@@ -173,8 +173,6 @@ This is an outline; details will be refined in the ERD and DDL.
 
 ## 👥 Team Members and Roles
 
-> Update this table with your real info.
-
 | Name                   | Email                    | Role                 |
 |------------------------|--------------------------|----------------------|
 | Tran Quang Khai (you)  | 23khai.tq@vinuni.edu.vn  | Software Developer   |
@@ -185,21 +183,9 @@ This is an outline; details will be refined in the ERD and DDL.
 
 ## 📆 Timeline (Planned Milestones)
 
-This aligns with the course timeline; you can tweak dates if needed.
-
-- **By Dec 1** – Team registration & topic selection, GitHub repo created, README completed.
-- **By Dec 8** – Finalize functional & non-functional requirements; first draft ERD and core entities ready for peer review.
-- **By Dec 15** – Submit design document:
-  - Final ERD (3NF) and DDL scripts (CREATE TABLE with keys & constraints).
-  - Plan for views, stored procedures, and triggers.
-- **Dec 15 – Dec 21**
-  - Implement database schema in MySQL.
-  - Implement views, ≥2 stored procedures, ≥1 trigger.
-  - Load sample data (seed scripts).
-  - Build web interface (CRUD + basic analytics).
-  - Configure indexes, roles, and security.
-  - Test and refine queries for performance.
-- **By Dec 22**
-  - Final demo website working end-to-end.
-  - Complete presentation slides & final report.
-  - Clean up GitHub repo and documentation.
+| Timeline         | Activity                                            |
+|------------------|-----------------------------------------------------|
+| Dec 1, 2025      | Team registration & topic selection                 |
+| Dec 8, 2025      | Peer review of proposals                            | 
+| Dec 15, 2025     | Submit design document (ERD, DDL, task division)    |
+| Dec 22, 2025     | Final submission & presentation slides              |
