@@ -175,7 +175,7 @@ This is an outline; details will be refined in the ERD and DDL.
 
 | Name                   | Email                    | Role                 |
 |------------------------|--------------------------|----------------------|
-| Tran Quang Khai (you)  | 23khai.tq@vinuni.edu.vn  | Software Developer   |
+| Tran Quang Khai        | 23khai.tq@vinuni.edu.vn  | Software Developer   |
 | Thai Huu Tri           | 23tri.th@vinuni.edu.vn   | Software Developer   |
 | Nguyen Ngoc Han        | 22han.nn@vinuni.edu.vn   | Software Developer   |
 
