@@ -1,0 +1,810 @@
+\documentclass[a4paper, 12pt]{report}
+% \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% \usepackage[vietnamese]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage[top=25mm, left=20mm, right=20mm, bottom=25mm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{lmodern}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue
+}
+
+% \pagestyle{fancy}
+% \fancyhf{}
+% \fancyfoot[C]{\thepage}
+% \fancyfoot[R]{\scriptsize 07/12/2025}
+% \renewcommand{\headrulewidth}{0pt}
+% \renewcommand{\footrulewidth}{0pt}
+
+\begin{document}
+
+% ================== TITLE PAGE ==================
+\begin{titlepage}
+    \centering
+
+    \vspace*{2cm}
+    {\large VinUniversity\par}
+
+    \vspace{4cm}
+    {\LARGE \textbf{Smart Inventory \& \\ Procurement Management System}\par}
+
+    \vfill
+    {\large Tran Quang Khai \par}
+    {\large Thai Huu Tri \par}
+    {\large Nguyen Ngoc Han \par}
+    \vspace{0.5cm}
+    {\large COMP3030 - Databases and Database Systems\par}
+    {\large Dec 15, 2025\par}
+
+\end{titlepage}
+
+\renewcommand{\thesection}{\arabic{section}}
+
+% ================== MAIN REPORT STARTS HERE ==================
+
+%==========================
+% 1. Introduction & System Overview
+%==========================
+\section{Introduction \& System Overview}
+
+Small retail stores often struggle to maintain accurate and timely
+information about their inventory. Typical problems include stockouts,
+overstocking, inconsistent records between different locations and a
+lack of visibility into which products are actually selling well.
+
+The goal of the \textbf{Store Inventory and Product Management System
+(SIPMS)} is to provide a lightweight but realistic database-backed web
+application that helps store managers:
+
+\begin{itemize}
+  \item Maintain a central catalogue of products and categories,
+  \item Track stock levels across multiple locations (warehouses and stores),
+  \item Record stock movements caused by purchases, sales, transfers
+        and manual adjustments,
+  \item Monitor low-stock products and generate simple reports,
+  \item Control access using user roles and keep an audit trail of
+        critical actions.
+\end{itemize}
+
+This design document focuses on the database aspects of SIPMS:
+conceptual and logical modelling, physical schema definition, and
+project planning. Application implementation details (Django backend
+and React frontend) will be covered in later milestones.
+
+%==========================
+% 2. Physical Schema Definition
+%==========================
+\section{Conceptual \& Logical Design}
+
+\subsection{Functional Requirements}
+
+The main functional requirements of SIPMS are:
+
+\begin{enumerate}
+  \item The system shall allow administrators to manage \textbf{product
+        categories} (create, update, deactivate).
+  \item The system shall store a \textbf{product catalogue} including
+        name, SKU, barcode, unit price, unit of measure and reorder
+        level for each product.
+  \item The system shall maintain a list of \textbf{locations}
+        (warehouses and stores) where stock is stored.
+  \item For each pair \texttt{(product, location)}, the system shall
+        store the current \textbf{quantity on hand}.
+  \item The system shall support \textbf{purchase orders} (PO) from
+        suppliers, with line items and status (draft, approved,
+        received, cancelled).
+  \item The system shall support \textbf{sales orders} (SO) from
+        customers, with line items and status (draft, confirmed,
+        refunded, cancelled).
+  \item The system shall record \textbf{stock movements} for all
+        inventory changes, including purchases, sales, internal
+        transfers and manual adjustments.
+  \item The system shall support \textbf{internal transfers} by moving
+        stock from one location to another.
+  \item The system shall provide a basic \textbf{dashboard} showing
+        total stock per location, low-stock alerts and top-selling
+        products.
+  \item The system shall manage \textbf{users and roles} and restrict
+        access to certain actions (for example only managers may
+        approve POs or SOs).
+  \item The system shall maintain an \textbf{audit log} for important
+        operations (logins, order status changes, stock adjustments).
+\end{enumerate}
+
+\subsection{Non-functional Requirements}
+
+Non-functional requirements focus on quality attributes of the system:
+
+\begin{enumerate}
+  \item \textbf{Usability:} The web interface should be easy to use for
+        non-technical store staff with minimal training.
+  \item \textbf{Performance:} Typical queries (viewing stock per
+        location, searching products by name, loading dashboards)
+        should respond within a few seconds for the expected data size
+        in this project.
+  \item \textbf{Reliability:} The database should preserve data
+        integrity using primary keys, foreign keys and constraints.
+  \item \textbf{Security:} Users must authenticate with a username and
+        password, and their permissions depend on their role.
+  \item \textbf{Consistency:} Stock quantities shown on dashboards and
+        reports must be consistent with the underlying stock movement
+        history.
+  \item \textbf{Extensibility:} The schema should be flexible enough to
+        add new locations, product attributes or reports with minimal
+        structural change.
+  \item \textbf{Portability:} The database shall run on MySQL, and the
+        design should be largely transferable to other relational DBMS.
+\end{enumerate}
+
+\subsection{Conceptual Data Model}
+
+\subsubsection{Entities Overview}
+
+At the conceptual level, SIPMS includes the following main entities:
+
+\begin{itemize}
+  \item \textbf{Category:} groups similar products.
+  \item \textbf{Product:} individual items that can be purchased or sold.
+  \item \textbf{Supplier:} vendors who supply products.
+  \item \textbf{Location:} warehouses or stores where stock is held.
+  \item \textbf{InventoryLevel:} current quantity of a product at a
+        specific location; identified by the pair
+        (product, location).
+  \item \textbf{PurchaseOrder / PurchaseOrderItem:} represent goods
+        ordered from suppliers and the individual line items.
+  \item \textbf{SalesOrder / SalesOrderItem:} represent goods sold to
+        customers and the individual line items.
+  \item \textbf{StockMovement:} atomic changes in stock quantity,
+        characterised by movement type and signed quantity.
+  \item \textbf{Role:} defines a set of permissions.
+  \item \textbf{User:} application users, each assigned exactly one role.
+  \item \textbf{AuditLog:} records important user actions.
+\end{itemize}
+
+\subsubsection{Entity--Relationship Diagram}
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.9\textwidth]{diagram sipms.png}
+\label{fig:conceptual-erd}
+\end{figure}
+
+The conceptual Entity--Relationship Diagram (ERD) shows the entities,
+primary keys and relationships between them. Key relationships
+include:
+
+\begin{itemize}
+  \item Each product belongs to exactly one category.
+  \item Each product can appear in many purchase order items and sales
+        order items.
+  \item InventoryLevel records the quantity for each (product, location)
+        pair.
+  \item PurchaseOrder and SalesOrder have one-to-many relationships to
+        their line items.
+  \item StockMovement links to exactly one product, one location and
+        one user who created the movement.
+  \item Each user is assigned exactly one role, and each audit log
+        entry references a user.
+\end{itemize}
+
+The complete ERD for SIPMS is shown in Figure~\ref{fig:conceptual-erd} in
+Appendix~A.
+
+\subsubsection{Business Rules}
+
+Some key business rules captured by the conceptual model are:
+
+\begin{itemize}
+  \item \textbf{BR1 -- No negative stock:} stock on hand must not
+        become negative at any location.
+  \item \textbf{BR2 -- Unique stock record:} for each product and
+        location there is at most one InventoryLevel record.
+  \item \textbf{BR3 -- Product classification:} every product must
+        belong to exactly one category.
+  \item \textbf{BR4 -- Purchase order life cycle:} a purchase order
+        goes through states (draft, approved, partially received,
+        closed, cancelled) and only approved orders can create stock
+        movements.
+  \item \textbf{BR5 -- Sales order life cycle:} a sales order goes
+        through states (draft, confirmed, refunded, cancelled) and only
+        confirmed orders can decrease stock.
+  \item \textbf{BR6 -- Internal transfer consistency:} each transfer
+        between locations is represented as two stock movements
+        (outbound and inbound) with equal absolute quantities.
+  \item \textbf{BR7 -- Role-based actions:} only users with a
+        manager-like role may approve or cancel orders or perform
+        manual adjustments.
+  \item \textbf{BR8 -- Auditability:} important actions (login,
+        approval, cancellation, adjustment) must be recorded in the
+        AuditLog table with user, time and description.
+\end{itemize}
+
+\subsection{Normalization to Third Normal Form (3NF)}
+
+The SIPMS database schema was designed directly with normalization
+principles in mind. All major entities were analysed for functional
+dependencies (FDs), partial dependencies, and transitive dependencies.
+This section explains the normalization process and demonstrates that
+all relations satisfy Third Normal Form (3NF).
+
+\subsubsection{Approach}
+
+Rather than decomposing a single large unnormalized table, the SIPMS
+schema was constructed by modelling real-world entities:
+\texttt{Product}, \texttt{Category}, \texttt{Location},
+\texttt{Supplier}, \texttt{PurchaseOrder}, \texttt{SalesOrder},
+\texttt{InventoryLevel}, \texttt{StockMovement}, and supporting
+entities such as \texttt{App\_User}, \texttt{Role}, and
+\texttt{AuditLog}.
+
+For each entity, we identify:
+
+\begin{itemize}
+    \item its primary key,
+    \item its attributes and functional dependencies,
+    \item foreign key constraints,
+    \item and whether any non-key attributes depend on other non-key attributes.
+\end{itemize}
+
+A table is in 3NF if:
+
+\begin{itemize}
+    \item it is in 2NF, and
+    \item every non-key attribute depends only on the key, the whole key,
+          and nothing but the key.
+\end{itemize}
+
+Below we justify 3NF compliance for each core component.
+
+\subsubsection{Product}
+
+\texttt{Product(}%
+\texttt{product\_id, category\_id, name, sku, barcode,}\\
+\texttt{\hspace*{1.5em}description, unit\_price, unit\_of\_measure, reorder\_level,}\\
+\texttt{\hspace*{1.5em}status, created\_at, updated\_at)}
+
+\medskip
+\noindent Functional dependencies:
+\begin{itemize}
+    \item \texttt{product\_id} $\rightarrow$ all other attributes.
+    \item \texttt{category\_id} is a foreign key and does not determine
+          any product attributes; it only specifies product category.
+\end{itemize}
+
+\noindent All non-key attributes depend only on \texttt{product\_id}.
+There are no partial or transitive dependencies.
+
+\noindent\textbf{Therefore, \texttt{Product} is in 3NF.}
+
+\medskip
+\subsubsection{Category}
+\texttt{Category(category\_id, name, description)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{category\_id} $\rightarrow$ \texttt{name},
+          \texttt{description}.
+\end{itemize}
+
+\noindent All attributes depend on the primary key \texttt{category\_id}
+and there are no non-key attributes determining others.
+
+\noindent\textbf{Therefore, \texttt{Category} is in 3NF.}
+
+\subsubsection{Supplier}
+
+\texttt{Supplier(}%
+\texttt{supplier\_id, name, contact\_name, phone, email,}\\
+\texttt{\hspace*{1.5em}address, payment\_terms, status, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{supplier\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent All non-key attributes describe a supplier and depend solely
+on \texttt{supplier\_id}. No transitive dependencies exist.
+
+\noindent\textbf{Therefore, \texttt{Supplier} is in 3NF.}
+
+\subsubsection{Location}
+
+\texttt{Location(}%
+\texttt{location\_id, name, type, address, status, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{location\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent All attributes depend on the primary key \texttt{location\_id};
+there are no dependencies among non-key attributes.
+
+\noindent\textbf{Therefore, \texttt{Location} is in 3NF.}
+
+\subsubsection{InventoryLevel}
+
+\texttt{InventoryLevel(}%
+\texttt{product\_id, location\_id, quantity\_on\_hand,}\\
+\texttt{\hspace*{1.5em}last\_updated)}
+
+\medskip
+\noindent Composite primary key: (\texttt{product\_id},
+\texttt{location\_id}).
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item (\texttt{product\_id}, \texttt{location\_id}) $\rightarrow$
+          \texttt{quantity\_on\_hand}, \texttt{last\_updated}.
+\end{itemize}
+
+\noindent No attribute depends solely on one component of the composite
+key. No transitive dependencies are present.
+
+\noindent\textbf{Therefore, \texttt{InventoryLevel} is in 3NF.}
+
+\subsubsection{PurchaseOrder}
+
+\texttt{PurchaseOrder(}%
+\texttt{po\_id, supplier\_id, location\_id, order\_date,}\\
+\texttt{\hspace*{1.5em}expected\_date, status, total\_amount,}\\
+\texttt{\hspace*{1.5em}created\_by, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{po\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent All non-key attributes describe a single purchase order and
+depend solely on \texttt{po\_id}.
+
+\noindent\textbf{Therefore, \texttt{PurchaseOrder} is in 3NF.}
+
+\medskip
+
+\subsubsection{PurchaseOrderItem}
+
+\texttt{PurchaseOrderItem(}%
+\texttt{po\_id, product\_id, ordered\_qty, received\_qty,}\\
+\texttt{\hspace*{1.5em}unit\_price, line\_total)}
+
+\medskip
+\noindent Composite primary key: (\texttt{po\_id}, \texttt{product\_id}).
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item (\texttt{po\_id}, \texttt{product\_id}) $\rightarrow$
+          \texttt{ordered\_qty}, \texttt{received\_qty},
+          \texttt{unit\_price}, \texttt{line\_total}.
+\end{itemize}
+
+\noindent All numeric values belong to a specific line of a purchase
+order, identified by the composite key. There are no partial or
+transitive dependencies.
+
+\noindent\textbf{Therefore, \texttt{PurchaseOrderItem} is in 3NF.}
+
+\subsubsection{SalesOrder}
+
+\texttt{SalesOrder(}%
+\texttt{so\_id, location\_id, order\_date, customer\_name,}\\
+\texttt{\hspace*{1.5em}status, total\_amount, created\_by, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{so\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent All non-key attributes describe a single sales order and
+depend only on \texttt{so\_id}.
+
+\noindent\textbf{Therefore, \texttt{SalesOrder} is in 3NF.}
+
+\medskip
+\subsubsection{SalesOrderItem}
+\texttt{SalesOrderItem(}%
+\texttt{so\_id, product\_id, quantity, unit\_price,}\\
+\texttt{\hspace*{1.5em}discount, line\_total)}
+
+\medskip
+\noindent Composite primary key: (\texttt{so\_id}, \texttt{product\_id}).
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item (\texttt{so\_id}, \texttt{product\_id}) $\rightarrow$
+          \texttt{quantity}, \texttt{unit\_price}, \texttt{discount},
+          \texttt{line\_total}.
+\end{itemize}
+
+\noindent All attributes refer to a single sales order line and depend
+on the full composite key.
+
+\noindent\textbf{Therefore, \texttt{SalesOrderItem} is in 3NF.}
+
+\subsubsection{StockMovement}
+
+\texttt{StockMovement(}%
+\texttt{movement\_id, product\_id, location\_id, quantity,}\\
+\texttt{\hspace*{1.5em}movement\_type, related\_document\_type,}\\
+\texttt{\hspace*{1.5em}related\_document\_id, movement\_date,}\\
+\texttt{\hspace*{1.5em}created\_by, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{movement\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent Each record describes a single inventory change; all attributes
+describe that movement and none depend on another non-key attribute.
+
+\noindent\textbf{Therefore, \texttt{StockMovement} is in 3NF.}
+
+
+
+\subsubsection{Role}
+\texttt{Role(}%
+\texttt{role\_id, role\_name, description)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{role\_id} $\rightarrow$ \texttt{role\_name},
+          \texttt{description}.
+\end{itemize}
+
+\noindent\textbf{Therefore, \texttt{Role} is in 3NF.}
+
+\medskip
+\subsubsection{App\_User}
+\texttt{App\_User(}%
+\texttt{user\_id, username, password\_hash, full\_name,}\\
+\texttt{\hspace*{1.5em}email, role\_id, status, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{user\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent No non-key attribute (e.g.\ \texttt{email}) determines other
+attributes; all depend on \texttt{user\_id}.
+
+\noindent\textbf{Therefore, \texttt{App\_User} is in 3NF.}
+
+\medskip
+\subsubsection{AuditLog}
+\texttt{AuditLog(}%
+\texttt{log\_id, user\_id, action\_type, entity\_name,}\\
+\texttt{\hspace*{1.5em}entity\_id, description, created\_at)}
+
+\medskip
+\noindent Functional dependency:
+\begin{itemize}
+    \item \texttt{log\_id} $\rightarrow$ all other attributes.
+\end{itemize}
+
+\noindent Each log entry is identified by \texttt{log\_id} and all
+details depend on this key.
+
+\noindent\textbf{Therefore, \texttt{AuditLog} is in 3NF.}
+
+\subsubsection{Conclusion}
+
+All tables in the SIPMS schema satisfy:
+
+\begin{itemize}
+    \item no repeating groups (1NF),
+    \item no partial dependencies on composite keys (2NF),
+    \item no transitive dependencies involving non-key attributes (3NF).
+\end{itemize}
+
+\noindent\textbf{Therefore, the logical schema of SIPMS is fully
+normalized to Third Normal Form (3NF).}
+
+%==========================
+% 3. Physical Schema Definition
+%==========================
+\section{Physical Schema Definition}
+
+The physical schema implements the conceptual design using MySQL. It
+consists of tables, foreign keys, indexes, views, and constraints
+defined in \texttt{database/schema.sql}.
+
+
+\subsection{Overview of tables and keys}
+
+Each conceptual entity corresponds to a physical table with appropriate
+primary and foreign keys:
+
+\begin{itemize}
+    \item \textbf{Category} --
+          PK: \texttt{category\_id}.
+    \item \textbf{Product} --
+          PK: \texttt{product\_id};
+          FK: \texttt{category\_id} $\rightarrow$ \texttt{Category}.
+    \item \textbf{Supplier} --
+          PK: \texttt{supplier\_id}.
+    \item \textbf{Location} --
+          PK: \texttt{location\_id}.
+    \item \textbf{InventoryLevel} --
+          PK: (\texttt{product\_id}, \texttt{location\_id});
+          FK to \texttt{Product} and \texttt{Location}.
+    \item \textbf{PurchaseOrder} --
+          PK: \texttt{po\_id};
+          FK: \texttt{supplier\_id}, \texttt{location\_id},
+              \texttt{created\_by}.
+    \item \textbf{PurchaseOrderItem} --
+          PK: (\texttt{po\_id}, \texttt{product\_id});
+          FK to \texttt{PurchaseOrder} and \texttt{Product}.
+    \item \textbf{SalesOrder} --
+          PK: \texttt{so\_id};
+          FK: \texttt{location\_id}, \texttt{created\_by}.
+    \item \textbf{SalesOrderItem} --
+          PK: (\texttt{so\_id}, \texttt{product\_id});
+          FK to \texttt{SalesOrder} and \texttt{Product}.
+    \item \textbf{StockMovement} --
+          PK: \texttt{movement\_id};
+          FK: \texttt{product\_id}, \texttt{location\_id}, \texttt{created\_by}.
+    \item \textbf{Role} --
+          PK: \texttt{role\_id}.
+    \item \textbf{App\_User} --
+          PK: \texttt{user\_id};
+          FK: \texttt{role\_id} $\rightarrow$ \texttt{Role}.
+    \item \textbf{AuditLog} --
+          PK: \texttt{log\_id};
+          FK: \texttt{user\_id} $\rightarrow$ \texttt{App\_User}.
+\end{itemize}
+
+
+\subsection{DDL scripts}
+
+All \texttt{CREATE TABLE}, \texttt{ALTER TABLE}, index definitions and
+constraint declarations are located in
+\texttt{database/schema.sql}. Executing the file initializes the
+entire SIPMS database from scratch. This script acts as the single
+source of truth for the physical schema.
+
+
+\subsection{Views}
+
+The following MySQL views were added to simplify dashboard queries:
+
+\begin{itemize}
+    \item \textbf{v\_inventory\_summary}: joins \texttt{InventoryLevel},
+          \texttt{Product} and \texttt{Location} to show real-time stock.
+    \item \textbf{v\_low\_stock}: filters products where
+          \texttt{quantity\_on\_hand} < \texttt{reorder\_level}.
+    \item \textbf{v\_top\_selling\_products}: aggregates
+          \texttt{SalesOrderItem} by product and computes revenue.
+\end{itemize}
+
+\subsection{Indexes and partitioning}
+
+Secondary indexes improve query performance on:
+
+\begin{itemize}
+    \item foreign keys (\texttt{product\_id}, \texttt{location\_id},
+          \texttt{supplier\_id}, \texttt{created\_by}),
+    \item frequently searched fields such as \texttt{product.name},
+    \item date fields like \texttt{movement\_date} and
+          \texttt{order\_date}.
+\end{itemize}
+
+Partitioning is not required for the course scale, but in real
+deployments tables such as \texttt{StockMovement} may be range-partitioned
+by date for improved performance.
+
+
+%==========================
+% 4. Task Division \& Project Plan
+%==========================
+
+\section{Task Division \& Project Plan}
+
+\subsection{Team member responsibilities}
+
+The project team consists of three members. Each member acts as a lead
+for one area and also contributes to documentation and testing for
+their part of the system.
+
+\begin{itemize}
+  \item \textbf{Database \& Documentation Lead - Tran Quang Khai} \\
+        Designs the conceptual and logical schema, creates the ERD,
+        performs normalization, prepares the DDL scripts and views and
+        writes the main database-related sections of the documentation.
+
+  \item \textbf{Backend Lead - Thai Huu Tri} \\
+        Implements the REST API using Django, connects to the MySQL
+        database, integrates with views and stored procedures, and
+        documents and tests the backend endpoints.
+
+  \item \textbf{Frontend Lead - Nguyen Ngoc Han} \\
+        Builds the user interface (CRUD pages, order workflows,
+        dashboards), integrates with the backend API, and documents
+        and tests the user-facing features.
+\end{itemize}
+
+\subsection{Timeline and activities}
+
+The overall project is organised into five activities aligned with the
+course milestones. Table~\ref{tab:timeline} summarises the main
+deliverables, responsibilities and deadlines.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{9cm} p{4cm} p{3.0cm}}
+\toprule
+\textbf{Main deliverable} & \textbf{Responsible} & \textbf{Deadline} \\
+\midrule
+
+Conceptual \& logical database design
+(requirements, ERD, 3NF, design document) &
+Khai &
+Dec 15, 2025 \\
+
+Backend API
+(Django REST + DB integration) &
+Tri &
+Dec 19, 2025 \\
+
+Frontend UI
+(React + API integration) &
+Han &
+Dec 19, 2025 \\
+
+Reporting \& dashboards
+(analytics and exporting features) &
+Han \& Tri &
+Dec 21, 2025 \\
+
+Final testing, demo and report
+(integration of all components) &
+All members &
+Dec 22, 2025 \\
+\bottomrule
+\end{tabular}
+\caption{Project activities, responsibilities and deadlines.}
+\label{tab:timeline}
+\end{table}
+
+\section{Supporting documentation}
+
+\subsection{Rationale for design decisions}
+
+The schema of SIPMS was designed to keep the core business concepts
+clearly separated while still supporting efficient queries.
+
+\begin{itemize}
+  \item \textbf{Separation of product, category, supplier and location.}
+        Products, categories, suppliers and locations are modelled as
+        separate tables to avoid duplication of descriptive attributes
+        (for example supplier contact information or warehouse
+        addresses) and to simplify future changes. This also makes it
+        easy to reuse the same product across multiple purchase or
+        sales orders.
+
+  \item \textbf{Composite keys for inventory and order line items.}
+        The tables \texttt{InventoryLevel},
+        \texttt{PurchaseOrderItem} and \texttt{SalesOrderItem} use
+        composite primary keys (\texttt{product\_id} with
+        \texttt{location\_id} or order identifiers). This reflects the
+        natural key of these concepts: a quantity always belongs to a
+        specific product at a specific location or in a specific
+        order. Using composite keys prevents duplicate lines for the
+        same product and keeps the schema in 3NF.
+
+  \item \textbf{Status and auditability.}
+        Order and product tables include a \texttt{status} attribute
+        instead of deleting rows when they are cancelled or disabled.
+        Together with the \texttt{AuditLog} table this allows the
+        system to keep a complete history of important changes and to
+        support future reporting on user actions.
+
+  \item \textbf{Role-based access control.}
+        The separation between \texttt{Role} and \texttt{App\_User}
+        makes it possible to assign permissions by role (for example
+        \emph{Admin}, \emph{Inventory Clerk}, \emph{Viewer}) instead
+        of hard-coding privileges per user. This design is extensible
+        if new roles are needed later.
+
+  \item \textbf{Indexing strategy.}
+        All foreign key columns are indexed (such as
+        \texttt{product\_id}, \texttt{location \\ \_id},
+        \texttt{supplier\_id}, \texttt{created\_by}) to speed up
+        joins between orders, inventory levels and master data. In
+        addition, frequently searched attributes such as
+        \texttt{product.name} and date fields like
+        \texttt{movement\_date} and \texttt{order\_date} are indexed
+        to support dashboard queries and time-based reports.
+\end{itemize}
+
+Overall, these decisions aim to balance normalisation (to reduce
+redundancy and anomalies) with practical performance considerations
+for typical inventory queries.
+
+\subsection{Sample data loading approach}
+
+For demonstration and testing purposes the project includes a simple
+sample data loading strategy.
+
+\begin{itemize}
+  \item \textbf{Seed script.}
+        A separate SQL file \texttt{database/seed.sql} will contain
+        \texttt{INSERT} statements to populate core tables with a
+        small, consistent dataset: a few categories, products,
+        suppliers, locations, users and roles. The script is designed
+        to be idempotent so that it can be rerun on a fresh database.
+
+  \item \textbf{Referential integrity.}
+        The seed data is ordered to respect foreign key dependencies:
+        master tables (\texttt{Category}, \texttt{Product},
+        \texttt{Supplier}, \texttt{Location}, \texttt{Role},
+        \texttt{App\_User}) are inserted first, followed by
+        transactional tables (\texttt{PurchaseOrder},
+        \texttt{PurchaseOrderItem}, \texttt{SalesOrder},
+        \texttt{SalesOrderItem}, \texttt{InventoryLevel},
+        \texttt{StockMovement}, \texttt{AuditLog}).
+
+  \item \textbf{Realistic scenarios.}
+        The sample data will cover typical business scenarios such as:
+        initial stock levels for each location, purchase orders from
+        different suppliers, sales orders to customers, and stock
+        movements generated from those orders. This allows the team to
+        verify that the schema and queries behave as expected before
+        integrating the backend and frontend.
+
+  \item \textbf{Reproducibility.}
+        Both the schema script \texttt{schema.sql} and the seed script
+        \texttt{seed.sql} are version-controlled in the repository so
+        that any team member (or the instructor) can create the same
+        database state locally with a few commands.
+\end{itemize}
+
+
+\end{document}
+
+
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \centering
+    \vspace{-20pt} % Adjust the space above the image
+    \includegraphics[width=0.28\textwidth]{bai 1.png}
+    \vspace{-10pt} % Adjust the space below the image
+    % \caption{Mô tả ảnh ở đây}
+    % \label{fig:your_label}
+\end{wrapfigure}
+
+
+ 
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.6\textwidth]{Problem5.png}
+\end{figure}
