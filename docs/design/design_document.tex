@@ -205,8 +205,7 @@ include:
         entry references a user.
 \end{itemize}
 
-The complete ERD for SIPMS is shown in Figure~\ref{fig:conceptual-erd} in
-Appendix~A.
+The complete ERD for SIPMS is shown in Figure~\ref{fig:conceptual-erd} on page 3.
 
 \subsubsection{Business Rules}
 
@@ -758,7 +757,7 @@ sample data loading strategy.
 
 \begin{itemize}
   \item \textbf{Seed script.}
-        A separate SQL file \texttt{database/seed.sql} will contain
+        A separate SQL file \texttt{database/seed\_data.sql} will contain
         \texttt{INSERT} statements to populate core tables with a
         small, consistent dataset: a few categories, products,
         suppliers, locations, users and roles. The script is designed
@@ -784,7 +783,7 @@ sample data loading strategy.
 
   \item \textbf{Reproducibility.}
         Both the schema script \texttt{schema.sql} and the seed script
-        \texttt{seed.sql} are version-controlled in the repository so
+        \texttt{seed\_data.sql} are version-controlled in the repository so
         that any team member (or the instructor) can create the same
         database state locally with a few commands.
 \end{itemize}

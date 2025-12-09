@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1765165658.31858 "c:/Coding/Vinuni-DB-Inventory-System-The-Fool/docs/design/design_document.tex" "design_document.pdf" "design_document" 1765165660.83342 0
+["pdflatex"] 1765167870.50168 "c:/Coding/Vinuni-DB-Inventory-System-The-Fool/docs/design/design_document.tex" "design_document.pdf" "design_document" 1765167872.86094 0
   "C:/Users/LAPTOP Thai Hoa/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1765118579 91620 7a57a1f8766c3b0e3fb60c506b76c594 ""
   "C:/Users/LAPTOP Thai Hoa/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1757575670 24229802 71b33650d2297c4a950211c4df7c862e ""
   "C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc" 1256929440 2375 baa924870cfb487815765f9094cf3728 ""
@@ -179,10 +179,10 @@
   "C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/tex/latex/wrapfig/wrapfig.sty" 1044403200 26220 3701aebf80ccdef248c0c20dd062fea9 ""
   "C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/svgnam.def" 1700127522 4705 ec4d2f4b7125d5a5145cc9aabae1d54b ""
   "C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1700127522 55487 80a65caedd3722f4c20a14a69e785d8f ""
-  "c:/Coding/Vinuni-DB-Inventory-System-The-Fool/docs/design/design_document.tex" 1765165657 29225 1b720d0261b74e25f32f1e77780d6675 ""
-  "design_document.aux" 1765165660 4678 4cca4d972295f57c669b6e34b7f63cfe "pdflatex"
-  "design_document.out" 1765165660 3207 3acfc115e98f61e9b0d0a56d0bd5c3b7 "pdflatex"
-  "design_document.tex" 1765165657 29225 1b720d0261b74e25f32f1e77780d6675 ""
+  "c:/Coding/Vinuni-DB-Inventory-System-The-Fool/docs/design/design_document.tex" 1765167869 29232 7e9a25e7471ed6052f8be61eb8de0a02 ""
+  "design_document.aux" 1765167872 4678 4cca4d972295f57c669b6e34b7f63cfe "pdflatex"
+  "design_document.out" 1765167872 3207 3acfc115e98f61e9b0d0a56d0bd5c3b7 "pdflatex"
+  "design_document.tex" 1765167869 29232 7e9a25e7471ed6052f8be61eb8de0a02 ""
   "diagram sipms.png" 1765162897 121718 880af947119afb5ca94ae2f42bc1ea4d ""
   (generated)
   "design_document.aux"

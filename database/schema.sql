@@ -6,6 +6,27 @@ CREATE DATABASE sipms
 
 USE sipms;
 
+SET NAMES utf8mb4;
+
+-- Drop tables in child->parent order
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS audit_log;
+DROP TABLE IF EXISTS stock_movement;
+DROP TABLE IF EXISTS sales_order_item;
+DROP TABLE IF EXISTS purchase_order_item;
+DROP TABLE IF EXISTS inventory_level;
+DROP TABLE IF EXISTS sales_order;
+DROP TABLE IF EXISTS purchase_order;
+DROP TABLE IF EXISTS app_user;
+DROP TABLE IF EXISTS role;
+DROP TABLE IF EXISTS product;
+DROP TABLE IF EXISTS category;
+DROP TABLE IF EXISTS supplier;
+DROP TABLE IF EXISTS location;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- =========================
 -- 1. Category
 -- =========================
