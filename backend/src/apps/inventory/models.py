@@ -1,5 +1,6 @@
 # backend/src/apps/inventory/models.py
 from django.db import models
+from django.utils import timezone
 from apps.accounts.models import AppUser
 
 
@@ -9,7 +10,7 @@ class Category(models.Model):
     description = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
-        managed = False  # created by schema.sql, Django didn't create
+        managed = False
         db_table = "category"
 
     def __str__(self):
@@ -25,7 +26,7 @@ class Supplier(models.Model):
     address = models.CharField(max_length=255, blank=True, null=True)
     payment_terms = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=8)  # 'ACTIVE' / 'INACTIVE'
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         managed = False
@@ -41,7 +42,7 @@ class Location(models.Model):
     type = models.CharField(max_length=10)  # 'WAREHOUSE' / 'STORE'
     address = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=8)  # 'ACTIVE' / 'INACTIVE'
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         managed = False
@@ -62,8 +63,8 @@ class Product(models.Model):
     unit_of_measure = models.CharField(max_length=20)
     reorder_level = models.PositiveIntegerField()
     status = models.CharField(max_length=8)  # 'ACTIVE' / 'INACTIVE'
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         managed = False
@@ -74,8 +75,7 @@ class Product(models.Model):
 
 
 class InventoryLevel(models.Model):
-    # table has composite PK (product_id, location_id), so Django
-    # will pick one field as primary_key; still can read data fine as mainly use filter.
+    # PK thực tế là (product_id, location_id); ta model hóa gần đúng:
     product = models.ForeignKey(
         Product, on_delete=models.DO_NOTHING, db_column="product_id", primary_key=True
     )
@@ -83,7 +83,7 @@ class InventoryLevel(models.Model):
         Location, on_delete=models.DO_NOTHING, db_column="location_id"
     )
     quantity_on_hand = models.IntegerField()
-    last_updated = models.DateTimeField()
+    last_updated = models.DateTimeField(default=timezone.now)
 
     class Meta:
         managed = False
@@ -102,17 +102,17 @@ class StockMovement(models.Model):
     location = models.ForeignKey(
         Location, on_delete=models.DO_NOTHING, db_column="location_id"
     )
-    quantity = models.IntegerField()  # >0 in, <0 out (theo comment trong schema)
+    quantity = models.IntegerField()  # >0 in, <0 out
     movement_type = models.CharField(max_length=20)
     related_document_type = models.CharField(
         max_length=20, blank=True, null=True
-    )  # 'PURCHASE_ORDER' / ...
+    )
     related_document_id = models.BigIntegerField(blank=True, null=True)
-    movement_date = models.DateTimeField()
+    movement_date = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
         AppUser, on_delete=models.DO_NOTHING, db_column="created_by"
     )
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         managed = False
