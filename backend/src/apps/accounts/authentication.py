@@ -44,5 +44,5 @@ class JWTAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed("User not found")
 
         # Let DRF know the user is authenticated
-        user.is_authenticated = True
+        # user.is_authenticated = True
         return (user, None)

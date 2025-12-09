@@ -21,5 +21,5 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.accounts.urls")),
-    # future add: inventory/orders/reports
+    path("api/", include("apps.inventory.urls")),  # CRUD master data
 ]
