@@ -1,4 +1,4 @@
--- seed_data.sql  —  sample data for SIPMS
+-- 02_seed_data.sql  —  sample data for SIPMS
 
 USE sipms;
 
