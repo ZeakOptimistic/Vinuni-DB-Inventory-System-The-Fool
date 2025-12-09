@@ -1,4 +1,4 @@
--- create database
+-- 01_schema.sql
 DROP DATABASE IF EXISTS sipms;
 CREATE DATABASE sipms
   CHARACTER SET utf8mb4
@@ -115,7 +115,7 @@ CREATE TABLE product (
 CREATE TABLE purchase_order (
     po_id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     supplier_id   INT UNSIGNED NOT NULL,
-    location_id   INT UNSIGNED NOT NULL,       -- nơi nhận hàng
+    location_id   INT UNSIGNED NOT NULL,       -- receive location
     order_date    DATE NOT NULL,
     expected_date DATE,
     status        ENUM('DRAFT','APPROVED','PARTIALLY_RECEIVED','CLOSED','CANCELLED')
@@ -136,7 +136,7 @@ CREATE TABLE purchase_order (
 -- =========================
 CREATE TABLE sales_order (
     so_id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    location_id   INT UNSIGNED NOT NULL,        -- store bán
+    location_id   INT UNSIGNED NOT NULL,        -- store location
     order_date    DATE NOT NULL,
     customer_name VARCHAR(150),
     status        ENUM('DRAFT','CONFIRMED','CANCELLED','REFUNDED')

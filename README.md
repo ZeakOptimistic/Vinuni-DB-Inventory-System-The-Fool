@@ -165,8 +165,8 @@ This is an outline; details will be refined in the ERD and DDL.
 ## 🔧 Tech Stack
 
 - **Database:** MySQL 8.x
-- **Backend:** Python 3.x with Flask
-- **Frontend:** HTML5, CSS3, Bootstrap, basic JavaScript
+- **Backend:** Node.js (e.g., Express.js)
+- **Frontend:** React.js
 - **Tools:** MySQL Workbench, Git, GitHub, Postman (for API testing)
 
 ---
