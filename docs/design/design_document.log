@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.9.11)  8 DEC 2025 10:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.9.11)  8 DEC 2025 11:24
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -675,52 +675,57 @@ File: diagram sipms.png Graphic file (type png)
 Package pdftex.def Info: diagram sipms.png  used on input line 186.
 (pdftex.def)             Requested size: 435.32422pt x 485.09114pt.
  [3 <./diagram sipms.png>]
-Overfull \hbox (26.46332pt too wide) in paragraph at lines 250--257
+Overfull \hbox (26.46332pt too wide) in paragraph at lines 249--256
 \T1/lmr/m/n/12 structed by mod-elling real-world en-ti-ties: \T1/lmtt/m/n/12 Product\T1/lmr/m/n/12 , \T1/lmtt/m/n/12 Category\T1/lmr/m/n/12 , \T1/lmtt/m/n/12 Location\T1/lmr/m/n/12 , \T1/lmtt/m/n/12 Supplier\T1/lmr/m/n/12 , \T1/lmtt/m/n/12 PurchaseOrder\T1/lmr/m/n/12 ,
  []
 
 [4]
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 287.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 286.
  (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 287.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 286.
  (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 287.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 286.
  (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 287.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 286.
  (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 287.
+(Font)              <12> on input line 286.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 287.
+(Font)              <8> on input line 286.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 287.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 287.
+(Font)              <6> on input line 286.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 286.
  (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 287.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 286.
  (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <12> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 295.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 294.
  [5{C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}] [6] [7] [8] [9]
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 664.
+(Font)              <10.95> on input line 663.
 
-Overfull \hbox (7.54721pt too wide) in paragraph at lines 664--695
+Overfull \hbox (7.54721pt too wide) in paragraph at lines 663--694
  [][] 
  []
 
-[10] [11] [12] (design_document.aux)
+[10] [11]
+Overfull \hbox (3.47481pt too wide) in paragraph at lines 784--789
+[]\T1/lmr/bx/n/12 Reproducibility. \T1/lmr/m/n/12 Both the schema script \T1/lmtt/m/n/12 schema.sql \T1/lmr/m/n/12 and the seed script \T1/lmtt/m/n/12 seed_data.sql
+ []
+
+[12] (design_document.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
@@ -737,7 +742,7 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  84i,10n,87p,475b,579s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt12.pfb>
-Output written on design_document.pdf (13 pages, 325151 bytes).
+Output written on design_document.pdf (13 pages, 325148 bytes).
 PDF statistics:
  233 PDF objects out of 1000 (max. 8388607)
  67 named destinations out of 1000 (max. 500000)
