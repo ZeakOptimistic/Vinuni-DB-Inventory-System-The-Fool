@@ -75,7 +75,7 @@ class Product(models.Model):
 
 
 class InventoryLevel(models.Model):
-    # PK thực tế là (product_id, location_id); ta model hóa gần đúng:
+    # The real PK is (product_id, location_id); approximate modeling:
     product = models.ForeignKey(
         Product, on_delete=models.DO_NOTHING, db_column="product_id", primary_key=True
     )
@@ -106,7 +106,7 @@ class StockMovement(models.Model):
     movement_type = models.CharField(max_length=20)
     related_document_type = models.CharField(
         max_length=20, blank=True, null=True
-    )
+    )  # 'PURCHASE_ORDER', 'SALES_ORDER',...
     related_document_id = models.BigIntegerField(blank=True, null=True)
     movement_date = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
