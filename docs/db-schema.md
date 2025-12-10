@@ -19,7 +19,7 @@ All SQL scripts are located in the `database/` folder:
 Before starting, make sure you have:
 
 - MySQL 8.x installed and running on `localhost:3306`
-- The MySQL command–line client available  
+- The MySQL command–line client available
   (`mysql -V` should show the version)
 - The project repository cloned locally so the `database/` folder exists
 
