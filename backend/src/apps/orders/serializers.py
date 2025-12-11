@@ -389,3 +389,17 @@ class PurchaseOrderCreateSerializer(serializers.Serializer):
             PurchaseOrderItem.objects.bulk_create(poi_objs)
 
         return po
+
+
+class TransferStockSerializer(serializers.Serializer):
+    product_id = serializers.IntegerField()
+    from_location_id = serializers.IntegerField()
+    to_location_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
+
+    def validate(self, attrs):
+        if attrs["from_location_id"] == attrs["to_location_id"]:
+            raise serializers.ValidationError(
+                "Source and destination locations must be different."
+            )
+        return attrs

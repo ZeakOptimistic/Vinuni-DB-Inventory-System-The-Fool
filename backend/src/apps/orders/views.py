@@ -6,15 +6,23 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 
 from .serializers import (
     SalesOrderCreateSerializer,
     SalesOrderSerializer,
     PurchaseOrderCreateSerializer,
     PurchaseOrderSerializer,
+    TransferStockSerializer,
 )
 from .models import SalesOrder, PurchaseOrder, PurchaseOrderItem
-from apps.inventory.models import StockMovement
+from apps.accounts.permissions import ReadOnlyOrStaff
+from apps.inventory.models import (
+    Product,
+    Location,
+    InventoryLevel,
+    StockMovement,
+)
 
 
 class SalesOrderListCreateView(APIView):
@@ -167,3 +175,148 @@ class PurchaseOrderReceiveAllView(APIView):
         po.refresh_from_db()
         data = PurchaseOrderSerializer(po).data
         return Response(data, status=status.HTTP_200_OK)
+
+
+class TransferStockView(APIView):
+    """
+    POST /api/transfers/
+
+    Request body:
+    {
+        "product_id": 1,
+        "from_location_id": 1,
+        "to_location_id": 2,
+        "quantity": 5
+    }
+
+    - Quantity must be > 0 (enforced by MySQL trigger).
+    - Trigger on stock_movement will update inventory_level and
+      prevent negative inventory.
+    """
+
+    permission_classes = [IsAuthenticated, ReadOnlyOrStaff]
+
+    def post(self, request):
+        serializer = TransferStockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        qty = data["quantity"]
+
+        # Determine user id for created_by
+        user = request.user
+        user_pk = getattr(user, "user_id", getattr(user, "pk", None))
+        if user_pk is None:
+            return Response(
+                {"detail": "Invalid user."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            with transaction.atomic():
+                # Lock product & locations
+                try:
+                    product = Product.objects.select_for_update().get(
+                        product_id=data["product_id"]
+                    )
+                except Product.DoesNotExist:
+                    raise ValidationError({"product_id": "Product not found."})
+
+                try:
+                    from_location = Location.objects.select_for_update().get(
+                        location_id=data["from_location_id"]
+                    )
+                except Location.DoesNotExist:
+                    raise ValidationError(
+                        {"from_location_id": "Source location not found."}
+                    )
+
+                try:
+                    to_location = Location.objects.select_for_update().get(
+                        location_id=data["to_location_id"]
+                    )
+                except Location.DoesNotExist:
+                    raise ValidationError(
+                        {"to_location_id": "Destination location not found."}
+                    )
+
+                # Optional pre-check: current stock at source
+                from_il = (
+                    InventoryLevel.objects.select_for_update()
+                    .filter(product=product, location=from_location)
+                    .first()
+                )
+                current_qty = from_il.quantity_on_hand if from_il else 0
+                if current_qty < qty:
+                    raise ValidationError(
+                        {"quantity": "Not enough stock in source location."}
+                    )
+
+                # Insert stock movements (quantity > 0 !)
+                out_mv = StockMovement.objects.create(
+                    product=product,
+                    location=from_location,
+                    quantity=qty,  # positive quantity
+                    movement_type="TRANSFER_OUT",
+                    related_document_type="TRANSFER",
+                    related_document_id=None,  # update after we know id
+                    created_by_id=user_pk,
+                )
+
+                transfer_id = out_mv.movement_id
+                out_mv.related_document_id = transfer_id
+                out_mv.save(update_fields=["related_document_id"])
+
+                StockMovement.objects.create(
+                    product=product,
+                    location=to_location,
+                    quantity=qty,  # positive quantity
+                    movement_type="TRANSFER_IN",
+                    related_document_type="TRANSFER",
+                    related_document_id=transfer_id,
+                    created_by_id=user_pk,
+                )
+
+                # Read updated inventory after trigger
+                from_il_after = (
+                    InventoryLevel.objects.select_for_update()
+                    .filter(product=product, location=from_location)
+                    .first()
+                )
+                to_il_after = (
+                    InventoryLevel.objects.select_for_update()
+                    .filter(product=product, location=to_location)
+                    .first()
+                )
+
+                from_qty_after = (
+                    from_il_after.quantity_on_hand if from_il_after else 0
+                )
+                to_qty_after = to_il_after.quantity_on_hand if to_il_after else 0
+
+        except ValidationError:
+            # let DRF handle and return 400
+            raise
+        except DatabaseError as e:
+            # MySQL SIGNAL from trigger (quantity <= 0, inventory negative, etc.)
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Final response for frontend
+        return Response(
+            {
+                "transfer_id": transfer_id,
+                "product_id": product.product_id,
+                "product_name": getattr(product, "name", None),
+                "from_location_id": from_location.location_id,
+                "from_location_name": getattr(from_location, "name", None),
+                "to_location_id": to_location.location_id,
+                "to_location_name": getattr(to_location, "name", None),
+                "quantity": qty,
+                "from_quantity_on_hand": from_qty_after,
+                "to_quantity_on_hand": to_qty_after,
+            },
+            status=status.HTTP_201_CREATED,
+        )
