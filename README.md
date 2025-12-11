@@ -293,8 +293,8 @@ On the frontend:
 ├── docs/
 │   ├── test_plan.md          # manual testing scenarios
 │   ├── design/
-│   │   ├── design_document.pdf
-│   └── final_report.md       # written report (optional)
+│   │   ├── design_document.pdf     # written report
+│   └── slide
 │
 └── README.md
 ```
@@ -343,7 +343,7 @@ Recommended tools: VS Code, MySQL Workbench, Postman.
 ### Clone the repository
 
 ```bash
-git clone https://github.com/<your-org>/Vinuni-DB-Inventory-System-The-Fool.git
+git clone https://github.com/ZeakOptimistic/Vinuni-DB-Inventory-System-The-Fool.git
 cd Vinuni-DB-Inventory-System-The-Fool
 ```
 
