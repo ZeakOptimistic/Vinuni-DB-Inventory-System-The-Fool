@@ -5,6 +5,8 @@ Smart Inventory & Procurement Management System (SIPMS)
 
 ## 📝 Brief Description
 
+This project was developed as a course project for the Databases and Database Systems course at VinUniversity.
+
 SIPMS is a MySQL-based information system that helps a multi-branch retail
 company manage its products, stock levels, and purchasing activities.
 
@@ -101,7 +103,7 @@ The system should provide at least the following features:
 
 ---
 
-## 🧱 Planned Core Entities (Initial Draft)
+## 🧱 Core Entitie
 
 This is an outline; details will be refined in the ERD and DDL.
 
@@ -162,13 +164,140 @@ This is an outline; details will be refined in the ERD and DDL.
 
 ---
 
+## Features Overview
+
+### Master data
+
+- **Products**
+  - SKU, name, category, unit price, reorder level, status (ACTIVE / INACTIVE)
+- **Categories**
+  - Grouping for products
+- **Suppliers**
+  - Contact info, status; used by purchase orders
+- **Locations**
+  - Warehouses / stores; stock is tracked separately per location
+
+### Inventory & stock movements
+
+- Logical table **`inventory_level`** stores on-hand quantity per (`product`, `location`)
+- All changes go through **stock movement procedures + triggers** to ensure consistency
+- Business rules enforced at DB level:
+  - Prevent negative stock on confirm sales / transfer
+  - Keep source & destination locations consistent for transfers
+
+### Purchase flow (PO)
+
+- Create purchase orders to suppliers for a destination location
+- Confirm / approve PO, then receive quantity
+- On receiving, stock at destination location increases
+- PO statuses: `DRAFT`, `APPROVED`, `PARTIALLY_RECEIVED`, `CLOSED`
+
+### Sales flow (SO)
+
+- Create sales order at a location with line items
+- Confirm sales order:
+  - Decrease stock at that location
+  - Block confirmation when stock is not enough (DB trigger / procedure)
+- SO statuses: `DRAFT`, `CONFIRMED`, `CANCELLED`
+
+### Internal transfer flow
+
+- Transfer stock of a product from one location to another
+- On success:
+  - Stock at source decreases
+  - Stock at destination increases
+- Fully enforced by stored procedure & triggers (no negative stock allowed)
+
+### Analytics & reports
+
+Backend `/api/reports/*` endpoints provide:
+
+- **Low stock report**
+  - Products below reorder level, optionally filtered by location
+- **Stock per location**
+  - Snapshot view of on-hand quantity and stock value per (`product`, `location`)
+- **Top-selling products (last 30 days)**
+  - Aggregation of sales orders to identify best sellers
+
+On the frontend:
+
+- **Dashboard**
+  - Cards: total products, purchase orders, sales orders, estimated stock value
+  - Mini chart: PO/SO counts in last 7 days
+  - Low-stock products table
+  - Recent purchase & sales orders
+- **ReportsPage**
+  - Tabs: Low stock, Stock per location, Top selling (30 days)
+
+### Security & accounts
+
+- Login with username + password via `/api/auth/login/`
+- JWT-style token stored on the frontend (via axios interceptors)
+- Role model (`Role`, `AppUser`) used to distinguish admin / manager / staff
+- Route guard on frontend: unauthenticated users are redirected to `/login`
+
+---
+
 ## 🔧 Tech Stack
 
-- **Database:** MySQL 8.x
-- **Backend:** Node.js (e.g., Express.js)
-- **Frontend:** React.js
-- **Tools:** MySQL Workbench, Git, GitHub, Postman (for API testing)
+- **Database**: MySQL 8.x
+- **Backend**: Python 3.10+, Django, Django REST Framework, MySQL client, SimpleJWT
+- **Frontend**: React 18 + Vite, React Router, Axios
+- **Tools**: MySQL Workbench, Postman, VS Code
 
+---
+
+## Repository Structure
+
+```text
+.
+├── database/
+│   ├── schema.sql            # tables & constraints
+│   ├── views.sql             # reporting views
+│   ├── procedures.sql        # business logic (PO/SO/transfer)
+│   ├── triggers.sql          # stock movement, integrity rules
+│   ├── indexes.sql           # performance indexes
+│   └── seed_data.sql         # sample data for demo
+│
+├── backend/
+│   ├── venv/                 # Python virtual environment (local)
+│   ├── src/
+│   │   ├── manage.py
+│   │   ├── config/           # Django settings, URLs, WSGI/ASGI
+│   │   └── apps/
+│   │       ├── accounts/     # users, roles, authentication
+│   │       ├── inventory/    # products, categories, suppliers, locations
+│   │       ├── orders/       # purchase orders, sales orders, transfers
+│   │       └── reports/      # reporting endpoints
+│   └── ...
+│
+├── frontend/
+│   ├── index.html
+│   ├── vite.config.*         # Vite config
+│   └── src/
+│       ├── api/              # axios clients (auth, products, orders, reports, ...)
+│       ├── hooks/            # useAuth, useFetch, ...
+│       ├── layouts/          # AuthLayout, DashboardLayout
+│       ├── pages/
+│       │   ├── auth/         # LoginPage
+│       │   ├── dashboard/    # DashboardPage
+│       │   ├── products/     # ProductsPage
+│       │   ├── suppliers/    # SuppliersPage
+│       │   ├── locations/    # LocationsPage
+│       │   ├── purchaseOrders/
+│       │   ├── salesOrders/
+│       │   └── transfers/
+│       ├── router/           # React Router config
+│       └── styles/           # global styles
+│
+├── docs/
+│   ├── test_plan.md          # manual testing scenarios
+│   ├── design/
+│   │   ├── design_document.pdf
+│   └── final_report.md       # written report (optional)
+│
+└── README.md
+```
 ---
 
 ## 👥 Team Members and Roles
@@ -189,3 +318,373 @@ This is an outline; details will be refined in the ERD and DDL.
 | Dec 8, 2025      | Peer review of proposals                            | 
 | Dec 15, 2025     | Submit design document (ERD, DDL, task division)    |
 | Dec 22, 2025     | Final submission & presentation slides              |
+
+---
+
+## Set up
+
+This part explains **only how to set up and run** the project (database, backend, frontend) after cloning from GitHub.
+
+---
+
+### Prerequisites
+
+Please install these first:
+
+- **Git**
+- **MySQL 8.x**
+- **Python 3.10+**
+- **Node.js 18+** and **npm**
+
+Recommended tools: VS Code, MySQL Workbench, Postman.
+
+---
+
+### Clone the repository
+
+```bash
+git clone https://github.com/<your-org>/Vinuni-DB-Inventory-System-The-Fool.git
+cd Vinuni-DB-Inventory-System-The-Fool
+```
+
+---
+
+### Database Setup (MySQL)
+
+We will create a database named sipms, load schema, views, procedures, triggers, indexes, and sample data.
+
+The commands below use the MySQL root user.
+If you use another user, adjust -u / -p accordingly.
+
+---
+
+#### Create schema (tables & constraints)
+
+From the project root:
+
+```sql
+mysql -u root -p < database/schema.sql
+```
+
+`schema.sql` will:
+
+- Drop existing DB sipms (if any)
+- Create a fresh sipms database
+- Create all core tables & constraints
+
+---
+
+#### Create views, procedures, triggers, indexes
+
+```sql
+mysql -u root -p sipms < database/views.sql
+mysql -u root -p sipms < database/procedures.sql
+mysql -u root -p sipms < database/triggers.sql
+mysql -u root -p sipms < database/indexes.sql
+```
+---
+
+#### Load sample data (for demo)
+
+```sql
+mysql -u root -p sipms < database/seed_data.sql
+```
+
+Now you should have:
+- Roles, users, products, suppliers, locations
+- Initial stock levels
+- Sample orders & stock movements
+
+---
+
+#### (Optional) Create a dedicated DB user
+
+Django is configured by default to use:
+- User: `sipms_user`
+- Password: `StrongPassword123!`
+- Database: `sipms`
+
+Create this user:
+
+```sql
+CREATE USER IF NOT EXISTS 'sipms_user'@'localhost'
+  IDENTIFIED BY 'StrongPassword123!';
+
+GRANT ALL PRIVILEGES ON sipms.* TO 'sipms_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+You can also continue to use root, but then update the backend settings accordingly.
+
+---
+
+### 💡 Windows PowerShell note
+
+If `<` redirection does not work:
+
+Open `cmd.exe` or the MySQL client and use:
+
+```sql
+SOURCE C:/path/to/database/schema.sql;
+```
+
+### ⚙️ Backend Setup (Django API)
+
+The backend lives in `backend/` and uses Django + DRF + MySQL.
+
+---
+
+#### Create and activate virtual environment
+
+From project root:
+
+```bash
+cd backend
+
+# create venv
+python -m venv venv
+```
+
+Activate:
+
+**Windows (PowerShell)**:
+
+```bash
+.\venv\Scripts\activate
+```
+
+**macOS / Linux**:
+
+```bash
+source venv/bin/activate
+```
+
+Your prompt should show `(venv)`.
+
+---
+
+#### Install Python dependencies
+
+If `backend/requirements.txt` exists:
+
+```bash
+pip install -r requirements.txt
+```
+
+If not, install manually:
+
+```bash
+pip install django djangorestframework mysqlclient django-cors-headers pyjwt
+```
+
+**Note (Windows)**:
+
+If `mysqlclient` fails, ensure MySQL is installed and available in PATH.
+
+#### Configure database connection
+
+Default in `backend/src/config/settings.py`:
+
+```python
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("DB_NAME", "sipms"),
+        "USER": os.environ.get("DB_USER", "sipms_user"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "StrongPassword123!"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
+    }
+}
+```
+
+If using root:
+
+```powershell
+$env:DB_USER="root"
+$env:DB_PASSWORD="<your-root-password>"
+```
+
+(Bash/zsh: `export DB_USER=...`)
+
+---
+
+#### Apply Django migrations
+
+Migrations only create Django’s own tables.
+
+```bash
+cd src
+python manage.py migrate
+```
+
+---
+
+#### Create Django superuser
+python manage.py createsuperuser
+
+---
+
+#### Set password for demo user (for API login)
+
+The SQL seed inserts users but with dummy password hashes.
+
+Start the Django shell:
+
+```bash
+python manage.py shell
+```
+
+Inside:
+
+```python
+from apps.accounts.models import AppUser
+from apps.accounts.services import set_user_password
+
+user = AppUser.objects.get(username="admin_demo")
+set_user_password(user, "admin123")
+
+print("Updated password for:", user.username)
+exit()
+```
+
+Repeat for other users if needed (`admin_demo`, `manager_demo`, …).
+
+---
+
+#### Run backend server
+
+```python
+python manage.py runserver
+```
+
+API endpoints:
+
+- http://localhost:8000/api/auth/login/
+- http://localhost:8000/api/products/
+- http://localhost:8000/api/purchase-orders/
+- http://localhost:8000/api/sales-orders/
+- http://localhost:8000/api/transfers/
+- http://localhost:8000/api/reports/
+...
+
+Keep backend running while using the frontend.
+
+---
+
+## 🌐 Frontend Setup (React + Vite)
+
+Frontend lives in frontend/ and communicates via REST API.
+
+---
+
+#### Install Node dependencies
+
+Open a new terminal:
+
+```bash
+cd Vinuni-DB-Inventory-System-The-Fool/frontend
+npm install
+```
+
+---
+
+#### Configure API base URL
+
+Check `frontend/src/api/httpClient.js`:
+
+```javascript
+const httpClient = axios.create({
+  baseURL: "http://localhost:8000/api/",
+});
+```
+
+Update if backend uses another port.
+
+---
+
+#### Run frontend dev server
+
+```bash
+npm run dev
+```
+
+Default URL:
+➡️ http://localhost:5173/
+
+Login page:
+➡️ http://localhost:5173/login
+
+Credentials (if set earlier):
+- Username: `admin_demo`
+- Password: `admin123`
+
+---
+
+## 📝 Summary (TL;DR)
+
+**Clone repo**
+
+```bash
+git clone https://github.com/<your-org>/Vinuni-DB-Inventory-System-The-Fool.git
+cd Vinuni-DB-Inventory-System-The-Fool
+```
+---
+
+**MySQL**
+
+```bash
+mysql -u root -p < database/schema.sql
+mysql -u root -p sipms < database/views.sql
+mysql -u root -p sipms < database/procedures.sql
+mysql -u root -p sipms < database/triggers.sql
+mysql -u root -p sipms < database/indexes.sql
+mysql -u root -p sipms < database/seed_data.sql
+```
+
+---
+
+**Backend**
+
+```bash
+cd backend
+python -m venv venv
+.\venv\Scripts\activate        # or source venv/bin/activate
+pip install -r requirements.txt
+cd src
+python manage.py migrate
+```
+
+Set demo password:
+
+```python
+python manage.py shell
+>>> from apps.accounts.models import AppUser
+>>> from apps.accounts.services import set_user_password
+>>> set_user_password(AppUser.objects.get(username="admin_demo"), "admin123")
+>>> exit()
+```
+
+Run server:
+
+```bash
+python manage.py runserver
+```
+
+---
+
+**Frontend**
+
+```bash
+cd ../../frontend
+npm install
+npm run dev
+```
+
+Open:
+
+➡️ http://localhost:5173/login
+
+Login:
+- Username: `admin_demo`
+- Password: `admin123`
