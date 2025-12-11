@@ -37,6 +37,13 @@ export const categoryApi = {
     return res.data;
   },
 
+  async setStatus(id, status) {
+    const res = await httpClient.post(`/api/categories/${id}/set-status/`, {
+      status,
+    });
+    return res.data;
+  },
+
   async remove(id) {
     await httpClient.delete(`/api/categories/${id}/`);
   },

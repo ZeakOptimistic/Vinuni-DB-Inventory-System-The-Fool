@@ -21,6 +21,11 @@ const SalesOrdersPage = () => {
   // All signed-in users can create sales orders
   const canCreateSalesOrders = !!user;
 
+  const canCancelSalesOrders =
+    user && (user.role === "ADMIN" || user.role === "MANAGER");
+
+
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,6 +36,8 @@ const SalesOrdersPage = () => {
 
   const [expandedIds, setExpandedIds] = useState(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [cancellingId, setCancellingId] = useState(null);
+
 
   // ---------------- Data loading ----------------
 
@@ -88,6 +95,33 @@ const SalesOrdersPage = () => {
       return next;
     });
   };
+
+  const handleCancel = async (order) => {
+    if (!canCancelSalesOrders) {
+      alert("You do not have permission to cancel sales orders.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Cancel sales order #${order.so_id}? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setCancellingId(order.so_id);
+      const updated = await salesOrderApi.cancel(order.so_id);
+
+      setOrders((prev) =>
+        prev.map((o) => (o.so_id === updated.so_id ? updated : o))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to cancel sales order. Please try again.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
 
   const handleOpenCreateModal = () => {
     if (!canCreateSalesOrders) return;
@@ -161,11 +195,13 @@ const SalesOrdersPage = () => {
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
           className="form-input"
-          style={{ minWidth: 160 }}
+          style={{ minWidth: 200 }}
         >
           <option value="">All statuses</option>
           <option value="DRAFT">DRAFT</option>
           <option value="CONFIRMED">CONFIRMED</option>
+          <option value="PARTIALLY_SHIPPED">PARTIALLY_SHIPPED</option>
+          <option value="CLOSED">CLOSED</option>
           <option value="CANCELLED">CANCELLED</option>
         </select>
       </div>
@@ -214,19 +250,29 @@ const SalesOrdersPage = () => {
                 <th style={thStyle}>Total</th>
                 <th style={thStyle}>Created at</th>
                 <th style={thStyle}>Items</th>
+                <th style={thStyle}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((o) => {
                 const isExpanded = expandedIds.has(o.so_id);
+                const normalizedStatus = (o.status || "").toUpperCase();
+                const isCancelledOrClosed =
+                  normalizedStatus === "CANCELLED" || normalizedStatus === "CLOSED";
 
                 return (
                   <React.Fragment key={o.so_id}>
-                    <tr>
+                    <tr
+                      style={
+                        isCancelledOrClosed
+                          ? { opacity: 0.6, background: "#f9fafb" }
+                          : undefined
+                      }
+                    >
                       <td style={tdStyle}>{o.so_id}</td>
                       <td style={tdStyle}>{o.customer_name || "-"}</td>
                       <td style={tdStyle}>{o.location_name || "-"}</td>
-                      <td style={tdStyle}>{o.status}</td>
+                      <td style={tdStyle}>{renderStatusBadge(o.status)}</td>
                       <td style={tdStyle}>{o.order_date || "-"}</td>
                       <td style={tdStyle}>
                         {o.total_amount != null ? o.total_amount : "-"}
@@ -250,6 +296,33 @@ const SalesOrdersPage = () => {
                         ) : (
                           <span style={{ color: "#6b7280" }}>No items</span>
                         )}
+                      </td>
+                      <td style={tdStyle}>
+                        {canCancelSalesOrders && o.status === "CONFIRMED" ? (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-danger"
+                            onClick={() => handleCancel(o)}
+                            disabled={cancellingId === o.so_id}
+                          >
+                            {cancellingId === o.so_id ? "Cancelling..." : "Cancel"}
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: "10px 10px",
+                              borderRadius: 999,
+                              border: "1px dashed #d1d5db",
+                              background: "#f9fafb",
+                              color: "#9ca3af",
+                              fontSize: 13,
+                              fontWeight: 500,
+                              letterSpacing: 0.3,
+                            }}>Cancelled</span>
+                          )}
                       </td>
                     </tr>
 
@@ -343,6 +416,48 @@ const subThStyle = {
 const subTdStyle = {
   padding: "4px 6px",
   color: "#374151",
+};
+
+const renderStatusBadge = (statusRaw) => {
+  const status = (statusRaw || "").toUpperCase();
+
+  let bg = "#e5e7eb";
+  let color = "#374151";
+  let label = status || "-";
+
+  if (status === "DRAFT") {
+    bg = "#e5e7eb";
+    color = "#6b7280";
+  } else if (status === "CONFIRMED") {
+    bg = "#dcfce7";
+    color = "#166534";
+  } else if (status === "PARTIALLY_SHIPPED") {
+    bg = "#dbeafe";
+    color = "#1d4ed8";
+  } else if (status === "CLOSED") {
+    bg = "#e5e7eb";
+    color = "#111827";
+  } else if (status === "CANCELLED") {
+    bg = "#fee2e2";
+    color = "#b91c1c";
+  }
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "2px 8px",
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 500,
+        background: bg,
+        color,
+      }}
+    >
+      {label}
+    </span>
+  );
 };
 
 export default SalesOrdersPage;

@@ -505,6 +505,31 @@ mysql -u root -p sipms < database/indexes.sql
 mysql -u root -p sipms < database/seed_data.sql
 ```
 
+---
+
+#### Log in mysql
+
+```bash
+cd Vinuni-DB-Inventory-System-The-Fool\database
+mysql -u sipms_user -p
+```
+
+Password: `StrongPassword123!`
+
+```sql
+DROP DATABASE IF EXISTS sipms;
+
+SOURCE schema.sql;
+SOURCE seed_data.sql;
+SOURCE views.sql;
+SOURCE procedures.sql;
+SOURCE triggers.sql;
+SOURCE indexes.sql;
+SOURCE security.sql;
+```
+
+---
+
 Now you should have:
 - Roles, users, products, suppliers, locations
 - Initial stock levels

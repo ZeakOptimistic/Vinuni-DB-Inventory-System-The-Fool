@@ -34,6 +34,8 @@ const LocationsPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+
 
   const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
 
@@ -127,6 +129,40 @@ const LocationsPage = () => {
       alert("Failed to delete location. Please try again.");
     }
   };
+
+  const handleStatusChange = async (location, nextStatus) => {
+    if (!canManageLocations) {
+      alert("You do not have permission to change location status.");
+      return;
+    }
+
+    const actionLabel = nextStatus === "INACTIVE" ? "deactivate" : "activate";
+    const ok = window.confirm(
+      `Are you sure you want to ${actionLabel} location "${location.name}"?`
+    );
+    if (!ok) return;
+
+    try {
+      setStatusUpdatingId(location.location_id);
+      const updated = await locationApi.setStatus(
+        location.location_id,
+        nextStatus
+      );
+
+      // Update current list without refetching everything
+      setLocations((prev) =>
+        prev.map((l) =>
+          l.location_id === updated.location_id ? updated : l
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update location status. Please try again.");
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
 
   // --------- Render ----------
   return (
@@ -278,7 +314,13 @@ const LocationsPage = () => {
                   </td>
                   {canManageLocations && (
                     <td style={tdStyle}>
-                      <div style={{ display: "flex", gap: 6 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 6,
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -287,6 +329,42 @@ const LocationsPage = () => {
                         >
                           Edit
                         </button>
+
+                        {l.status === "ACTIVE" ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#fecaca",
+                            }}
+                            onClick={() => handleStatusChange(l, "INACTIVE")}
+                            disabled={statusUpdatingId === l.location_id}
+                          >
+                            {statusUpdatingId === l.location_id
+                              ? "Deactivating..."
+                              : "Deactivate"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#bbf7d0",
+                            }}
+                            onClick={() => handleStatusChange(l, "ACTIVE")}
+                            disabled={statusUpdatingId === l.location_id}
+                          >
+                            {statusUpdatingId === l.location_id
+                              ? "Activating..."
+                              : "Activate"}
+                          </button>
+                        )}
+
+                        {/* Optional: keep hard delete; remove if you only want soft deactivate */}
                         <button
                           type="button"
                           className="btn btn-outline"

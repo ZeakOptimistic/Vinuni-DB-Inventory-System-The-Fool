@@ -29,6 +29,7 @@ const ProductsPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
   const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
 
@@ -119,6 +120,37 @@ const ProductsPage = () => {
       alert("Failed to delete product. Please try again.");
     }
   };
+
+  const handleStatusChange = async (product, nextStatus) => {
+    if (!canManageProducts) {
+      alert("You do not have permission to change product status.");
+      return;
+    }
+
+    const actionLabel = nextStatus === "INACTIVE" ? "deactivate" : "activate";
+    const ok = window.confirm(
+      `Are you sure you want to ${actionLabel} product "${product.name}" (SKU: ${product.sku})?`
+    );
+    if (!ok) return;
+
+    try {
+      setStatusUpdatingId(product.product_id);
+      const updated = await productApi.setStatus(product.product_id, nextStatus);
+
+      // Update list in-place without full refetch
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.product_id === updated.product_id ? updated : p
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update product status. Please try again.");
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
 
   return (
     <div>
@@ -259,17 +291,56 @@ const ProductsPage = () => {
                       ? new Date(p.created_at).toLocaleString()
                       : "-"}
                   </td>
-                  {canManageProducts && (
-                    <td style={tdStyle}>
-                      <div style={{ display: "flex", gap: 6 }}>
+                {canManageProducts && (
+                  <td style={tdStyle}>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 6,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ fontSize: 12, padding: "4px 8px" }}
+                        onClick={() => openEditModal(p)}
+                      >
+                        Edit
+                      </button>
+
+                      {p.status === "ACTIVE" ? (
                         <button
                           type="button"
                           className="btn btn-outline"
-                          style={{ fontSize: 12, padding: "4px 8px" }}
-                          onClick={() => openEditModal(p)}
+                          style={{
+                            fontSize: 12,
+                            padding: "4px 8px",
+                            borderColor: "#fecaca",
+                          }}
+                          onClick={() => handleStatusChange(p, "INACTIVE")}
+                          disabled={statusUpdatingId === p.product_id}
                         >
-                          Edit
+                          {statusUpdatingId === p.product_id ? "Deactivating..." : "Deactivate"}
                         </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          style={{
+                            fontSize: 12,
+                            padding: "4px 8px",
+                            borderColor: "#bbf7d0",
+                          }}
+                          onClick={() => handleStatusChange(p, "ACTIVE")}
+                          disabled={statusUpdatingId === p.product_id}
+                        >
+                          {statusUpdatingId === p.product_id ? "Activating..." : "Activate"}
+                        </button>
+                      )}
+
+                      {/* Optional: keep hard delete only for ADMIN if you still want it */}
+                      {/* {user.role === "ADMIN" && (
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -282,9 +353,10 @@ const ProductsPage = () => {
                         >
                           Delete
                         </button>
-                      </div>
-                    </td>
-                  )}
+                      )} */}
+                    </div>
+                  </td>
+                )}
                 </tr>
               ))}
             </tbody>

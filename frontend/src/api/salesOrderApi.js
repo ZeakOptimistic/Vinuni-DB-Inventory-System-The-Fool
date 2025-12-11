@@ -35,4 +35,9 @@ export const salesOrderApi = {
     const res = await httpClient.post("/api/sales-orders/", payload);
     return res.data;
   },
+
+  async cancel(soId) {
+    const res = await httpClient.post(`/api/sales-orders/${soId}/cancel/`);
+    return res.data;
+  },
 };

@@ -3,6 +3,7 @@ from django.urls import path
 
 from .views import (
     SalesOrderListCreateView,
+    SalesOrderCancelView,
     PurchaseOrderListCreateView,
     PurchaseOrderReceiveAllView,
     TransferStockView,
@@ -13,6 +14,11 @@ urlpatterns = [
         "sales-orders/",
         SalesOrderListCreateView.as_view(),
         name="sales-order-list-create",
+    ),
+    path(
+        "sales-orders/<int:so_id>/cancel/",
+        SalesOrderCancelView.as_view(),
+        name="sales-order-cancel",
     ),
     path(
         "purchase-orders/",

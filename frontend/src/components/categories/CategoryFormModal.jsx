@@ -17,6 +17,7 @@ const CategoryFormModal = ({ open, onClose, onSaved, initialCategory }) => {
   const [form, setForm] = useState({
     name: "",
     description: "",
+    status: "ACTIVE",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -34,11 +35,13 @@ const CategoryFormModal = ({ open, onClose, onSaved, initialCategory }) => {
       setForm({
         name: initialCategory.name || "",
         description: initialCategory.description || "",
+        status: initialCategory.status || "ACTIVE",
       });
     } else {
       setForm({
         name: "",
         description: "",
+        status: "ACTIVE",
       });
     }
   }, [open, initialCategory]);
@@ -60,6 +63,7 @@ const CategoryFormModal = ({ open, onClose, onSaved, initialCategory }) => {
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || null,
+      status: form.status,
     };
 
     try {
@@ -134,6 +138,25 @@ const CategoryFormModal = ({ open, onClose, onSaved, initialCategory }) => {
             {fieldErrors.description && (
               <span className="field-error">
                 {JSON.stringify(fieldErrors.description)}
+              </span>
+            )}
+          </label>
+
+          <label className="form-label">
+            Status
+            <select
+              name="status"
+              className="form-input"
+              value={form.status}
+              onChange={handleChange}
+              required
+            >
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+            {fieldErrors.status && (
+              <span className="field-error">
+                {JSON.stringify(fieldErrors.status)}
               </span>
             )}
           </label>

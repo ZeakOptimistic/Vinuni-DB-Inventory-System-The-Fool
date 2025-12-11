@@ -297,7 +297,27 @@ const PurchaseOrdersPage = () => {
                       <td style={tdStyle}>{o.po_id}</td>
                       <td style={tdStyle}>{o.supplier_name}</td>
                       <td style={tdStyle}>{o.location_name || "-"}</td>
-                      <td style={tdStyle}>{o.status}</td>
+                      <td style={tdStyle}>
+                        {(() => {
+                          const { bg, fg, label } = getPoStatusStyles(o.status);
+                          return (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                padding: "2px 8px",
+                                borderRadius: 999,
+                                fontSize: 14,
+                                fontWeight: 500,
+                                background: bg,
+                                color: fg,
+                              }}
+                            >
+                              {label}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td style={tdStyle}>{o.order_date || "-"}</td>
                       <td style={tdStyle}>
                         {o.total_amount != null ? o.total_amount : "-"}
@@ -341,7 +361,7 @@ const PurchaseOrdersPage = () => {
                                   ? "Receive all remaining items"
                                   : "All items have already been received"
                               }
-                            >
+                              >
                               {receivingId === o.po_id
                                 ? "Receiving..."
                                 : "Receive all"}
@@ -419,6 +439,39 @@ const PurchaseOrdersPage = () => {
       />
     </div>
   );
+};
+
+const getPoStatusStyles = (status) => {
+  const value = (status || "").toUpperCase();
+
+  // Default styling
+  let bg = "#e5e7eb";  // gray-200
+  let fg = "#374151";  // gray-700
+  let label = status || "UNKNOWN";
+
+  if (value === "DRAFT") {
+    bg = "#e5e7eb"; // gray
+    fg = "#374151";
+    label = "Draft";
+  } else if (value === "APPROVED") {
+    bg = "#dbeafe"; // blue-100
+    fg = "#1d4ed8"; // blue-700
+    label = "Approved";
+  } else if (value === "PARTIALLY_RECEIVED") {
+    bg = "#fef3c7"; // amber-100
+    fg = "#92400e"; // amber-800
+    label = "Partially received";
+  } else if (value === "CLOSED") {
+    bg = "#dcfce7"; // green-100
+    fg = "#166534"; // green-700
+    label = "Closed";
+  } else if (value === "CANCELLED") {
+    bg = "#fee2e2"; // red-100
+    fg = "#b91c1c"; // red-700
+    label = "Cancelled";
+  }
+
+  return { bg, fg, label };
 };
 
 const thStyle = {

@@ -27,6 +27,7 @@ const CategoriesPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
   const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
 
@@ -109,6 +110,38 @@ const CategoriesPage = () => {
     } catch (err) {
       console.error(err);
       alert("Failed to delete category. Please try again.");
+    }
+  };
+
+  const handleStatusChange = async (category, nextStatus) => {
+    if (!isStaff) {
+      alert("You do not have permission to change categories.");
+      return;
+    }
+
+    const actionLabel = nextStatus === "INACTIVE" ? "deactivate" : "activate";
+    const ok = window.confirm(
+      `Are you sure you want to ${actionLabel} category "${category.name}"?`
+    );
+    if (!ok) return;
+
+    try {
+      setStatusUpdatingId(category.category_id);
+      const updated = await categoryApi.setStatus(
+        category.category_id,
+        nextStatus
+      );
+
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.category_id === updated.category_id ? updated : c
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update category status. Please try again.");
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -195,6 +228,7 @@ const CategoriesPage = () => {
               <tr>
                 <th style={thStyle}>Name</th>
                 <th style={thStyle}>Description</th>
+                <th style={thStyle}>Status</th>
                 {isStaff && <th style={thStyle}>Actions</th>}
               </tr>
             </thead>
@@ -203,9 +237,33 @@ const CategoriesPage = () => {
                 <tr key={c.category_id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={tdStyle}>{c.name}</td>
                   <td style={tdStyle}>{c.description || "-"}</td>
+                  <td style={tdStyle}>
+                    {c.status ? (
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          background:
+                            c.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
+                          color: c.status === "ACTIVE" ? "#15803d" : "#b91c1c",
+                        }}
+                      >
+                        {c.status}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   {isStaff && (
                     <td style={tdStyle}>
-                      <div style={{ display: "flex", gap: 6 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 6,
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -214,6 +272,41 @@ const CategoriesPage = () => {
                         >
                           Edit
                         </button>
+
+                        {c.status === "ACTIVE" ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#fecaca",
+                            }}
+                            onClick={() => handleStatusChange(c, "INACTIVE")}
+                            disabled={statusUpdatingId === c.category_id}
+                          >
+                            {statusUpdatingId === c.category_id
+                              ? "Deactivating..."
+                              : "Deactivate"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#bbf7d0",
+                            }}
+                            onClick={() => handleStatusChange(c, "ACTIVE")}
+                            disabled={statusUpdatingId === c.category_id}
+                          >
+                            {statusUpdatingId === c.category_id
+                              ? "Activating..."
+                              : "Activate"}
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           className="btn btn-outline"
