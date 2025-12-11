@@ -5,6 +5,7 @@ from .views import (
     SalesOrderListCreateView,
     PurchaseOrderListCreateView,
     PurchaseOrderReceiveAllView,
+    TransferStockView,
 )
 
 urlpatterns = [
@@ -22,5 +23,10 @@ urlpatterns = [
         "purchase-orders/<int:po_id>/receive-all/",
         PurchaseOrderReceiveAllView.as_view(),
         name="purchase-order-receive-all",
+    ),
+    path(
+        "transfers/",
+        TransferStockView.as_view(),
+        name="transfer-stock"
     ),
 ]

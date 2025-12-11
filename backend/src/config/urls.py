@@ -24,4 +24,5 @@ urlpatterns = [
     path("api/auth/", include("apps.accounts.urls")),
     path("api/", include("apps.inventory.urls")),  # CRUD master data
     path("api/", include("apps.orders.urls")),  # Sales orders
+    path("api/reports/", include("apps.reports.urls")),
 ]

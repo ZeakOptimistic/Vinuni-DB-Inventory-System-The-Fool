@@ -16,7 +16,11 @@ import SuppliersPage from "../pages/suppliers/SuppliersPage";
 import LocationsPage from "../pages/locations/LocationsPage";
 import PurchaseOrdersPage from "../pages/purchaseOrders/PurchaseOrdersPage";
 import SalesOrdersPage from "../pages/salesOrders/SalesOrdersPage";
+import TransfersPage from "../pages/transfers/TransfersPage";
+import CategoriesPage from "../pages/categories/CategoriesPage";
 import NotFoundPage from "../pages/NotFoundPage";
+import ReportsPage from "../pages/reports/ReportsPage";
+
 import { useAuth } from "../hooks/useAuth";
 
 const RequireAuth = () => {
@@ -53,10 +57,13 @@ export const AppRouter = () => {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/products" element={<ProductsPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/suppliers" element={<SuppliersPage />} />
           <Route path="/locations" element={<LocationsPage />} />
           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
+          <Route path="/transfers" element={<TransfersPage />} />
+          <Route path="reports" element={<ReportsPage />} />
         </Route>
       </Route>
 

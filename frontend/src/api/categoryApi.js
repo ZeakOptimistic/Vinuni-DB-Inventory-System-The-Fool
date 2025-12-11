@@ -2,17 +2,42 @@
 import httpClient from "./httpClient";
 
 /**
- * Category API: used mainly for dropdowns when editing products.
+ * Category API: CRUD for /api/categories/
  */
 export const categoryApi = {
   /**
-   * Get a list of categories (all, or first N).
-   * For now we just request a big page_size, assuming number of categories is small.
+   * Get paginated list of categories with optional search and ordering.
+   *
+   * Expected backend fields: category_id, name, description
    */
-  async listAll() {
-    const res = await httpClient.get("/api/categories/", {
-      params: { page_size: 1000 },
-    });
-    return res.data.results || [];
+  async list({ page = 1, pageSize = 10, search = "", ordering = "name" } = {}) {
+    const params = {
+      page,
+      page_size: pageSize,
+    };
+    if (search) params.search = search;
+    if (ordering) params.ordering = ordering;
+
+    const res = await httpClient.get("/api/categories/", { params });
+    return res.data; // DRF style: { count, next, previous, results }
+  },
+
+  async get(id) {
+    const res = await httpClient.get(`/api/categories/${id}/`);
+    return res.data;
+  },
+
+  async create(payload) {
+    const res = await httpClient.post("/api/categories/", payload);
+    return res.data;
+  },
+
+  async update(id, payload) {
+    const res = await httpClient.put(`/api/categories/${id}/`, payload);
+    return res.data;
+  },
+
+  async remove(id) {
+    await httpClient.delete(`/api/categories/${id}/`);
   },
 };

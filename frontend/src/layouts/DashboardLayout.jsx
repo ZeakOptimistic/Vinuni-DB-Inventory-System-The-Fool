@@ -17,6 +17,9 @@ const DashboardLayout = () => {
           <NavLink to="/products" className="sidebar-link">
             Products
           </NavLink>
+          <NavLink to="/categories" className="sidebar-link">
+            Categories
+          </NavLink>
           <NavLink to="/suppliers" className="sidebar-link">
             Suppliers
           </NavLink>
@@ -28,6 +31,12 @@ const DashboardLayout = () => {
           </NavLink>
           <NavLink to="/sales-orders" className="sidebar-link">
             Sales Orders
+          </NavLink>
+          <NavLink to="/transfers" className="sidebar-link">
+            Transfers
+          </NavLink>
+          <NavLink to="/reports" className="sidebar-link">
+            Reports
           </NavLink>
         </nav>
       </aside>
