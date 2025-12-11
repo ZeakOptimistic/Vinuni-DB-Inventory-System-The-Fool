@@ -1,7 +1,6 @@
 # backend/src/apps/inventory/models.py
 from django.db import models
 from django.utils import timezone
-from apps.accounts.models import AppUser
 
 
 class Category(models.Model):
@@ -110,7 +109,7 @@ class StockMovement(models.Model):
     related_document_id = models.BigIntegerField(blank=True, null=True)
     movement_date = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(
-        AppUser, on_delete=models.DO_NOTHING, db_column="created_by"
+        "accounts.AppUser", on_delete=models.DO_NOTHING, db_column="created_by"
     )
     created_at = models.DateTimeField(default=timezone.now)
 

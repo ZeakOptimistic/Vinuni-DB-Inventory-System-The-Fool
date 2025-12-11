@@ -8,18 +8,27 @@ const PAGE_SIZE = 10;
 
 /**
  * LocationsPage: view, search, sort, and basic CRUD for locations.
+ *
+ * Permission model:
+ * - ADMIN / MANAGER: full CRUD (create, edit, delete).
+ * - CLERK: read-only. Can search & view but not modify.
  */
 const LocationsPage = () => {
   const { user } = useAuth();
-  const isStaff =
-    user && ["ADMIN", "MANAGER", "CLERK"].includes(user.role);
+
+  // permission flags
+  const canManageLocations =
+    user && (user.role === "ADMIN" || user.role === "MANAGER");
+  const isClerk = user && user.role === "CLERK";
 
   const [locations, setLocations] = useState([]);
   const [page, setPage] = useState(1);
   const [count, setCount] = useState(0);
+
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("name");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -28,6 +37,7 @@ const LocationsPage = () => {
 
   const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
 
+  // --------- Load data ----------
   const fetchLocations = async () => {
     setLoading(true);
     setError(null);
@@ -53,6 +63,7 @@ const LocationsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, ordering]);
 
+  // --------- Handlers ----------
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setPage(1);
@@ -69,22 +80,24 @@ const LocationsPage = () => {
   };
 
   const handleNextPage = () => {
-    if (totalPages === 0) return;
-    setPage((p) => Math.min(totalPages, p + 1));
+    setPage((p) => p + 1);
   };
 
   const openCreateModal = () => {
+    if (!canManageLocations) return;
     setEditingLocation(null);
     setIsModalOpen(true);
   };
 
   const openEditModal = (location) => {
+    if (!canManageLocations) return;
     setEditingLocation(location);
     setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
+    setEditingLocation(null);
   };
 
   const handleLocationSaved = () => {
@@ -92,6 +105,11 @@ const LocationsPage = () => {
   };
 
   const handleDelete = async (location) => {
+    if (!canManageLocations) {
+      alert("You do not have permission to delete locations.");
+      return;
+    }
+
     const ok = window.confirm(
       `Are you sure you want to delete location "${location.name}"?`
     );
@@ -110,6 +128,7 @@ const LocationsPage = () => {
     }
   };
 
+  // --------- Render ----------
   return (
     <div>
       {/* Header */}
@@ -119,20 +138,49 @@ const LocationsPage = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 12,
         }}
       >
         <h2 style={{ margin: 0 }}>Locations</h2>
-        {isStaff && (
-          <button className="btn btn-primary" type="button" onClick={openCreateModal}>
+        {canManageLocations && (
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={openCreateModal}
+          >
             New Location
           </button>
         )}
       </div>
 
+      {/* Read-only notice for Clerk */}
+      {isClerk && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: "#FEF3C7",
+            color: "#92400E",
+            fontSize: 13,
+          }}
+        >
+          You are signed in as <strong>Clerk</strong>. This page is
+          read-only: you can search and view locations but cannot create,
+          edit, or delete.
+        </div>
+      )}
+
       {/* Search + sort */}
       <form
         onSubmit={handleSearchSubmit}
-        style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}
+        style={{
+          display: "flex",
+          gap: 8,
+          marginBottom: 12,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
       >
         <input
           type="text"
@@ -142,9 +190,6 @@ const LocationsPage = () => {
           className="form-input"
           style={{ maxWidth: 320 }}
         />
-        <button className="btn btn-outline" type="submit">
-          Search
-        </button>
 
         <select
           value={ordering}
@@ -157,6 +202,10 @@ const LocationsPage = () => {
           <option value="-created_at">Created (newest)</option>
           <option value="created_at">Created (oldest)</option>
         </select>
+
+        <button className="btn btn-outline" type="submit">
+          Search
+        </button>
       </form>
 
       {/* Status */}
@@ -168,7 +217,13 @@ const LocationsPage = () => {
       )}
 
       {!loading && locations.length === 0 && (
-        <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 8,
+            background: "#f3f4f6",
+          }}
+        >
           No locations found.
         </div>
       )}
@@ -193,7 +248,7 @@ const LocationsPage = () => {
                 <th style={thStyle}>Address</th>
                 <th style={thStyle}>Status</th>
                 <th style={thStyle}>Created At</th>
-                {isStaff && <th style={thStyle}>Actions</th>}
+                {canManageLocations && <th style={thStyle}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -221,7 +276,7 @@ const LocationsPage = () => {
                       ? new Date(l.created_at).toLocaleString()
                       : "-"}
                   </td>
-                  {isStaff && (
+                  {canManageLocations && (
                     <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button

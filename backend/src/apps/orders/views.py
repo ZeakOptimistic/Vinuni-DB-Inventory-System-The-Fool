@@ -16,7 +16,7 @@ from .serializers import (
     TransferStockSerializer,
 )
 from .models import SalesOrder, PurchaseOrder, PurchaseOrderItem
-from apps.accounts.permissions import ReadOnlyOrStaff
+from apps.accounts.permissions import IsManagerOrAdmin
 from apps.inventory.models import (
     Product,
     Location,
@@ -27,8 +27,12 @@ from apps.inventory.models import (
 
 class SalesOrderListCreateView(APIView):
     """
-    GET  /api/sales-orders/      → sales order list
-    POST /api/sales-orders/      → create + confirm (call sp_confirm_sales_order)
+    Sales Orders
+
+    - GET  /api/sales-orders/      → list last 50 sales orders.
+    - POST /api/sales-orders/      → create + confirm (call stored procedure).
+
+    All authenticated roles (ADMIN / MANAGER / CLERK) can create sales orders.
     """
     permission_classes = [IsAuthenticated]
 
@@ -48,7 +52,7 @@ class SalesOrderListCreateView(APIView):
         try:
             so = serializer.save()
         except DatabaseError as e:
-            # Catch errors caused by stored procedure SIGNAL (e.g. insufficient inventory)
+            # Catch errors caused by stored procedure SIGNAL
             return Response(
                 {"detail": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -60,10 +64,22 @@ class SalesOrderListCreateView(APIView):
 
 class PurchaseOrderListCreateView(APIView):
     """
-    GET  /api/purchase-orders/   → list of imported goods
-    POST /api/purchase-orders/   → Create PO + items (not received yet)
+    Purchase Orders
+
+    - GET  /api/purchase-orders/   → list last 50 purchase orders (all roles).
+    - POST /api/purchase-orders/   → create purchase order + items.
+
+    Only ADMIN / MANAGER can create purchase orders.
     """
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        GET: any authenticated user.
+        POST: ADMIN or MANAGER only.
+        """
+        if self.request.method == "GET":
+            return [IsAuthenticated()]
+        return [IsManagerOrAdmin()]
 
     def get(self, request):
         orders = PurchaseOrder.objects.all().order_by("-created_at")[:50]
@@ -87,11 +103,14 @@ class PurchaseOrderReceiveAllView(APIView):
     """
     POST /api/purchase-orders/<po_id>/receive-all/
 
-    - Get all remaining quantity for each item in PO.
-    - Create stock_movement with movement_type = 'PURCHASE_RECEIPT'
-    - Trigger DB will update inventory_level automatically.
+    - Compute remaining quantity for each PO line.
+    - Insert stock movements with movement_type = 'PURCHASE_RECEIPT'.
+    - MySQL trigger updates inventory_level automatically.
+    - If all items fully received → close PO.
+
+    Only ADMIN / MANAGER are allowed to execute this action.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsManagerOrAdmin]
 
     def post(self, request, po_id: int):
         # Get user_id to write to stock_movement.created_by
@@ -112,7 +131,7 @@ class PurchaseOrderReceiveAllView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Get item
+        # Get items
         items = list(
             PurchaseOrderItem.objects.select_related("product").filter(po=po)
         )
@@ -156,7 +175,7 @@ class PurchaseOrderReceiveAllView(APIView):
             )
 
         with transaction.atomic():
-            # 1) Record stock_movement
+            # 1) Record stock movements
             StockMovement.objects.bulk_create(movements)
 
             # 2) Update received_qty for PO lines
@@ -171,7 +190,6 @@ class PurchaseOrderReceiveAllView(APIView):
                 po.status = "CLOSED"
                 po.save(update_fields=["status"])
 
-        # Return to PO after receipt
         po.refresh_from_db()
         data = PurchaseOrderSerializer(po).data
         return Response(data, status=status.HTTP_200_OK)
@@ -192,9 +210,10 @@ class TransferStockView(APIView):
     - Quantity must be > 0 (enforced by MySQL trigger).
     - Trigger on stock_movement will update inventory_level and
       prevent negative inventory.
-    """
 
-    permission_classes = [IsAuthenticated, ReadOnlyOrStaff]
+    Only ADMIN / MANAGER can perform stock transfers.
+    """
+    permission_classes = [IsManagerOrAdmin]
 
     def post(self, request):
         serializer = TransferStockSerializer(data=request.data)
@@ -256,7 +275,7 @@ class TransferStockView(APIView):
                 out_mv = StockMovement.objects.create(
                     product=product,
                     location=from_location,
-                    quantity=qty,  # positive quantity
+                    quantity=qty,
                     movement_type="TRANSFER_OUT",
                     related_document_type="TRANSFER",
                     related_document_id=None,  # update after we know id
@@ -270,7 +289,7 @@ class TransferStockView(APIView):
                 StockMovement.objects.create(
                     product=product,
                     location=to_location,
-                    quantity=qty,  # positive quantity
+                    quantity=qty,
                     movement_type="TRANSFER_IN",
                     related_document_type="TRANSFER",
                     related_document_id=transfer_id,
@@ -289,9 +308,7 @@ class TransferStockView(APIView):
                     .first()
                 )
 
-                from_qty_after = (
-                    from_il_after.quantity_on_hand if from_il_after else 0
-                )
+                from_qty_after = from_il_after.quantity_on_hand if from_il_after else 0
                 to_qty_after = to_il_after.quantity_on_hand if to_il_after else 0
 
         except ValidationError:
