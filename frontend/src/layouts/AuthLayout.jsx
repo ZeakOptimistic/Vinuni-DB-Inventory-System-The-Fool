@@ -5,7 +5,7 @@ const AuthLayout = ({ children }) => {
   return (
     <div className="auth-layout">
       <div className="auth-card">
-        <h1 className="auth-title">SIPMS Login</h1>
+        <h1 className="auth-title">Login</h1>
         {children}
       </div>
     </div>

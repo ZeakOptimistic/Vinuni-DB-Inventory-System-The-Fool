@@ -38,6 +38,13 @@ export const supplierApi = {
     return res.data;
   },
 
+  async setStatus(id, status) {
+    const res = await httpClient.post(`/api/suppliers/${id}/set-status/`, {
+      status,
+    });
+    return res.data;
+  },
+
   async remove(id) {
     await httpClient.delete(`/api/suppliers/${id}/`);
   },

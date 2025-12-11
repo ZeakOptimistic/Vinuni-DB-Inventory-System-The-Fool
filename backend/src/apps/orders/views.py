@@ -61,6 +61,45 @@ class SalesOrderListCreateView(APIView):
         output = SalesOrderSerializer(so).data
         return Response(output, status=status.HTTP_201_CREATED)
 
+class SalesOrderCancelView(APIView):
+    """
+    Cancel a sales order.
+
+    POST /api/sales-orders/<so_id>/cancel/
+
+    Only ADMIN / MANAGER can cancel sales orders.
+    """
+    permission_classes = [IsManagerOrAdmin]
+
+    def post(self, request, so_id):
+        try:
+            so = SalesOrder.objects.get(pk=so_id)
+        except SalesOrder.DoesNotExist:
+            return Response(
+                {"detail": "Sales order not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Basic rule: only CONFIRMED orders can be cancelled
+        if so.status in ["CANCELLED", "CLOSED"]:
+            return Response(
+                {"detail": f"Cannot cancel sales order in status '{so.status}'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if so.status != "CONFIRMED":
+            return Response(
+                {"detail": "Only CONFIRMED sales orders can be cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Simple implementation: just mark as CANCELLED
+        so.status = "CANCELLED"
+        so.save(update_fields=["status"])
+
+        data = SalesOrderSerializer(so).data
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class PurchaseOrderListCreateView(APIView):
     """
@@ -181,14 +220,26 @@ class PurchaseOrderReceiveAllView(APIView):
             # 2) Update received_qty for PO lines
             PurchaseOrderItem.objects.bulk_update(items_to_update, ["received_qty"])
 
-            # 3) If all PO items have been received → close PO
+            # 3) Update the Purchase Order status after receiving the goods.
             all_items = PurchaseOrderItem.objects.filter(po=po)
+
+            # Check if all lines have been received.
             all_received = all(
-                itm.ordered_qty == itm.received_qty for itm in all_items
+                item.ordered_qty == item.received_qty
+                for item in all_items
             )
+
             if all_received:
+                # Received everything → CLOSED
                 po.status = "CLOSED"
-                po.save(update_fields=["status"])
+            else:
+            # If there is a partial receiving flow later (not receive-all),
+            # then receiving a part will result in the state PARTIALLY_RECEIVED.
+            # With the current logic (receive-all), this branch may not be used much,
+            # but it will be prepared for future business flows.
+                po.status = "PARTIALLY_RECEIVED"
+
+            po.save(update_fields=["status"])
 
         po.refresh_from_db()
         data = PurchaseOrderSerializer(po).data

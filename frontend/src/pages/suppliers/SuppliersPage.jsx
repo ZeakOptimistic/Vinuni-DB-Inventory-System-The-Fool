@@ -6,6 +6,22 @@ import { useAuth } from "../../hooks/useAuth";
 
 const PAGE_SIZE = 10;
 
+const getStatusBadgeStyles = (status) => {
+  switch (status) {
+    case "ACTIVE":
+      return {
+        background: "#dcfce7", // light green
+        color: "#15803d",      // dark green
+      };
+    case "INACTIVE":
+    default:
+      return {
+        background: "#fee2e2", // light red
+        color: "#b91c1c",      // dark red
+      };
+  }
+};
+
 /**
  * SuppliersPage: view, search, sort, and CRUD for suppliers.
  *
@@ -35,6 +51,7 @@ const SuppliersPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [initialSupplier, setInitialSupplier] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
   const totalPages = totalCount > 0 ? Math.ceil(totalCount / PAGE_SIZE) : 0;
 
@@ -138,7 +155,7 @@ const SuppliersPage = () => {
 
     setDeletingId(supplier.supplier_id);
     try {
-      await supplierApi.delete(supplier.supplier_id);
+      await supplierApi.remove(supplier.supplier_id);
       setSuppliers((prev) =>
         prev.filter((s) => s.supplier_id !== supplier.supplier_id)
       );
@@ -150,6 +167,40 @@ const SuppliersPage = () => {
       setDeletingId(null);
     }
   };
+
+  const handleStatusChange = async (supplier, nextStatus) => {
+    if (!canManageSuppliers) {
+      alert("You do not have permission to change supplier status.");
+      return;
+    }
+
+    const actionLabel = nextStatus === "INACTIVE" ? "deactivate" : "activate";
+    const ok = window.confirm(
+      `Are you sure you want to ${actionLabel} supplier "${supplier.name}"?`
+    );
+    if (!ok) return;
+
+    try {
+      setStatusUpdatingId(supplier.supplier_id);
+      const updated = await supplierApi.setStatus(
+        supplier.supplier_id,
+        nextStatus
+      );
+
+      // Update list in-place
+      setSuppliers((prev) =>
+        prev.map((s) =>
+          s.supplier_id === updated.supplier_id ? updated : s
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update supplier status. Please try again.");
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
 
   // ----------------- Render -----------------
   return (
@@ -315,6 +366,41 @@ const SuppliersPage = () => {
                         >
                           Edit
                         </button>
+                        {s.status === "ACTIVE" ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#fecaca",
+                            }}
+                            onClick={() => handleStatusChange(s, "INACTIVE")}
+                            disabled={statusUpdatingId === s.supplier_id}
+                          >
+                            {statusUpdatingId === s.supplier_id
+                              ? "Deactivating..."
+                              : "Deactivate"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#bbf7d0",
+                            }}
+                            onClick={() => handleStatusChange(s, "ACTIVE")}
+                            disabled={statusUpdatingId === s.supplier_id}
+                          >
+                            {statusUpdatingId === s.supplier_id
+                              ? "Activating..."
+                              : "Activate"}
+                          </button>
+                        )}
+
+                        {/* Optional: keep hard delete; remove this block if you want only soft deactivate */}
                         <button
                           type="button"
                           className="btn btn-outline"

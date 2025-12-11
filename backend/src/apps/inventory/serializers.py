@@ -4,6 +4,9 @@ from .models import Category, Supplier, Location, Product
 
 
 class CategorySerializer(serializers.ModelSerializer):
+
+    status = serializers.ChoiceField(choices=["ACTIVE", "INACTIVE"])
+
     class Meta:
         model = Category
         fields = "__all__"
@@ -11,6 +14,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class SupplierSerializer(serializers.ModelSerializer):
+
+    status = serializers.ChoiceField(choices=["ACTIVE", "INACTIVE"])
+
     class Meta:
         model = Supplier
         fields = "__all__"
@@ -18,6 +24,9 @@ class SupplierSerializer(serializers.ModelSerializer):
 
 
 class LocationSerializer(serializers.ModelSerializer):
+
+    status = serializers.ChoiceField(choices=["ACTIVE", "INACTIVE"])
+
     class Meta:
         model = Location
         fields = "__all__"
@@ -29,6 +38,8 @@ class ProductSerializer(serializers.ModelSerializer):
         source="category.name", read_only=True
     )
 
+    status = serializers.ChoiceField(choices=["ACTIVE", "INACTIVE"])
+
     class Meta:
         model = Product
         fields = "__all__"
@@ -38,3 +49,4 @@ class ProductSerializer(serializers.ModelSerializer):
             "updated_at",
             "category_name",
         ]
+

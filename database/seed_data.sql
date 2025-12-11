@@ -35,16 +35,16 @@ INSERT INTO app_user
   (user_id, username, password_hash, full_name, email, role_id, status)
 VALUES
   (1, 'admin',   'demo_admin',   'Admin',   'admin@example.com',   1, 'ACTIVE'),
-  (2, 'manager', 'demo_manager', 'Manager', 'manager@example.com', 2, 'ACTIVE');
-  (3, 'clerk',   'demo_clerk', 'Clerk',  'clerk@example.com',  3, 'ACTIVE'),
+  (2, 'manager', 'demo_manager', 'Manager', 'manager@example.com', 2, 'ACTIVE'),
+  (3, 'clerk',   'demo_clerk', 'Clerk',  'clerk@example.com',  3, 'ACTIVE');
 
 -- =========================
 -- Categories
 -- =========================
-INSERT INTO category (category_id, name, description) VALUES
-  (1, 'Electronics', 'Consumer electronics and accessories'),
-  (2, 'Office',      'Office supplies and stationery'),
-  (3, 'Food',        'Packaged food and drinks');
+INSERT INTO category (category_id, name, description, status) VALUES
+  (1, 'Electronics', 'Consumer electronics and accessories', 'ACTIVE'),
+  (2, 'Office',      'Office supplies and stationery', 'ACTIVE'),
+  (3, 'Food',        'Packaged food and drinks', 'ACTIVE');
 
 -- =========================
 -- Suppliers

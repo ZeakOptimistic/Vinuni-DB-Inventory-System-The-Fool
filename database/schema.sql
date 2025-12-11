@@ -18,12 +18,12 @@ DROP TABLE IF EXISTS purchase_order_item;
 DROP TABLE IF EXISTS inventory_level;
 DROP TABLE IF EXISTS sales_order;
 DROP TABLE IF EXISTS purchase_order;
-DROP TABLE IF EXISTS app_user;
-DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS product;
 DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS supplier;
 DROP TABLE IF EXISTS location;
+DROP TABLE IF EXISTS app_user;
+DROP TABLE IF EXISTS role;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -33,7 +33,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE category (
     category_id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name          VARCHAR(100) NOT NULL UNIQUE,
-    description   VARCHAR(255)
+    description   VARCHAR(255),
+    status        ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE'
 );
 
 -- =========================

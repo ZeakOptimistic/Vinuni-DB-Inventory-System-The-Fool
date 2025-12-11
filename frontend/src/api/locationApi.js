@@ -37,6 +37,13 @@ export const locationApi = {
     return res.data;
   },
 
+  async setStatus(id, status) {
+    const res = await httpClient.post(`/api/locations/${id}/set-status/`, {
+      status,
+    });
+    return res.data;
+  },
+
   async remove(id) {
     await httpClient.delete(`/api/locations/${id}/`);
   },
