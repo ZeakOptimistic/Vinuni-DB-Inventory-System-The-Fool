@@ -1,3 +1,4 @@
+# backend/src/config/settings.py
 from pathlib import Path
 import os
 

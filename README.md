@@ -250,53 +250,168 @@ On the frontend:
 ## Repository Structure
 
 ```text
-.
-├── database/
-│   ├── schema.sql            # tables & constraints
-│   ├── views.sql             # reporting views
-│   ├── procedures.sql        # business logic (PO/SO/transfer)
-│   ├── triggers.sql          # stock movement, integrity rules
-│   ├── indexes.sql           # performance indexes
-│   └── seed_data.sql         # sample data for demo
+project-root/                                   # Root of SIPMS system
 │
-├── backend/
-│   ├── venv/                 # Python virtual environment (local)
+├── backend/                                    # Django backend (API + business logic)
 │   ├── src/
-│   │   ├── manage.py
-│   │   ├── config/           # Django settings, URLs, WSGI/ASGI
-│   │   └── apps/
-│   │       ├── accounts/     # users, roles, authentication
-│   │       ├── inventory/    # products, categories, suppliers, locations
-│   │       ├── orders/       # purchase orders, sales orders, transfers
-│   │       └── reports/      # reporting endpoints
-│   └── ...
+│   │   ├── manage.py                           # Django management CLI (runserver, migrate)
+│   │   │
+│   │   ├── config/                             # Django project configuration
+│   │   │   ├── __init__.py                     # Marks folder as module
+│   │   │   ├── urls.py                         # Main URL router mapping all app URLs
+│   │   │   ├── wsgi.py                         # WSGI entrypoint for production servers
+│   │   │   ├── asgi.py                         # ASGI entrypoint for async servers
+│   │   │   └── settings
+│   │   │       ├── __init__                    # Settings module bootstrap
+│   │   │       ├── base                        # Core settings (DB, apps, middleware)
+│   │   │       ├── dev                         # Dev overrides (DEBUG=True, local DB)
+│   │   │       └── prod                        # Production overrides (secure configs)
+│   │   │
+│   │   ├── apps/                               # All Django domain apps
+│   │   │
+│   │   │   ├── accounts/                       # User/Role/Auth domain
+│   │   │   │   ├── __init__.py                 # Module init
+│   │   │   │   ├── admin.py                    # Django admin config for User/Role
+│   │   │   │   ├── apps.py                     # AppConfig registration
+│   │   │   │   ├── authentication.py           # Custom auth helpers (token/password)
+│   │   │   │   ├── models.py                   # User, Role database models
+│   │   │   │   ├── permissions.py              # Role-based permission classes
+│   │   │   │   ├── serializers.py              # User/Role serializers for DRF
+│   │   │   │   ├── services.py                 # Business logic (create user, hash password)
+│   │   │   │   ├── urls.py                     # /api/auth/ /api/users/
+│   │   │   │   └── views.py                    # Authentication + user CRUD API
+│   │   │
+│   │   │   ├── audit/                          # System audit logging
+│   │   │   │   ├── __init__.py                 # Module init
+│   │   │   │   ├── admin.py                    # Admin display for AuditLog
+│   │   │   │   ├── apps.py                     # AppConfig
+│   │   │   │   ├── models.py                   # AuditLog model
+│   │   │   │   ├── services.py                 # Write audit logs from actions
+│   │   │   │   └── views.py                    # API endpoints (optional)
+│   │   │
+│   │   │   ├── inventory/                      # Product / Category / Stock domain
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── admin.py                    # Admin config for inventory tables
+│   │   │   │   ├── apps.py                     # AppConfig
+│   │   │   │   ├── models.py                   # Product, Category, Location, Stock models
+│   │   │   │   ├── serializers.py              # Transform DB models ↔ API format
+│   │   │   │   ├── services.py                 # Stock management logic + stored procedures
+│   │   │   │   ├── urls.py                     # /api/products/ /api/categories/ ...
+│   │   │   │   └── views.py                    # CRUD endpoints for inventory
+│   │   │
+│   │   │   ├── orders/                         # Purchase/Sales Order domain
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── admin.py                    # Admin config for orders
+│   │   │   │   ├── apps.py                     # AppConfig
+│   │   │   │   ├── models.py                   # PurchaseOrder, SalesOrder, Items
+│   │   │   │   ├── serializers.py              # Convert order models ↔ API responses
+│   │   │   │   ├── services.py                 # Order creation + stored procedures
+│   │   │   │   ├── urls.py                     # /api/purchase-orders/ /api/sales-orders/
+│   │   │   │   └── views.py                    # Order CRUD + confirm order API
+│   │   │
+│   │   │   └── reports/                        # Reporting + dashboards
+│   │   │       ├── __init__.py
+│   │   │       ├── admin.py                    # Admin view for report tables (if any)
+│   │   │       ├── apps.py                     # AppConfig
+│   │   │       ├── models.py                   # Usually empty (views don't require models)
+│   │   │       ├── serializers.py              # Format report responses
+│   │   │       ├── urls.py                     # /api/reports/
+│   │   │       └── views.py                    # Fetch data from MySQL views
+│   │   │
+│   │   ├── common/                             # Helper modules shared across apps
+│   │   │   ├── __init__.py
+│   │   │   ├── db.py                           # Raw SQL + stored procedure helpers
+│   │   │   ├── exceptions.py                   # Clean API error responses from DB errors
+│   │   │   └── utils.py                        # Pagination, formatting, misc helpers
+│   │   │
+│   │   └── scripts/                            # Utility scripts for development
+│   │       ├── __init__.py
+│   │       ├── call_sp_demo.py                 # Example: call stored procedures manually
+│   │       ├── load_demo_data.py               # Load initial demo data from CSV/SQL
+│   │       └── test_cases_backend.md           # Backend test plan (recommend: move to docs/)
+│   │
+│   └── requirements.txt                        # Python dependency list
 │
-├── frontend/
-│   ├── index.html
-│   ├── vite.config.*         # Vite config
-│   └── src/
-│       ├── api/              # axios clients (auth, products, orders, reports, ...)
-│       ├── hooks/            # useAuth, useFetch, ...
-│       ├── layouts/          # AuthLayout, DashboardLayout
-│       ├── pages/
-│       │   ├── auth/         # LoginPage
-│       │   ├── dashboard/    # DashboardPage
-│       │   ├── products/     # ProductsPage
-│       │   ├── suppliers/    # SuppliersPage
-│       │   ├── locations/    # LocationsPage
-│       │   ├── purchaseOrders/
-│       │   ├── salesOrders/
-│       │   └── transfers/
-│       ├── router/           # React Router config
-│       └── styles/           # global styles
 │
-├── docs/
-│   ├── test_plan.md          # manual testing scenarios
-│   ├── design/
-│   │   ├── design_document.pdf     # written report
-│   └── slide
+├── database/                                   # SQL schema + DB logic
+│   ├── schema.sql                              # CREATE TABLE definitions
+│   ├── seed_data.sql                           # Insert initial sample data
+│   ├── views.sql                               # SQL VIEW definitions
+│   ├── procedures.sql                          # Stored procedures for business logic
+│   ├── triggers.sql                            # DB triggers for audit + stock update
+│   ├── security.sql                            # DB user roles + GRANT permissions
+│   ├── indexes.sql                             # Performance indexes + EXPLAIN samples
+│   └── erd/
+│       ├── erd.png                             # ERD diagram image
+│       └── erd.mwb                             # MySQL Workbench source file
 │
-└── README.md
+│
+├── docs/                                       # Project documentation
+│   ├── design/                                 # System design documentation
+│   │   ├── design_document.pdf                 # Final design report
+│   │   ├── design_document.tex                 # LaTeX source
+│   │   └── diagram_sipms.png                   # Architecture diagram
+│   ├── test_plan.md                            # End-to-end test flows for SIPMS
+│   ├── installation.md                         # Installation guide for backend/frontend
+│   ├── db-schema.md                            # Human-readable DB schema explanation
+│
+│
+├── frontend/                                   # React SPA
+│   ├── public/                                 # HTML template + static files
+│   ├── src/
+│   │   ├── api/                                # API request modules (axios)
+│   │   │   ├── httpClient.js                   # Axios config + interceptors
+│   │   │   ├── authApi.js                      # Login / logout API
+│   │   │   ├── productApi.js                   # Product APIs
+│   │   │   ├── purchaseOrderApi.js             # Purchase order APIs
+│   │   │   ├── salesOrderApi.js                # Sales order APIs
+│   │   │   ├── supplierApi.js                  # Supplier CRUD APIs
+│   │   │   └── reportApi.js                    # Dashboard/reporting APIs
+│   │   │
+│   │   ├── components/                         # Reusable UI components
+│   │   │   ├── categories/                     # Category modals/forms
+│   │   │   ├── locations/                      # Location modals/forms
+│   │   │   ├── products/                       # Product modals/forms
+│   │   │   ├── purchaseOrders/                 # Purchase order modals/forms
+│   │   │   ├── salesOrders/                    # Sales order modals/forms
+│   │   │   └── suppliers/                      # Supplier modals/forms
+│   │   │
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx                 # Auth state provider
+│   │   │
+│   │   ├── hooks/
+│   │   │   └── useAuth.js                      # Authentication hook (login/logout/session)
+│   │   │
+│   │   ├── layouts/
+│   │   │   ├── AuthLayout.jsx                  # Layout for login pages
+│   │   │   └── DashboardLayout.jsx             # Main dashboard layout
+│   │   │
+│   │   ├── pages/                              # Screens / routes
+│   │   │   ├── auth/LoginPage.jsx              # Login page
+│   │   │   ├── dashboard/DashboardPage.jsx     # Dashboard overview
+│   │   │   ├── categories/CategoriesPage.jsx   # Category list page
+│   │   │   ├── locations/LocationsPage.jsx     # Location list page
+│   │   │   ├── products/ProductsPage.jsx       # Product list page
+│   │   │   ├── purchaseOrders/PurchaseOrdersPage.jsx
+│   │   │   ├── salesOrders/SalesOrdersPage.jsx
+│   │   │   ├── suppliers/SuppliersPage.jsx
+│   │   │   ├── reports/ReportsPage.jsx
+│   │   │   └── transfers/TransfersPage.jsx     # For transfer operations
+│   │
+│   │   ├── router/
+│   │   │   └── index.jsx                       # React Router configuration
+│   │   │
+│   │   ├── styles/
+│   │   │   └── global.css                      # Global styling
+│   │   │
+│   │   ├── App.jsx                             # Main React app component
+│   │   └── main.jsx                            # Entry point for Vite / React
+│   │
+│   ├── package.json                            # Frontend dependencies
+│   └── vite.config.js                          # Vite configuration
+│
+└── README.md                                   # Root project introduction + quick start
+
 ```
 ---
 
