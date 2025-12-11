@@ -148,9 +148,6 @@ const CategoriesPage = () => {
           className="form-input"
           style={{ maxWidth: 320 }}
         />
-        <button className="btn btn-outline" type="submit">
-          Search
-        </button>
 
         <select
           value={ordering}
@@ -161,6 +158,10 @@ const CategoriesPage = () => {
           <option value="name">Sort by name (A→Z)</option>
           <option value="-name">Sort by name (Z→A)</option>
         </select>
+
+        <button className="btn btn-outline" type="submit">
+          Search
+        </button>
       </form>
 
       {/* Status */}

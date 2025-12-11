@@ -1,23 +1,25 @@
 // src/pages/salesOrders/SalesOrdersPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { salesOrderApi } from "../../api/salesOrderApi";
 import { useAuth } from "../../hooks/useAuth";
 import SalesOrderFormModal from "../../components/salesOrders/SalesOrderFormModal";
 
 /**
  * SalesOrdersPage:
- * - Shows list of sales orders
- * - Allows filtering by customer, status, location
+ * - Shows list of sales orders from backend
+ * - Allows filtering by customer, status, and location (client-side)
  * - Allows expanding each SO to see line items
- * - Allows staff users to create new sales orders
+ * - Allows any authenticated user (ADMIN / MANAGER / CLERK) to create
+ *   new sales orders via modal.
  *
- * Confirm & stock deduction are handled on backend
- * when creating the sales order.
+ * Confirm & stock deduction are handled on the backend when creating
+ * the sales order.
  */
 const SalesOrdersPage = () => {
   const { user } = useAuth();
-  const isStaff =
-    user && ["ADMIN", "MANAGER", "CLERK"].includes(user.role);
+
+  // All signed-in users can create sales orders
+  const canCreateSalesOrders = !!user;
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,15 +28,18 @@ const SalesOrdersPage = () => {
   const [filterCustomer, setFilterCustomer] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
-  const [expandedIds, setExpandedIds] = useState(new Set());
 
+  const [expandedIds, setExpandedIds] = useState(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // ---------------- Data loading ----------------
 
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await salesOrderApi.list();
+      // API returns a plain array of sales orders
       setOrders(data || []);
     } catch (err) {
       console.error(err);
@@ -48,34 +53,58 @@ const SalesOrdersPage = () => {
     fetchOrders();
   }, []);
 
+  // ---------------- Derived data ----------------
+
+  const filteredOrders = useMemo(() => {
+    const customerFilter = filterCustomer.trim().toLowerCase();
+    const statusFilter = filterStatus.trim().toUpperCase();
+    const locationFilter = filterLocation.trim().toLowerCase();
+
+    return (orders || []).filter((o) => {
+      const customerName = (o.customer_name || "").toLowerCase();
+      const status = (o.status || "").toUpperCase();
+      const locationName = (o.location_name || "").toLowerCase();
+
+      const matchCustomer =
+        !customerFilter || customerName.includes(customerFilter);
+      const matchStatus = !statusFilter || status === statusFilter;
+      const matchLocation =
+        !locationFilter || locationName.includes(locationFilter);
+
+      return matchCustomer && matchStatus && matchLocation;
+    });
+  }, [orders, filterCustomer, filterStatus, filterLocation]);
+
+  // ---------------- Handlers ----------------
+
   const toggleExpand = (soId) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(soId)) next.delete(soId);
-      else next.add(soId);
+      if (next.has(soId)) {
+        next.delete(soId);
+      } else {
+        next.add(soId);
+      }
       return next;
     });
   };
 
-  const filteredOrders = orders.filter((o) => {
-    const customerMatch = filterCustomer
-      ? (o.customer_name || "")
-          .toLowerCase()
-          .includes(filterCustomer.toLowerCase())
-      : true;
-    const statusMatch = filterStatus ? o.status === filterStatus : true;
-    const locationMatch = filterLocation
-      ? (o.location_name || "")
-          .toLowerCase()
-          .includes(filterLocation.toLowerCase())
-      : true;
-    return customerMatch && statusMatch && locationMatch;
-  });
-
-  const handleSoCreated = (created) => {
-    // Prepend new SO to the list
-    setOrders((prev) => [created, ...prev]);
+  const handleOpenCreateModal = () => {
+    if (!canCreateSalesOrders) return;
+    setIsCreateModalOpen(true);
   };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleSalesOrderCreated = (created) => {
+    if (!created) return;
+    // Prepend new SO for quick feedback
+    setOrders((prev) => [created, ...(prev || [])]);
+  };
+
+  // ---------------- Render ----------------
 
   return (
     <div>
@@ -86,15 +115,16 @@ const SalesOrdersPage = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 12,
         }}
       >
         <h2 style={{ margin: 0 }}>Sales Orders</h2>
 
-        {isStaff && (
+        {canCreateSalesOrders && (
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleOpenCreateModal}
           >
             New Sales Order
           </button>
@@ -117,48 +147,52 @@ const SalesOrdersPage = () => {
           value={filterCustomer}
           onChange={(e) => setFilterCustomer(e.target.value)}
           className="form-input"
-          style={{ maxWidth: 220 }}
+          style={{ minWidth: 180 }}
         />
-
         <input
           type="text"
           placeholder="Filter by location..."
           value={filterLocation}
           onChange={(e) => setFilterLocation(e.target.value)}
           className="form-input"
-          style={{ maxWidth: 220 }}
+          style={{ minWidth: 180 }}
         />
-
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
           className="form-input"
-          style={{ maxWidth: 180 }}
+          style={{ minWidth: 160 }}
         >
           <option value="">All statuses</option>
           <option value="DRAFT">DRAFT</option>
           <option value="CONFIRMED">CONFIRMED</option>
           <option value="CANCELLED">CANCELLED</option>
-          <option value="REFUNDED">REFUNDED</option>
         </select>
       </div>
 
-      {/* Status messages */}
-      {loading && <div>Loading sales orders...</div>}
+      {/* Error / loading / empty states */}
       {error && (
         <div className="form-error" style={{ marginBottom: 12 }}>
           {error}
         </div>
       )}
 
+      {loading && <div>Loading sales orders...</div>}
+
       {!loading && filteredOrders.length === 0 && (
-        <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
-          No sales orders found.
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 8,
+            background: "#f3f4f6",
+          }}
+        >
+          No sales orders found with the current filters.
         </div>
       )}
 
       {/* Table */}
-      {filteredOrders.length > 0 && (
+      {!loading && filteredOrders.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -175,11 +209,10 @@ const SalesOrdersPage = () => {
                 <th style={thStyle}>SO #</th>
                 <th style={thStyle}>Customer</th>
                 <th style={thStyle}>Location</th>
-                <th style={thStyle}>Order Date</th>
                 <th style={thStyle}>Status</th>
+                <th style={thStyle}>Order date</th>
                 <th style={thStyle}>Total</th>
-                <th style={thStyle}>Created By</th>
-                <th style={thStyle}>Created At</th>
+                <th style={thStyle}>Created at</th>
                 <th style={thStyle}>Items</th>
               </tr>
             </thead>
@@ -189,110 +222,82 @@ const SalesOrdersPage = () => {
 
                 return (
                   <React.Fragment key={o.so_id}>
-                    <tr style={{ borderTop: "1px solid #e5e7eb" }}>
+                    <tr>
                       <td style={tdStyle}>{o.so_id}</td>
                       <td style={tdStyle}>{o.customer_name || "-"}</td>
-                      <td style={tdStyle}>{o.location_name}</td>
-                      <td style={tdStyle}>{o.order_date}</td>
+                      <td style={tdStyle}>{o.location_name || "-"}</td>
+                      <td style={tdStyle}>{o.status}</td>
+                      <td style={tdStyle}>{o.order_date || "-"}</td>
                       <td style={tdStyle}>
-                        <SoStatusBadge status={o.status} />
+                        {o.total_amount != null ? o.total_amount : "-"}
                       </td>
-                      <td style={tdStyle}>
-                        {o.total_amount != null
-                          ? `${o.total_amount} ₫`
-                          : "-"}
-                      </td>
-                      <td style={tdStyle}>{o.created_by_id}</td>
                       <td style={tdStyle}>
                         {o.created_at
                           ? new Date(o.created_at).toLocaleString()
                           : "-"}
                       </td>
                       <td style={tdStyle}>
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          style={{
-                            fontSize: 12,
-                            padding: "4px 8px",
-                          }}
-                          onClick={() => toggleExpand(o.so_id)}
-                        >
-                          {isExpanded ? "Hide items" : "Show items"}
-                        </button>
+                        {o.items && o.items.length > 0 ? (
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-outline"
+                            onClick={() => toggleExpand(o.so_id)}
+                          >
+                            {isExpanded
+                              ? "Hide items"
+                              : `View items (${o.items.length})`}
+                          </button>
+                        ) : (
+                          <span style={{ color: "#6b7280" }}>No items</span>
+                        )}
                       </td>
                     </tr>
 
-                    {/* Expanded row for items */}
-                    {isExpanded && (
+                    {isExpanded && o.items && o.items.length > 0 && (
                       <tr>
-                        <td
-                          style={{
-                            padding: 0,
-                            borderTop: "1px solid #e5e7eb",
-                            background: "#f9fafb",
-                          }}
-                          colSpan={9}
-                        >
-                          <div style={{ padding: "8px 12px" }}>
-                            {o.items && o.items.length > 0 ? (
-                              <table
-                                style={{
-                                  width: "100%",
-                                  borderCollapse: "collapse",
-                                  fontSize: 13,
-                                }}
-                              >
-                                <thead>
-                                  <tr>
-                                    <th style={subThStyle}>Product</th>
-                                    <th style={subThStyle}>SKU</th>
-                                    <th style={subThStyle}>Quantity</th>
-                                    <th style={subThStyle}>Unit price</th>
-                                    <th style={subThStyle}>Discount</th>
-                                    <th style={subThStyle}>Line total</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {o.items.map((item, idx) => (
-                                    <tr key={idx}>
-                                      <td style={subTdStyle}>
-                                        {item.product_name}
-                                      </td>
-                                      <td style={subTdStyle}>{item.sku}</td>
-                                      <td style={subTdStyle}>
-                                        {item.quantity}
-                                      </td>
-                                      <td style={subTdStyle}>
-                                        {item.unit_price != null
-                                          ? `${item.unit_price} ₫`
-                                          : "-"}
-                                      </td>
-                                      <td style={subTdStyle}>
-                                        {item.discount != null
-                                          ? `${item.discount}%`
-                                          : "-"}
-                                      </td>
-                                      <td style={subTdStyle}>
-                                        {item.line_total != null
-                                          ? `${item.line_total} ₫`
-                                          : "-"}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            ) : (
-                              <div
-                                style={{
-                                  fontSize: 13,
-                                  color: "#6b7280",
-                                }}
-                              >
-                                No items found for this sales order.
-                              </div>
-                            )}
-                          </div>
+                        <td style={tdStyle} colSpan={8}>
+                          <table
+                            style={{
+                              width: "100%",
+                              borderCollapse: "collapse",
+                              fontSize: 13,
+                            }}
+                          >
+                            <thead>
+                              <tr>
+                                <th style={subThStyle}>Product</th>
+                                <th style={subThStyle}>SKU</th>
+                                <th style={subThStyle}>Quantity</th>
+                                <th style={subThStyle}>Unit price</th>
+                                <th style={subThStyle}>Discount</th>
+                                <th style={subThStyle}>Line total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {o.items.map((item) => (
+                                <tr key={item.item_id}>
+                                  <td style={subTdStyle}>
+                                    {item.product_name || "-"}
+                                  </td>
+                                  <td style={subTdStyle}>
+                                    {item.product_sku || "-"}
+                                  </td>
+                                  <td style={subTdStyle}>
+                                    {item.quantity}
+                                  </td>
+                                  <td style={subTdStyle}>
+                                    {item.unit_price}
+                                  </td>
+                                  <td style={subTdStyle}>
+                                    {item.discount_amount ?? "-"}
+                                  </td>
+                                  <td style={subTdStyle}>
+                                    {item.line_total}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </td>
                       </tr>
                     )}
@@ -304,62 +309,28 @@ const SalesOrdersPage = () => {
         </div>
       )}
 
-      {/* Modal: create SO */}
-      {isStaff && (
-        <SalesOrderFormModal
-          open={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onCreated={handleSoCreated}
-        />
-      )}
+      {/* Create SO modal */}
+      <SalesOrderFormModal
+        open={isCreateModalOpen}
+        onClose={handleCloseCreateModal}
+        onCreated={handleSalesOrderCreated}
+      />
     </div>
-  );
-};
-
-const SoStatusBadge = ({ status }) => {
-  let bg = "#e5e7eb";
-  let color = "#374151";
-
-  if (status === "CONFIRMED") {
-    bg = "#dcfce7";
-    color = "#15803d";
-  } else if (status === "CANCELLED") {
-    bg = "#fee2e2";
-    color = "#b91c1c";
-  } else if (status === "REFUNDED") {
-    bg = "#e0f2fe";
-    color = "#0369a1";
-  } else if (status === "DRAFT") {
-    bg = "#e5e7eb";
-    color = "#4b5563";
-  }
-
-  return (
-    <span
-      style={{
-        padding: "2px 8px",
-        borderRadius: 999,
-        fontSize: 12,
-        background: bg,
-        color,
-      }}
-    >
-      {status}
-    </span>
   );
 };
 
 const thStyle = {
   textAlign: "left",
-  padding: "10px 12px",
+  padding: "8px 10px",
   fontWeight: 600,
   color: "#4b5563",
   borderBottom: "1px solid #e5e7eb",
 };
 
 const tdStyle = {
-  padding: "8px 12px",
+  padding: "6px 10px",
   color: "#374151",
+  borderBottom: "1px solid #f3f4f6",
 };
 
 const subThStyle = {

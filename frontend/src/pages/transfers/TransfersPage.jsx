@@ -13,8 +13,16 @@ import { transferApi } from "../../api/transferApi";
  */
 const TransfersPage = () => {
   const { user } = useAuth();
-  const isStaff =
-    user && ["ADMIN", "MANAGER", "CLERK"].includes(user.role);
+
+  // Only ADMIN / MANAGER can perform stock transfers
+  const canTransfer =
+    user && (user.role === "ADMIN" || user.role === "MANAGER");
+
+  // Clerk can view in read-only mode
+  const isClerk = user && user.role === "CLERK";
+
+  // Known application roles for this page
+  const isKnownRole = canTransfer || isClerk;
 
   const [loadingLookups, setLoadingLookups] = useState(false);
   const [lookupError, setLookupError] = useState(null);
@@ -36,7 +44,7 @@ const TransfersPage = () => {
 
   // Load product and location options
   useEffect(() => {
-    if (!isStaff) return;
+    if (!isKnownRole) return;
 
     const loadLookups = async () => {
       setLoadingLookups(true);
@@ -72,7 +80,7 @@ const TransfersPage = () => {
     };
 
     loadLookups();
-  }, [isStaff]);
+  }, [isKnownRole]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -90,6 +98,14 @@ const TransfersPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     resetMessages();
+
+    // Safety: only ADMIN / MANAGER can perform transfers
+    if (!canTransfer) {
+      setSubmitError(
+        "You do not have permission to perform stock transfers."
+      );
+      return;
+    }
 
     if (!form.productId || !form.fromLocationId || !form.toLocationId) {
       setSubmitError("Please select product and both locations.");
@@ -173,7 +189,7 @@ const TransfersPage = () => {
     }
   };
 
-  if (!isStaff) {
+  if (!isKnownRole) {
     return (
       <div>
         <h2 style={{ marginBottom: 16 }}>Transfers</h2>
@@ -186,7 +202,7 @@ const TransfersPage = () => {
             fontSize: 14,
           }}
         >
-          Only staff users can perform stock transfers.
+          Only application staff users can perform stock transfers.
         </div>
       </div>
     );
@@ -202,134 +218,148 @@ const TransfersPage = () => {
         </div>
       )}
 
-      {/* Transfer form */}
-      <div className="dashboard-card" style={{ marginBottom: 16 }}>
-        <div className="dashboard-card-header">
-          New stock transfer between locations
+      {/* Read-only notice for Clerk */}
+      {isClerk && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: "#FEF3C7",
+            color: "#92400E",
+            fontSize: 13,
+          }}
+        >
+          You are signed in as <strong>Clerk</strong>. This page is read-only:
+          you can view recent transfers but cannot perform new transfers.
         </div>
+      )}
 
-        <form onSubmit={handleSubmit}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-              gap: 12,
-              marginTop: 8,
-              marginBottom: 8,
-            }}
-          >
-            <label className="form-label">
-              Product
-              <select
-                name="productId"
-                value={form.productId}
-                onChange={handleChange}
-                className="form-input"
-                disabled={loadingLookups}
-              >
-                <option value="">Select product…</option>
-                {products.map((p) => (
-                  <option key={p.product_id} value={p.product_id}>
-                    {p.name} ({p.sku})
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-label">
-              Quantity
-              <input
-                name="quantity"
-                type="number"
-                min="1"
-                step="1"
-                value={form.quantity}
-                onChange={handleChange}
-                className="form-input"
-              />
-            </label>
-
-            <label className="form-label">
-              From location
-              <select
-                name="fromLocationId"
-                value={form.fromLocationId}
-                onChange={handleChange}
-                className="form-input"
-                disabled={loadingLookups}
-              >
-                <option value="">Select source location…</option>
-                {locations.map((loc) => (
-                  <option
-                    key={loc.location_id}
-                    value={loc.location_id}
-                  >
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="form-label">
-              To location
-              <select
-                name="toLocationId"
-                value={form.toLocationId}
-                onChange={handleChange}
-                className="form-input"
-                disabled={loadingLookups}
-              >
-                <option value="">Select destination location…</option>
-                {locations.map((loc) => (
-                  <option
-                    key={loc.location_id}
-                    value={loc.location_id}
-                  >
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+      {/* Transfer form: only Admin / Manager */}
+      {canTransfer && (
+        <div className="dashboard-card" style={{ marginBottom: 16 }}>
+          <div className="dashboard-card-header">
+            New stock transfer between locations
           </div>
 
-          {submitError && (
-            <div className="form-error" style={{ marginBottom: 8 }}>
-              {submitError}
-            </div>
-          )}
-
-          {submitSuccess && (
+          <form onSubmit={handleSubmit}>
             <div
               style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 12,
+                marginTop: 8,
                 marginBottom: 8,
-                padding: "8px 10px",
-                borderRadius: 8,
-                background: "#ecfdf3",
-                color: "#166534",
-                fontSize: 13,
               }}
             >
-              {submitSuccess}
+              <label className="form-label">
+                Product
+                <select
+                  name="productId"
+                  value={form.productId}
+                  onChange={handleChange}
+                  className="form-input"
+                  disabled={loadingLookups}
+                >
+                  <option value="">Select product…</option>
+                  {products.map((p) => (
+                    <option key={p.product_id} value={p.product_id}>
+                      {p.name} ({p.sku})
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="form-label">
+                Quantity
+                <input
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.quantity}
+                  onChange={handleChange}
+                  className="form-input"
+                />
+              </label>
+
+              <label className="form-label">
+                From location
+                <select
+                  name="fromLocationId"
+                  value={form.fromLocationId}
+                  onChange={handleChange}
+                  className="form-input"
+                  disabled={loadingLookups}
+                >
+                  <option value="">Select source location…</option>
+                  {locations.map((loc) => (
+                    <option key={loc.location_id} value={loc.location_id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="form-label">
+                To location
+                <select
+                  name="toLocationId"
+                  value={form.toLocationId}
+                  onChange={handleChange}
+                  className="form-input"
+                  disabled={loadingLookups}
+                >
+                  <option value="">Select destination location…</option>
+                  {locations.map((loc) => (
+                    <option key={loc.location_id} value={loc.location_id}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-          )}
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={submitting || loadingLookups}
-          >
-            {submitting ? "Transferring..." : "Transfer stock"}
-          </button>
-        </form>
-      </div>
+            {submitError && (
+              <div className="form-error" style={{ marginBottom: 8 }}>
+                {submitError}
+              </div>
+            )}
 
-      {/* Recent transfers (in-memory for this session) */}
+            {submitSuccess && (
+              <div
+                style={{
+                  marginBottom: 8,
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  background: "#ecfdf3",
+                  color: "#166534",
+                  fontSize: 13,
+                }}
+              >
+                {submitSuccess}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={submitting || loadingLookups}
+            >
+              {submitting ? "Transferring..." : "Transfer stock"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Recent transfers table (all roles can see) */}
       <div className="dashboard-card">
         <div className="dashboard-card-header">Recent transfers</div>
         <RecentTransfersTable rows={recentTransfers} />
       </div>
     </div>
   );
+
 };
 
 const RecentTransfersTable = ({ rows }) => {

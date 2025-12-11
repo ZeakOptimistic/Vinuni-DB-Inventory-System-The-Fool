@@ -11,8 +11,12 @@ const PAGE_SIZE = 10;
  */
 const ProductsPage = () => {
   const { user } = useAuth();
-  const isStaff =
-    user && ["ADMIN", "MANAGER", "CLERK"].includes(user.role);
+
+  // Permission flags derived from role
+  const canManageProducts =
+    user && (user.role === "ADMIN" || user.role === "MANAGER");
+
+  const isClerk = user && user.role === "CLERK";
 
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
@@ -93,6 +97,10 @@ const ProductsPage = () => {
   };
 
   const handleDelete = async (product) => {
+    if (!canManageProducts) {
+      alert("You do not have permission to delete products.");
+      return;
+    }
     const ok = window.confirm(
       `Are you sure you want to delete product "${product.name}" (SKU: ${product.sku})?`
     );
@@ -124,12 +132,29 @@ const ProductsPage = () => {
         }}
       >
         <h2 style={{ margin: 0 }}>Products</h2>
-        {isStaff && (
+        {canManageProducts && (
           <button className="btn btn-primary" type="button" onClick={openCreateModal}>
             New Product
           </button>
         )}
       </div>
+
+      {isClerk && (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: "#FEF3C7",
+            color: "#92400E",
+            fontSize: 13,
+          }}
+        >
+          You are signed in as <strong>Clerk</strong>. This page is read-only:
+          you can search and view products but cannot create, edit, or delete.
+        </div>
+      )}
+
 
       {/* Search + sort */}
       <form
@@ -144,9 +169,6 @@ const ProductsPage = () => {
           className="form-input"
           style={{ maxWidth: 320 }}
         />
-        <button className="btn btn-outline" type="submit">
-          Search
-        </button>
 
         <select
           value={ordering}
@@ -161,6 +183,10 @@ const ProductsPage = () => {
           <option value="-created_at">Created (newest)</option>
           <option value="created_at">Created (oldest)</option>
         </select>
+
+        <button className="btn btn-outline" type="submit">
+          Search
+        </button>
       </form>
 
       {/* Status */}
@@ -200,7 +226,7 @@ const ProductsPage = () => {
                 <th style={thStyle}>Reorder Level</th>
                 <th style={thStyle}>Status</th>
                 <th style={thStyle}>Created At</th>
-                {isStaff && <th style={thStyle}>Actions</th>}
+                {canManageProducts && <th style={thStyle}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -233,7 +259,7 @@ const ProductsPage = () => {
                       ? new Date(p.created_at).toLocaleString()
                       : "-"}
                   </td>
-                  {isStaff && (
+                  {canManageProducts && (
                     <td style={tdStyle}>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button

@@ -1,6 +1,6 @@
 # backend/src/apps/inventory/views.py
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+
 from .models import Category, Supplier, Location, Product
 from .serializers import (
     CategorySerializer,
@@ -8,12 +8,15 @@ from .serializers import (
     LocationSerializer,
     ProductSerializer,
 )
-from apps.accounts.permissions import ReadOnlyOrStaff, IsManagerOrAdmin
+from apps.accounts.permissions import ReadOnlyOrStaff
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
     /api/categories/
+
+    - Any logged in user (ADMIN / MANAGER / CLERK) can list / retrieve categories.
+    - Only ADMIN or MANAGER can create / update / delete categories.
     """
     queryset = Category.objects.all().order_by("name")
     serializer_class = CategorySerializer
@@ -25,6 +28,9 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class SupplierViewSet(viewsets.ModelViewSet):
     """
     /api/suppliers/
+
+    - Read: all authenticated users.
+    - Write: only ADMIN / MANAGER.
     """
     queryset = Supplier.objects.all().order_by("name")
     serializer_class = SupplierSerializer
@@ -36,6 +42,9 @@ class SupplierViewSet(viewsets.ModelViewSet):
 class LocationViewSet(viewsets.ModelViewSet):
     """
     /api/locations/
+
+    - Read: all authenticated users.
+    - Write: only ADMIN / MANAGER.
     """
     queryset = Location.objects.all().order_by("name")
     serializer_class = LocationSerializer
@@ -47,6 +56,9 @@ class LocationViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     """
     /api/products/
+
+    - Read: all authenticated users.
+    - Write: only ADMIN / MANAGER.
     """
     queryset = Product.objects.select_related("category").all().order_by("name")
     serializer_class = ProductSerializer

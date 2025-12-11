@@ -34,11 +34,9 @@ INSERT INTO role (role_id, role_name, description) VALUES
 INSERT INTO app_user
   (user_id, username, password_hash, full_name, email, role_id, status)
 VALUES
-  (1, 'khai',  'demo_hash_1', 'Tran Quang Khai',  'khai@example.com', 1, 'ACTIVE'),
-  (2, 'tri',   'demo_hash_2', 'Thai Huu Tri',     'tri@example.com',  2, 'ACTIVE'),
-  (3, 'han',   'demo_hash_3', 'Nguyen Ngoc Han',  'han@example.com',  3, 'ACTIVE'),
-  (4, 'admin_demo',   'demo_hash_admin',   'Demo Admin',   'admin.demo@example.com',   1, 'ACTIVE'),
-  (5, 'manager_demo', 'demo_hash_manager', 'Demo Manager', 'manager.demo@example.com', 2, 'ACTIVE');
+  (1, 'admin',   'demo_admin',   'Admin',   'admin@example.com',   1, 'ACTIVE'),
+  (2, 'manager', 'demo_manager', 'Manager', 'manager@example.com', 2, 'ACTIVE');
+  (3, 'clerk',   'demo_clerk', 'Clerk',  'clerk@example.com',  3, 'ACTIVE'),
 
 -- =========================
 -- Categories
