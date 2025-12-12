@@ -330,6 +330,10 @@ const PurchaseOrdersPage = () => {
                       <td style={tdStyle}>
                         {o.items && o.items.length > 0 ? (
                           <button
+                            style={{
+                              fontSize: 13,
+                              padding: "4px 8px",
+                            }}
                             type="button"
                             className="btn btn-xs btn-outline"
                             onClick={() => toggleExpand(o.po_id)}
@@ -352,6 +356,10 @@ const PurchaseOrdersPage = () => {
                             }}
                           >
                             <button
+                              style={{
+                                fontSize: 13,
+                                padding: "4px 8px",
+                              }}
                               type="button"
                               className="btn btn-xs btn-outline"
                               disabled={!hasRemaining || receivingId === o.po_id}

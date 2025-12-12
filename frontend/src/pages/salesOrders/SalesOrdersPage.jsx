@@ -285,6 +285,10 @@ const SalesOrdersPage = () => {
                       <td style={tdStyle}>
                         {o.items && o.items.length > 0 ? (
                           <button
+                            style={{
+                              fontSize: 13,
+                              padding: "4px 8px",
+                            }}
                             type="button"
                             className="btn btn-xs btn-outline"
                             onClick={() => toggleExpand(o.so_id)}
@@ -300,6 +304,10 @@ const SalesOrdersPage = () => {
                       <td style={tdStyle}>
                         {canCancelSalesOrders && o.status === "CONFIRMED" ? (
                           <button
+                            style={{
+                              fontSize: 13,
+                              padding: "4px 8px",
+                            }}
                             type="button"
                             className="btn btn-xs btn-danger"
                             onClick={() => handleCancel(o)}
@@ -313,7 +321,8 @@ const SalesOrdersPage = () => {
                               display: "inline-flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              padding: "10px 10px",
+                              fontSize: 13,
+                              padding: "4px 8px",
                               borderRadius: 999,
                               border: "1px dashed #d1d5db",
                               background: "#f9fafb",

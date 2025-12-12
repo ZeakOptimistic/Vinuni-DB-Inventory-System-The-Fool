@@ -1,6 +1,14 @@
 # backend/src/apps/accounts/permissions.py
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
+def _get_role_name(user):
+    # user.role can be a string or a FK Role
+    role = getattr(user, "role", None)
+    if isinstance(role, str):
+        return role
+    if role is not None:
+        return getattr(role, "role_name", None)
+    return getattr(user, "role_name", None)
 
 class IsAdmin(BasePermission):
     """

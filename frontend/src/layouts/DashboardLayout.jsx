@@ -9,6 +9,7 @@ const DashboardLayout = () => {
 
   const canManageMasterData = role === "ADMIN" || role === "MANAGER";
   const canViewReports = role === "ADMIN" || role === "MANAGER";
+  const canManageUsers = user?.role === "ADMIN";
 
   return (
     <div className="dashboard-layout">
@@ -54,6 +55,14 @@ const DashboardLayout = () => {
               Reports
             </NavLink>
           )}
+
+          {/* Manage Users: only ADMIN */}
+          {canManageUsers && (
+            <NavLink to="/users" className="sidebar-link">
+              Users
+            </NavLink>
+          )}
+
         </nav>
       </aside>
 
