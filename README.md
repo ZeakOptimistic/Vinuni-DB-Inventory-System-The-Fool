@@ -511,10 +511,8 @@ mysql -u root -p sipms < database/seed_data.sql
 
 ```bash
 cd Vinuni-DB-Inventory-System-The-Fool\database
-mysql -u sipms_user -p
+mysql -u root-p
 ```
-
-Password: `StrongPassword123!`
 
 ```sql
 DROP DATABASE IF EXISTS sipms;
@@ -828,3 +826,93 @@ Open:
 Login:
 - Username: `admin_demo`
 - Password: `admin123`
+
+
+---
+
+## Docker
+
+
+### Prerequisites
+- Docker Desktop installed
+- Docker Engine running
+
+Check:
+```bash
+docker version
+docker compose version
+```
+
+### Start the system
+Build images and start containers:
+
+```bash
+docker compose up --build
+
+Start in background mode:
+docker compose up -d
+```
+
+### Check status
+List running containers:
+
+```bash
+docker ps
+```
+
+View all logs:
+```bash
+docker compose logs -f
+```
+
+View backend logs only:
+```bash
+docker compose logs -f backend
+```
+## Access services
+- Backend API: http://localhost:8000
+- Frontend Web UI: http://localhost:5173
+
+## Stop the system
+Stop containers (keep database):
+```bash
+docker compose down
+```
+
+Stop containers and remove database data:
+```bash
+docker compose down -v
+```
+
+### Rebuild after code/dependency changes
+Rebuild backend only:
+```bash
+docker compose build backend
+```
+
+Rebuild everything:
+```bash
+docker compose build --no-cache
+```
+
+### Reset everything (clean start)
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+### Useful debug commands
+Enter backend container:
+```bash
+docker exec -it sipms-backend sh
+```
+
+Enter MySQL container:
+```bash
+docker exec -it sipms-mysql mysql -u root -p
+```bash
+
+## Common fixes
+If Docker cannot connect:
+- Start Docker Desktop
+- Restart Docker Desktop

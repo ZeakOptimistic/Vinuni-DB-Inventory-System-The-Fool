@@ -159,11 +159,11 @@ VALUES
    '2025-12-15 10:05:00', 2),
   (3, 4, 1,  40, 'PURCHASE_RECEIPT', 'PURCHASE_ORDER', 1,
    '2025-12-15 10:10:00', 2),
-  (4, 1, 2,  -5, 'SALES_ISSUE',      'SALES_ORDER',    1,
+  (4, 1, 2,  0, 'SALES_ISSUE',      'SALES_ORDER',    1,
    '2025-12-12 15:00:00', 3),
-  (5, 2, 2,  -2, 'SALES_ISSUE',      'SALES_ORDER',    1,
+  (5, 2, 2,  0, 'SALES_ISSUE',      'SALES_ORDER',    1,
    '2025-12-12 15:05:00', 3),
-  (6, 4, 2,  -2, 'SALES_ISSUE',      'SALES_ORDER',    1,
+  (6, 4, 2,  0, 'SALES_ISSUE',      'SALES_ORDER',    1,
    '2025-12-12 15:10:00', 3);
 
 -- =========================
