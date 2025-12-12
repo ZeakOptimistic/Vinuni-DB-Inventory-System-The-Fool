@@ -21,6 +21,8 @@ import SalesOrdersPage from "../pages/salesOrders/SalesOrdersPage";
 import TransfersPage from "../pages/transfers/TransfersPage";
 import CategoriesPage from "../pages/categories/CategoriesPage";
 import ReportsPage from "../pages/reports/ReportsPage";
+import UsersPage from "../pages/users/UsersPage";
+
 import NotFoundPage from "../pages/NotFoundPage";
 
 import { useAuth } from "../hooks/useAuth";
@@ -96,6 +98,10 @@ export const AppRouter = () => {
           <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
           <Route path="/sales-orders" element={<SalesOrdersPage />} />
           <Route path="/transfers" element={<TransfersPage />} />
+          <Route element={<RequireRole allowed={["ADMIN"]} />}>
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
+
         </Route>
       </Route>
 

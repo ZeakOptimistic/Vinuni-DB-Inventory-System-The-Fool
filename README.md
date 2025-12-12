@@ -511,7 +511,7 @@ mysql -u root -p sipms < database/seed_data.sql
 
 ```bash
 cd Vinuni-DB-Inventory-System-The-Fool\database
-mysql -u root-p
+mysql -u root -p
 ```
 
 ```sql
