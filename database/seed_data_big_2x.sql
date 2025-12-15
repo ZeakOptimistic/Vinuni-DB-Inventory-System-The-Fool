@@ -1,5 +1,5 @@
--- 02_seed_data.sql  —  sample data for SIPMS
-
+-- seed_data_big_2x.sql  —  large demo data for SIPMS (2x scale)
+-- Generated on 2025-12-12 (Asia/Bangkok)
 USE sipms;
 
 SET FOREIGN_KEY_CHECKS = 0;

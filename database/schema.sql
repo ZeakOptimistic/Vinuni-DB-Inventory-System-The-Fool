@@ -42,7 +42,7 @@ CREATE TABLE category (
 -- =========================
 CREATE TABLE role (
     role_id      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    role_name    VARCHAR(50) NOT NULL UNIQUE,
+    role_name    VARCHAR(50) NOT NULL UNIQUE,       # ADMIN, MANAGER, CLERK
     description  VARCHAR(255)
 );
 

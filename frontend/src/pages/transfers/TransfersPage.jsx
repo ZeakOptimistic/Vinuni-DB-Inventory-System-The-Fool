@@ -82,6 +82,22 @@ const TransfersPage = () => {
     loadLookups();
   }, [isKnownRole]);
 
+  useEffect(() => {
+    if (!isKnownRole) return;
+
+    const loadHistory = async () => {
+      try {
+        const data = await transferApi.list({ limit: 50 });
+        setRecentTransfers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+        // optional: setLookupError("Failed to load transfer history.");
+      }
+    };
+
+    loadHistory();
+  }, [isKnownRole]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -139,22 +155,9 @@ const TransfersPage = () => {
         `Transferred ${res.quantity} units of "${res.product_name}" from "${res.from_location_name}" to "${res.to_location_name}".`
       );
 
-      // Keep a small history in memory for this session
-      setRecentTransfers((prev) => {
-        const next = [
-          {
-            transfer_id: res.transfer_id,
-            product_name: res.product_name,
-            from_location_name: res.from_location_name,
-            to_location_name: res.to_location_name,
-            quantity: res.quantity,
-            from_quantity_on_hand: res.from_quantity_on_hand,
-            to_quantity_on_hand: res.to_quantity_on_hand,
-          },
-          ...prev,
-        ];
-        return next.slice(0, 5);
-      });
+      //  Reload recent transfers
+      const latest = await transferApi.list({ limit: 50 });
+      setRecentTransfers(Array.isArray(latest) ? latest : []);
 
       // Reset quantity, keep selections
       setForm((prev) => ({
@@ -366,7 +369,7 @@ const RecentTransfersTable = ({ rows }) => {
   if (!rows || rows.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
-        No transfers performed in this session.
+        No transfers found yet.
       </div>
     );
   }

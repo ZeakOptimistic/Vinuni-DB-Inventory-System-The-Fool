@@ -20,4 +20,11 @@ export const transferApi = {
     const res = await httpClient.post("/api/transfers/", payload);
     return res.data;
   },
+
+  async list({ limit = 50 } = {}) {
+    const res = await httpClient.get("/api/transfers/", {
+      params: { limit },
+    });
+    return res.data; // backend return array
+  },
 };

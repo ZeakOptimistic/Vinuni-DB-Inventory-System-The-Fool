@@ -26,11 +26,14 @@ BEGIN
 
     -- determine delta based on movement_type (match enum)
     CASE NEW.movement_type
-        WHEN 'PURCHASE_RECEIPT' THEN SET v_delta = NEW.quantity;        -- import
-        WHEN 'SALES_ISSUE'      THEN SET v_delta = -NEW.quantity;       -- export
-        WHEN 'ADJUSTMENT'       THEN SET v_delta = NEW.quantity;        -- modify can +/-, depend use way
+        WHEN 'PURCHASE_RECEIPT' THEN SET v_delta = NEW.quantity;
+        WHEN 'SALES_ISSUE'      THEN SET v_delta = -NEW.quantity;
+        WHEN 'TRANSFER_IN'      THEN SET v_delta = NEW.quantity;
+        WHEN 'TRANSFER_OUT'     THEN SET v_delta = -NEW.quantity;
+        WHEN 'ADJUSTMENT'       THEN SET v_delta = NEW.quantity;
         ELSE SET v_delta = 0;
     END CASE;
+
 
     SELECT quantity_on_hand
       INTO v_current_qty

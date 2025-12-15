@@ -264,7 +264,10 @@ class TransferStockView(APIView):
 
     Only ADMIN / MANAGER can perform stock transfers.
     """
-    permission_classes = [IsManagerOrAdmin]
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsAuthenticated()]
+        return [IsManagerOrAdmin()]
 
     def post(self, request):
         serializer = TransferStockSerializer(data=request.data)
@@ -388,3 +391,46 @@ class TransferStockView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+    def get(self, request):
+        limit = request.query_params.get("limit", 50)
+        try:
+            limit = min(max(int(limit), 1), 200)
+        except Exception:
+            limit = 50
+
+        out_rows = list(
+            StockMovement.objects.select_related("product", "location")
+            .filter(movement_type="TRANSFER_OUT", related_document_type="TRANSFER")
+            .order_by("-created_at")[:limit]
+        )
+
+        transfer_ids = [r.related_document_id for r in out_rows]
+        in_rows = list(
+            StockMovement.objects.select_related("location")
+            .filter(
+                movement_type="TRANSFER_IN",
+                related_document_type="TRANSFER",
+                related_document_id__in=transfer_ids,
+            )
+        )
+        in_map = {r.related_document_id: r for r in in_rows}
+
+        data = []
+        for out_mv in out_rows:
+            in_mv = in_map.get(out_mv.related_document_id)
+            data.append(
+                {
+                    "transfer_id": out_mv.related_document_id,
+                    "product_id": out_mv.product_id,
+                    "product_name": getattr(out_mv.product, "name", None),
+                    "from_location_id": out_mv.location_id,
+                    "from_location_name": getattr(out_mv.location, "name", None),
+                    "to_location_id": getattr(in_mv, "location_id", None),
+                    "to_location_name": getattr(getattr(in_mv, "location", None), "name", None),
+                    "quantity": out_mv.quantity,
+                    "created_at": out_mv.created_at,
+                }
+            )
+
+        return Response(data, status=status.HTTP_200_OK)
