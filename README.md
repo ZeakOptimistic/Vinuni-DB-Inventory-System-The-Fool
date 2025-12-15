@@ -444,14 +444,23 @@ This part explains **only how to set up and run** the project (database, backend
 
 ### Prerequisites
 
-Please install these first:
+Please install the following tools before running the SIPMS system:
 
-- **Git**
-- **MySQL 8.x**
-- **Python 3.10+**
-- **Node.js 18+** and **npm**
+#### General
+- Git
 
-Recommended tools: VS Code, MySQL Workbench, Postman.
+#### Backend (Django)
+- Python 3.10+
+- MySQL 8.x
+
+#### Frontend (React)
+- Node.js 18+
+- npm
+
+#### Recommended tools
+- VS Code
+- MySQL Workbench
+- Postman
 
 ---
 
