@@ -56,11 +56,13 @@ const TransfersPage = () => {
             page: 1,
             pageSize: 1000,
             ordering: "name",
+            status: "ACTIVE",
           }),
           locationApi.list({
             page: 1,
             pageSize: 1000,
             ordering: "name",
+            status: "ACTIVE",
           }),
         ]);
 

@@ -10,13 +10,14 @@ export const categoryApi = {
    *
    * Expected backend fields: category_id, name, description
    */
-  async list({ page = 1, pageSize = 10, search = "", ordering = "name" } = {}) {
+  async list({ page = 1, pageSize = 10, search = "", ordering = "name", status = "" } = {}) {
     const params = {
       page,
       page_size: pageSize,
     };
     if (search) params.search = search;
     if (ordering) params.ordering = ordering;
+    if (status) params.status = status;
 
     const res = await httpClient.get("/api/categories/", { params });
     return res.data; // DRF style: { count, next, previous, results }

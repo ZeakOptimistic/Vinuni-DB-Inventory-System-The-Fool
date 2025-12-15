@@ -1,5 +1,5 @@
 // src/pages/reports/ReportsPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { locationApi } from "../../api/locationApi";
 import { reportApi } from "../../api/reportApi";
@@ -36,6 +36,7 @@ const ReportsPage = () => {
   const [lowStockRows, setLowStockRows] = useState([]);
   const [stockRows, setStockRows] = useState([]);
   const [topSellingRows, setTopSellingRows] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Load location list for filters
   useEffect(() => {
@@ -177,11 +178,19 @@ const ReportsPage = () => {
           flexWrap: "wrap",
         }}
       >
+        <div className="form-group">
+          <input
+            className="form-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by product name or SKU..."
+          />
+        </div>
+        
         <label
           className="form-label"
           style={{ marginBottom: 0, minWidth: 220 }}
         >
-          Location
           <select
             value={filters.locationId}
             onChange={handleLocationChange}
@@ -222,7 +231,7 @@ const ReportsPage = () => {
             <div className="dashboard-card-header">
               Low stock products
             </div>
-            <LowStockReportTable rows={lowStockRows} />
+            <LowStockReportTable rows={lowStockRows} searchTerm={searchTerm} />
           </>
         )}
 
@@ -231,7 +240,7 @@ const ReportsPage = () => {
             <div className="dashboard-card-header">
               Stock per location
             </div>
-            <StockPerLocationTable rows={stockRows} />
+            <StockPerLocationTable rows={stockRows} searchTerm={searchTerm}/>
           </>
         )}
 
@@ -240,7 +249,7 @@ const ReportsPage = () => {
             <div className="dashboard-card-header">
               Top selling products (last 30 days)
             </div>
-            <TopSellingReportTable rows={topSellingRows} />
+            <TopSellingReportTable rows={topSellingRows} searchTerm={searchTerm}/>
           </>
         )}
       </div>
@@ -248,7 +257,19 @@ const ReportsPage = () => {
   );
 };
 
-const LowStockReportTable = ({ rows }) => {
+const LowStockReportTable = ({ rows, searchTerm }) => {
+
+  const filteredRows = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter((r) => {
+      const name = String(r.product_name || "").toLowerCase();
+      const sku = String(r.sku || "").toLowerCase();
+      return name.includes(q) || sku.includes(q);
+    });
+  }, [rows, searchTerm]);
+
   if (!rows || rows.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
@@ -277,7 +298,7 @@ const LowStockReportTable = ({ rows }) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {filteredRows.map((r) => (
             <tr
               key={`${r.product_id}-${r.location_id}`}
               style={{ borderTop: "1px solid #e5e7eb" }}
@@ -300,7 +321,19 @@ const LowStockReportTable = ({ rows }) => {
   );
 };
 
-const StockPerLocationTable = ({ rows }) => {
+const StockPerLocationTable = ({ rows, searchTerm }) => {
+
+  const filteredRows = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter((r) => {
+      const name = String(r.product_name || "").toLowerCase();
+      const sku = String(r.sku || "").toLowerCase();
+      return name.includes(q) || sku.includes(q);
+    });
+  }, [rows, searchTerm]);
+
   if (!rows || rows.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
@@ -329,7 +362,7 @@ const StockPerLocationTable = ({ rows }) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {filteredRows.map((r) => (
             <tr
               key={`${r.product_id}-${r.location_id}`}
               style={{ borderTop: "1px solid #e5e7eb" }}
@@ -352,7 +385,19 @@ const StockPerLocationTable = ({ rows }) => {
   );
 };
 
-const TopSellingReportTable = ({ rows }) => {
+const TopSellingReportTable = ({ rows , searchTerm }) => {
+
+  const filteredRows = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return rows;
+
+    return rows.filter((r) => {
+      const name = String(r.product_name || "").toLowerCase();
+      const sku = String(r.sku || "").toLowerCase();
+      return name.includes(q) || sku.includes(q);
+    });
+  }, [rows, searchTerm]);
+
   if (!rows || rows.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
@@ -360,6 +405,7 @@ const TopSellingReportTable = ({ rows }) => {
       </div>
     );
   }
+
 
   return (
     <div style={{ overflowX: "auto" }}>
@@ -379,7 +425,7 @@ const TopSellingReportTable = ({ rows }) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
+          {filteredRows.map((r) => (
             <tr key={r.product_id} style={{ borderTop: "1px solid #e5e7eb" }}>
               <td style={tdStyle}>{r.product_name}</td>
               <td style={tdStyle}>{r.sku}</td>

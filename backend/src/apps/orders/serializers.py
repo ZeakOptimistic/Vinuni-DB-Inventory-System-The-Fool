@@ -15,10 +15,7 @@ from apps.orders.models import (
     PurchaseOrderItem,
 )
 
-
-# ============================
 # 1. SALES ORDER SERIALIZERS
-# ============================
 
 class SalesOrderItemInputSerializer(serializers.Serializer):
     """
@@ -39,10 +36,15 @@ class SalesOrderItemInputSerializer(serializers.Serializer):
     )
 
     def validate_product_id(self, value):
-        if not Product.objects.filter(pk=value).exists():
-            raise serializers.ValidationError("Product does not exist.")
+        if not Product.objects.filter(
+            pk=value,
+            status="ACTIVE",
+            category__status="ACTIVE",
+        ).exists():
+            raise serializers.ValidationError(
+                "Product is not available (inactive product/category)."
+            )
         return value
-
 
 class SalesOrderItemSerializer(serializers.ModelSerializer):
     """
@@ -62,7 +64,6 @@ class SalesOrderItemSerializer(serializers.ModelSerializer):
             "discount",
             "line_total",
         ]
-
 
 class SalesOrderSerializer(serializers.ModelSerializer):
     """
@@ -90,7 +91,6 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             "items",
         ]
 
-
 class SalesOrderCreateSerializer(serializers.Serializer):
     """
     Use for POST /api/sales-orders/
@@ -104,8 +104,8 @@ class SalesOrderCreateSerializer(serializers.Serializer):
     items = SalesOrderItemInputSerializer(many=True)
 
     def validate_location_id(self, value):
-        if not Location.objects.filter(pk=value).exists():
-            raise serializers.ValidationError("Location does not exist.")
+        if not Location.objects.filter(pk=value, status="ACTIVE").exists():
+            raise serializers.ValidationError("Location is not available (inactive).")
         return value
 
     def validate_items(self, value):
@@ -207,10 +207,7 @@ class SalesOrderCreateSerializer(serializers.Serializer):
 
         return so
 
-
-# ============================
 # 2. PURCHASE ORDER SERIALIZERS
-# ============================
 
 class PurchaseOrderItemInputSerializer(serializers.Serializer):
     """
@@ -225,10 +222,15 @@ class PurchaseOrderItemInputSerializer(serializers.Serializer):
     )
 
     def validate_product_id(self, value):
-        if not Product.objects.filter(pk=value).exists():
-            raise serializers.ValidationError("Product does not exist.")
+        if not Product.objects.filter(
+            pk=value,
+            status="ACTIVE",
+            category__status="ACTIVE",
+        ).exists():
+            raise serializers.ValidationError(
+                "Product is not available (inactive product/category)."
+            )
         return value
-
 
 class PurchaseOrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True)
@@ -245,7 +247,6 @@ class PurchaseOrderItemSerializer(serializers.ModelSerializer):
             "unit_price",
             "line_total",
         ]
-
 
 class PurchaseOrderSerializer(serializers.ModelSerializer):
     supplier_name = serializers.CharField(source="supplier.name", read_only=True)
@@ -273,7 +274,6 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             "items",
         ]
 
-
 class PurchaseOrderCreateSerializer(serializers.Serializer):
     """
     Use for POST /api/purchase-orders/
@@ -285,13 +285,13 @@ class PurchaseOrderCreateSerializer(serializers.Serializer):
     items = PurchaseOrderItemInputSerializer(many=True)
 
     def validate_supplier_id(self, value):
-        if not Supplier.objects.filter(pk=value).exists():
-            raise serializers.ValidationError("Supplier does not exist.")
+        if not Supplier.objects.filter(pk=value, status="ACTIVE").exists():
+            raise serializers.ValidationError("Supplier is not available (inactive).")
         return value
 
     def validate_location_id(self, value):
-        if not Location.objects.filter(pk=value).exists():
-            raise serializers.ValidationError("Location does not exist.")
+        if not Location.objects.filter(pk=value, status="ACTIVE").exists():
+            raise serializers.ValidationError("Location is not available (inactive).")
         return value
 
     def validate_items(self, value):
@@ -389,7 +389,6 @@ class PurchaseOrderCreateSerializer(serializers.Serializer):
             PurchaseOrderItem.objects.bulk_create(poi_objs)
 
         return po
-
 
 class TransferStockSerializer(serializers.Serializer):
     product_id = serializers.IntegerField()

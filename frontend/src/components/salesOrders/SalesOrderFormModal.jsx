@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { locationApi } from "../../api/locationApi";
 import { productApi } from "../../api/productApi";
 import { salesOrderApi } from "../../api/salesOrderApi";
+import { reportApi } from "../../api/reportApi";
 
 /**
  * Modal form for creating a new sales order.
@@ -31,6 +32,9 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
 
   const [locations, setLocations] = useState([]);
   const [products, setProducts] = useState([]);
+  const [stockRows, setStockRows] = useState([]);
+  const [loadingStock, setLoadingStock] = useState(false);
+
 
   const [loadingLookups, setLoadingLookups] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -64,8 +68,8 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
       setLoadingLookups(true);
       try {
         const [locData, prodData] = await Promise.all([
-          locationApi.list({ pageSize: 1000 }),
-          productApi.list({ pageSize: 1000 }),
+          locationApi.list({ pageSize: 1000, status: "ACTIVE" }),
+          productApi.list({ pageSize: 1000, status: "ACTIVE" }),
         ]);
 
         setLocations(locData.results || locData || []);
@@ -81,6 +85,33 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
     fetchLookups();
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    // not select location -> clear stock
+    if (!form.location_id) {
+      setStockRows([]);
+      return;
+    }
+
+    const fetchStock = async () => {
+      setLoadingStock(true);
+      try {
+        const rows = await reportApi.getStockPerLocation({
+          location_id: Number(form.location_id),
+        });
+        setStockRows(Array.isArray(rows) ? rows : []);
+      } catch (err) {
+        console.error(err);
+        setStockRows([]);
+      } finally {
+        setLoadingStock(false);
+      }
+    };
+
+    fetchStock();
+  }, [open, form.location_id]);
+
   const handleChangeForm = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -88,6 +119,20 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
       [name]: value,
     }));
   };
+
+  const handleLocationChange = (e) => {
+    const value = e.target.value;
+
+    setForm((prev) => ({
+      ...prev,
+      location_id: value,
+    }));
+
+    // reset items avoids keeping products from the old location
+    setItems([{ product_id: "", quantity: "" }]);
+    setItemsError(null);
+  };
+
 
   const handleChangeItem = (index, field, value) => {
     setItems((prev) =>
@@ -133,6 +178,25 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
     }, 0);
   }, [validItems, products]);
 
+  const availableQtyByProductId = useMemo(() => {
+    const map = {};
+    for (const r of stockRows) {
+      const pid = Number(r.product_id);
+      const qty = Number(r.quantity_on_hand || 0);
+      map[pid] = qty;
+    }
+    return map;
+  }, [stockRows]);
+
+  const availableProducts = useMemo(() => {
+    // only allow products with qty > 0 at selected location
+    return (products || []).filter((p) => {
+      const qty = availableQtyByProductId[Number(p.product_id)] || 0;
+      return qty > 0;
+    });
+  }, [products, availableQtyByProductId]);
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -148,6 +212,32 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
 
     if (validItems.length === 0) {
       setItemsError("At least one line item with product and quantity > 0 is required.");
+      setSubmitting(false);
+      return;
+    }
+
+    // validate requested qty <= available (sum by product)
+    const req = {};
+    for (const it of validItems) {
+      const pid = Number(it.product_id);
+      const qty = Number(it.quantity) || 0;
+      req[pid] = (req[pid] || 0) + qty;
+    }
+
+    const problems = [];
+    for (const pidStr of Object.keys(req)) {
+      const pid = Number(pidStr);
+      const available = availableQtyByProductId[pid] || 0;
+      if (req[pid] > available) {
+        const p = products.find((x) => Number(x.product_id) === pid);
+        problems.push(
+          `${p ? p.name : `Product ${pid}`}: requested ${req[pid]} > available ${available}`
+        );
+      }
+    }
+
+    if (problems.length > 0) {
+      setItemsError(problems.join(" | "));
       setSubmitting(false);
       return;
     }
@@ -216,7 +306,7 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
                 name="location_id"
                 className="form-input"
                 value={form.location_id}
-                onChange={handleChangeForm}
+                onChange={handleLocationChange}
                 required
               >
                 <option value="">Select location</option>
@@ -321,6 +411,9 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
                   const qty = Number(it.quantity) || 0;
                   const price = product ? Number(product.unit_price || 0) : 0;
                   const lineTotal = qty * price;
+                  const maxQty = it.product_id
+                    ? (availableQtyByProductId[Number(it.product_id)] || 0)
+                    : 0;
 
                   return (
                     <tr key={index}>
@@ -331,25 +424,35 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
                           onChange={(e) =>
                             handleChangeItem(index, "product_id", e.target.value)
                           }
+                          disabled={!form.location_id || loadingStock}
                         >
-                          <option value="">Select product</option>
-                          {products.map((p) => (
-                            <option key={p.product_id} value={p.product_id}>
-                              {p.name} ({p.sku})
-                            </option>
-                          ))}
+                          <option value="">
+                            {!form.location_id ? "Select location first" : "Select product"}
+                          </option>
+
+                          {availableProducts.map((p) => {
+                            const avail = availableQtyByProductId[Number(p.product_id)] || 0;
+                            return (
+                              <option key={p.product_id} value={p.product_id}>
+                                {p.name} ({p.sku}) — {avail} available
+                              </option>
+                            );
+                          })}
+
                         </select>
                       </td>
                       <td style={tdItemStyle}>
                         <input
                           type="number"
                           min="1"
+                          max={maxQty > 0 ? maxQty : undefined}
                           className="form-input"
                           value={it.quantity}
-                          onChange={(e) =>
-                            handleChangeItem(index, "quantity", e.target.value)
-                          }
+                          onChange={(e) => handleChangeItem(index, "quantity", e.target.value)}
                         />
+                        {it.product_id && Number(it.quantity || 0) > maxQty && (
+                          <div className="field-error">Max available: {maxQty}</div>
+                        )}
                       </td>
                       <td style={tdItemStyle}>
                         {product

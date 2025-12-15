@@ -57,6 +57,13 @@ class SupplierViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "contact_name", "email", "phone"]
     ordering_fields = ["name", "created_at"]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get("status")
+        if status_param in ("ACTIVE", "INACTIVE"):
+            qs = qs.filter(status=status_param)
+        return qs
+
     @action(detail=True, methods=["post"], url_path="set-status")
     def set_status(self, request, pk=None):
         """
@@ -145,6 +152,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         status_param = self.request.query_params.get("status")
         if status_param in ("ACTIVE", "INACTIVE"):
             qs = qs.filter(status=status_param)
+            if status_param == "ACTIVE":
+                qs = qs.filter(category__status="ACTIVE")
         return qs
 
     @action(detail=True, methods=["post"], url_path="set-status")

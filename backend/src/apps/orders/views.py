@@ -276,6 +276,9 @@ class TransferStockView(APIView):
 
         qty = data["quantity"]
 
+        if data["from_location_id"] == data["to_location_id"]:
+            raise ValidationError({"to_location_id": "Destination must be different from source location."})
+
         # Determine user id for created_by
         user = request.user
         user_pk = getattr(user, "user_id", getattr(user, "pk", None))
@@ -289,28 +292,36 @@ class TransferStockView(APIView):
             with transaction.atomic():
                 # Lock product & locations
                 try:
-                    product = Product.objects.select_for_update().get(
-                        product_id=data["product_id"]
+                    product = (
+                        Product.objects.select_for_update()
+                        .select_related("category")
+                        .get(
+                            product_id=data["product_id"],
+                            status="ACTIVE",
+                            category__status="ACTIVE",
+                        )
                     )
                 except Product.DoesNotExist:
-                    raise ValidationError({"product_id": "Product not found."})
+                    raise ValidationError({"product_id": "Product not available (inactive product/category) or not found."})
 
                 try:
                     from_location = Location.objects.select_for_update().get(
-                        location_id=data["from_location_id"]
+                        location_id=data["from_location_id"],
+                        status="ACTIVE",
                     )
                 except Location.DoesNotExist:
                     raise ValidationError(
-                        {"from_location_id": "Source location not found."}
+                        {"from_location_id": "Source location not available (inactive) or not found."}
                     )
 
                 try:
                     to_location = Location.objects.select_for_update().get(
-                        location_id=data["to_location_id"]
+                        location_id=data["to_location_id"],
+                        status="ACTIVE",
                     )
                 except Location.DoesNotExist:
                     raise ValidationError(
-                        {"to_location_id": "Destination location not found."}
+                        {"to_location_id": "Destination location not available (inactive) or not found."}
                     )
 
                 # Optional pre-check: current stock at source

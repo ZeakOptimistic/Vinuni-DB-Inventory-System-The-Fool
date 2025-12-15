@@ -10,13 +10,14 @@ export const locationApi = {
    *
    * Backend fields: location_id, name, type, address, status, created_at
    */
-  async list({ page = 1, pageSize = 10, search = "", ordering = "name" } = {}) {
+  async list({ page = 1, pageSize = 10, search = "", ordering = "name", status = "" } = {}) {
     const params = {
       page,
       page_size: pageSize,
     };
     if (search) params.search = search;
     if (ordering) params.ordering = ordering;
+    if (status) params.status = status;
 
     const res = await httpClient.get("/api/locations/", { params });
     return res.data; // { count, next, previous, results }

@@ -70,9 +70,9 @@ const PurchaseOrderFormModal = ({ open, onClose, onCreated }) => {
       setLoadingLookups(true);
       try {
         const [supData, locData, prodData] = await Promise.all([
-          supplierApi.list({ pageSize: 1000 }),
-          locationApi.list({ pageSize: 1000 }),
-          productApi.list({ pageSize: 1000 }),
+          supplierApi.list({ pageSize: 1000, status: "ACTIVE"}),
+          locationApi.list({ pageSize: 1000, status: "ACTIVE" }),
+          productApi.list({ pageSize: 1000, status: "ACTIVE" }),
         ]);
 
         setSuppliers(supData.results || supData || []);
