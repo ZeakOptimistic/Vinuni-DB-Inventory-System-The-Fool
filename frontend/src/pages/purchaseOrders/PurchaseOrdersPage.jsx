@@ -31,6 +31,10 @@ const PurchaseOrdersPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [receivingId, setReceivingId] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+
   // ------------- Data loading -------------
 
   const fetchOrders = async () => {
@@ -73,6 +77,24 @@ const PurchaseOrdersPage = () => {
       return matchSupplier && matchStatus && matchLocation;
     });
   }, [orders, filterSupplier, filterStatus, filterLocation]);
+
+  // ------------- Pagination (client-side) -------------
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterSupplier, filterStatus, filterLocation]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedOrders = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, page, pageSize]);
+
 
   // ------------- Handlers -------------
 
@@ -124,9 +146,12 @@ const PurchaseOrdersPage = () => {
     }
 
     const confirmed = window.confirm(
-      `Receive all remaining items for PO #${order.po_id}?`
+      hasRemaining
+        ? `Receive all remaining items for PO #${order.po_id}?`
+        : `No remaining quantities detected. Sync/close PO #${order.po_id}?`
     );
     if (!confirmed) return;
+
 
     setReceivingId(order.po_id);
     try {
@@ -255,106 +280,86 @@ const PurchaseOrdersPage = () => {
 
       {/* Table */}
       {!loading && filteredOrders.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: 14,
-              background: "#fff",
-              borderRadius: 12,
-              overflow: "hidden",
-            }}
-          >
-            <thead style={{ background: "#f9fafb" }}>
-              <tr>
-                <th style={thStyle}>PO #</th>
-                <th style={thStyle}>Supplier</th>
-                <th style={thStyle}>Location</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Order Date</th>
-                <th style={thStyle}>Total</th>
-                <th style={thStyle}>Created At</th>
-                <th style={thStyle}>Items</th>
-                {canManagePurchaseOrders && <th style={thStyle}>Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((o) => {
-                const isExpanded = expandedIds.has(o.po_id);
+        <>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 14,
+                background: "#fff",
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <thead style={{ background: "#f9fafb" }}>
+                <tr>
+                  <th style={thStyle}>PO #</th>
+                  <th style={thStyle}>Supplier</th>
+                  <th style={thStyle}>Location</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Order Date</th>
+                  <th style={thStyle}>Total</th>
+                  <th style={thStyle}>Created At</th>
+                  <th style={thStyle}>Items</th>
+                  {canManagePurchaseOrders && <th style={thStyle}>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {pagedOrders.map((o) => {
+                  const isExpanded = expandedIds.has(o.po_id);
 
-                const hasRemaining =
-                  o.items &&
-                  o.items.some(
-                    (item) =>
-                      Number(item.ordered_qty) >
-                      Number(item.received_qty || 0)
+                  const itemsTotal = (o.items || []).reduce(
+                    (sum, it) => sum + Number(it.line_total || 0),
+                    0
                   );
 
-                return (
-                  <React.Fragment key={o.po_id}>
-                    <tr>
-                      <td style={tdStyle}>{o.po_id}</td>
-                      <td style={tdStyle}>{o.supplier_name}</td>
-                      <td style={tdStyle}>{o.location_name || "-"}</td>
-                      <td style={tdStyle}>
-                        {(() => {
-                          const { bg, fg, label } = getPoStatusStyles(o.status);
-                          return (
-                            <span
-                              style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                padding: "2px 8px",
-                                borderRadius: 999,
-                                fontSize: 14,
-                                fontWeight: 500,
-                                background: bg,
-                                color: fg,
-                              }}
-                            >
-                              {label}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td style={tdStyle}>{o.order_date || "-"}</td>
-                      <td style={tdStyle}>
-                        {o.total_amount != null ? o.total_amount : "-"}
-                      </td>
-                      <td style={tdStyle}>
-                        {o.created_at
-                          ? new Date(o.created_at).toLocaleString()
-                          : "-"}
-                      </td>
-                      <td style={tdStyle}>
-                        {o.items && o.items.length > 0 ? (
-                          <button
-                            style={{
-                              fontSize: 13,
-                              padding: "4px 8px",
-                            }}
-                            type="button"
-                            className="btn btn-xs btn-outline"
-                            onClick={() => toggleExpand(o.po_id)}
-                          >
-                            {isExpanded
-                              ? "Hide items"
-                              : `View items (${o.items.length})`}
-                          </button>
-                        ) : (
-                          <span style={{ color: "#6b7280" }}>No items</span>
-                        )}
-                      </td>
-                      {canManagePurchaseOrders && (
+                  const hasRemaining =
+                    o.items &&
+                    o.items.some(
+                      (item) =>
+                        Number(item.ordered_qty) >
+                        Number(item.received_qty || 0)
+                    );
+
+                  return (
+                    <React.Fragment key={o.po_id}>
+                      <tr>
+                        <td style={tdStyle}>{o.po_id}</td>
+                        <td style={tdStyle}>{o.supplier_name}</td>
+                        <td style={tdStyle}>{o.location_name || "-"}</td>
                         <td style={tdStyle}>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 6,
-                              flexWrap: "wrap",
-                            }}
-                          >
+                          {(() => {
+                            const { bg, fg, label } = getPoStatusStyles(o.status);
+                            return (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  padding: "2px 8px",
+                                  borderRadius: 999,
+                                  fontSize: 14,
+                                  fontWeight: 500,
+                                  background: bg,
+                                  color: fg,
+                                }}
+                              >
+                                {label}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td style={tdStyle}>{o.order_date || "-"}</td>
+                        <td style={tdStyle}>
+                          {o.total_amount != null ? o.total_amount : "-"}
+                        </td>
+                        <td style={tdStyle}>
+                          {o.created_at
+                            ? new Date(o.created_at).toLocaleString()
+                            : "-"}
+                        </td>
+                        <td style={tdStyle}>
+                          {o.items && o.items.length > 0 ? (
                             <button
                               style={{
                                 fontSize: 13,
@@ -362,81 +367,172 @@ const PurchaseOrdersPage = () => {
                               }}
                               type="button"
                               className="btn btn-xs btn-outline"
-                              disabled={!hasRemaining || receivingId === o.po_id}
-                              onClick={() => handleReceiveAll(o)}
-                              title={
-                                hasRemaining
-                                  ? "Receive all remaining items"
-                                  : "All items have already been received"
-                              }
-                              >
-                              {receivingId === o.po_id
-                                ? "Receiving..."
-                                : "Receive all"}
+                              onClick={() => toggleExpand(o.po_id)}
+                            >
+                              {isExpanded
+                                ? "Hide items"
+                                : `View items (${o.items.length})`}
                             </button>
-                          </div>
+                          ) : (
+                            <span style={{ color: "#6b7280" }}>No items</span>
+                          )}
                         </td>
-                      )}
-                    </tr>
+                        {canManagePurchaseOrders && (
+                          <td style={tdStyle}>
+                            <div
+                              style={{
+                                display: "flex",
+                                gap: 6,
+                                flexWrap: "wrap",
+                              }}
+                            >
+                              <button
+                                style={{
+                                  fontSize: 13,
+                                  padding: "4px 8px",
+                                }}
+                                type="button"
+                                className="btn btn-xs btn-outline"
+                                disabled={receivingId === o.po_id || String(o.status).toUpperCase() === "CLOSED"}
+                                onClick={() => handleReceiveAll(o)}
+                                title={
+                                  hasRemaining
+                                    ? "Receive all remaining items"
+                                    : "All items have already been received"
+                                }
+                                >
+                                {receivingId === o.po_id
+                                  ? "Receiving..."
+                                  : "Receive all"}
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
 
-                    {/* Expanded row for line items */}
-                    {isExpanded && o.items && o.items.length > 0 && (
-                      <tr>
-                        <td
-                          style={tdStyle}
-                          colSpan={canManagePurchaseOrders ? 9 : 8}
-                        >
-                          <table
-                            style={{
-                              width: "100%",
-                              borderCollapse: "collapse",
-                              fontSize: 13,
-                            }}
+                      {/* Expanded row for line items */}
+                      {isExpanded && o.items && o.items.length > 0 && (
+                        <tr>
+                          <td
+                            style={tdStyle}
+                            colSpan={canManagePurchaseOrders ? 9 : 8}
                           >
-                            <thead>
-                              <tr>
-                                <th style={subThStyle}>Product</th>
-                                <th style={subThStyle}>SKU</th>
-                                <th style={subThStyle}>Ordered</th>
-                                <th style={subThStyle}>Received</th>
-                                <th style={subThStyle}>Unit price</th>
-                                <th style={subThStyle}>Line total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {o.items.map((item) => (
-                                <tr key={item.item_id}>
-                                  <td style={subTdStyle}>
-                                    {item.product_name || "-"}
+                            <table
+                              style={{
+                                width: "100%",
+                                borderCollapse: "collapse",
+                                fontSize: 13,
+                              }}
+                            >
+                              <thead>
+                                <tr>
+                                  <th style={subThStyle}>Product</th>
+                                  <th style={subThStyle}>SKU</th>
+                                  <th style={subThStyle}>Ordered</th>
+                                  <th style={subThStyle}>Received</th>
+                                  <th style={subThStyle}>Unit price</th>
+                                  <th style={subThStyle}>Line total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {o.items.map((item) => (
+                                  <tr key={item.item_id}>
+                                    <td style={subTdStyle}>
+                                      {item.product_name || "-"}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.product_sku || item.sku || "-"}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.ordered_qty}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.received_qty}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.unit_price}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.line_total}
+                                    </td>
+                                  </tr>
+                                ))}
+                                <tr>
+                                  <td style={{ ...subTdStyle, fontWeight: 700 }} colSpan={5}>
+                                    Total
                                   </td>
-                                  <td style={subTdStyle}>
-                                    {item.product_sku || "-"}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.ordered_qty}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.received_qty}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.unit_price}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.line_total}
+                                  <td style={{ ...subTdStyle, fontWeight: 700 }}>
+                                    {o.total_amount ?? itemsTotal}
                                   </td>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <>
+            {/* Pagination */}
+            {totalPages > 0 && (
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <span style={{ fontSize: 13, color: "#6b7280" }}>
+                  Page {page} of {totalPages} · {filteredOrders.length} orders
+                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <select
+                    className="form-input"
+                    style={{ width: 100 }}
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }}
+                  >
+                    {[10, 20, 50, 100].map((n) => (
+                      <option key={n} value={n}>
+                        {n}/page
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    Previous
+                  </button>
+
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+
+        </>
       )}
 
       {/* Create PO modal (only used by ADMIN / MANAGER) */}

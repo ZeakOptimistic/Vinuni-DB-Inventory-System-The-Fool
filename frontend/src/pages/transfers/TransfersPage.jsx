@@ -1,9 +1,10 @@
 // src/pages/transfers/TransfersPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { productApi } from "../../api/productApi";
 import { locationApi } from "../../api/locationApi";
 import { transferApi } from "../../api/transferApi";
+
 
 /**
  * TransfersPage:
@@ -42,6 +43,27 @@ const TransfersPage = () => {
   const [submitSuccess, setSubmitSuccess] = useState(null);
   const [recentTransfers, setRecentTransfers] = useState([]);
 
+  // Load transfer history from server (persist across sessions)
+  useEffect(() => {
+    if (!isKnownRole) return;
+
+    const loadHistory = async () => {
+      try {
+        const data = await transferApi.list({ limit: 5000 });
+        const list = Array.isArray(data) ? data : (data?.results || []);
+        // newest first (optional)
+        list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setRecentTransfers(list);
+      } catch (err) {
+        console.error(err);
+        // not block UI, only log
+      }
+    };
+
+    loadHistory();
+  }, [isKnownRole]);
+
+
   // Load product and location options
   useEffect(() => {
     if (!isKnownRole) return;
@@ -51,23 +73,10 @@ const TransfersPage = () => {
       setLookupError(null);
 
       try {
-        const [productRes, locationRes] = await Promise.all([
-          productApi.list({
-            page: 1,
-            pageSize: 1000,
-            ordering: "name",
-            status: "ACTIVE",
-          }),
-          locationApi.list({
-            page: 1,
-            pageSize: 1000,
-            ordering: "name",
-            status: "ACTIVE",
-          }),
+        const [productList, locationList] = await Promise.all([
+          productApi.listAll({ ordering: "name", status: "ACTIVE" }),
+          locationApi.listAll({ ordering: "name", status: "ACTIVE" }),
         ]);
-
-        const productList = productRes.results || productRes || [];
-        const locationList = locationRes.results || locationRes || [];
 
         setProducts(productList);
         setLocations(locationList);
@@ -82,22 +91,6 @@ const TransfersPage = () => {
     };
 
     loadLookups();
-  }, [isKnownRole]);
-
-  useEffect(() => {
-    if (!isKnownRole) return;
-
-    const loadHistory = async () => {
-      try {
-        const data = await transferApi.list({ limit: 50 });
-        setRecentTransfers(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error(err);
-        // optional: setLookupError("Failed to load transfer history.");
-      }
-    };
-
-    loadHistory();
   }, [isKnownRole]);
 
   const handleChange = (e) => {
@@ -157,9 +150,11 @@ const TransfersPage = () => {
         `Transferred ${res.quantity} units of "${res.product_name}" from "${res.from_location_name}" to "${res.to_location_name}".`
       );
 
-      //  Reload recent transfers
-      const latest = await transferApi.list({ limit: 50 });
-      setRecentTransfers(Array.isArray(latest) ? latest : []);
+      // Reload recent transfers (full + newest first)
+      const latest = await transferApi.list({ limit: 5000 });
+      const list = Array.isArray(latest) ? latest : (latest?.results || []);
+      list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setRecentTransfers(list);
 
       // Reset quantity, keep selections
       setForm((prev) => ({
@@ -197,7 +192,18 @@ const TransfersPage = () => {
   if (!isKnownRole) {
     return (
       <div>
-        <h2 style={{ marginBottom: 16 }}>Transfers</h2>
+        <div
+          style={{
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Transfers</h2>
+
+        </div>
         <div
           style={{
             padding: 12,
@@ -215,7 +221,18 @@ const TransfersPage = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 16 }}>Transfers</h2>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Transfers</h2>
+
+      </div>
 
       {lookupError && (
         <div className="form-error" style={{ marginBottom: 12 }}>
@@ -367,52 +384,138 @@ const TransfersPage = () => {
 
 };
 
-const RecentTransfersTable = ({ rows }) => {
-  if (!rows || rows.length === 0) {
-    return (
-      <div style={{ fontSize: 13, color: "#6b7280" }}>
-        No transfers found yet.
-      </div>
-    );
-  }
+function RecentTransfersTable({ rows }) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.max(1, Math.ceil(safeRows.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return safeRows.slice(start, end);
+  }, [safeRows, page, pageSize]);
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>Transfer #</th>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>From</th>
-            <th style={thStyle}>To</th>
-            <th style={thStyle}>Quantity</th>
-            <th style={thStyle}>From qty after</th>
-            <th style={thStyle}>To qty after</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((t) => (
-            <tr key={t.transfer_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={tdStyle}>{t.transfer_id}</td>
-              <td style={tdStyle}>{t.product_name}</td>
-              <td style={tdStyle}>{t.from_location_name}</td>
-              <td style={tdStyle}>{t.to_location_name}</td>
-              <td style={tdStyle}>{t.quantity}</td>
-              <td style={tdStyle}>{t.from_quantity_on_hand}</td>
-              <td style={tdStyle}>{t.to_quantity_on_hand}</td>
+    <div>
+      {/* --- table --- */}
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={thStyle}>Transfer #</th>
+              <th style={thStyle}>Product</th>
+              <th style={thStyle}>From</th>
+              <th style={thStyle}>To</th>
+              <th style={thStyle}>Quantity</th>
+              <th style={thStyle}>From qty after</th>
+              <th style={thStyle}>To qty after</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {pagedRows.map((t) => (
+              <tr
+                key={`${t.transfer_id ?? "na"}-${t.created_at ?? ""}-${t.product_id ?? ""}-${t.from_location_id ?? ""}-${t.to_location_id ?? ""}`}
+                style={{ borderTop: "1px solid #e5e7eb" }}
+              >
+                <td style={tdStyle}>{t.transfer_id ?? "-"}</td>
+                <td style={tdStyle}>{t.product_name ?? "-"}</td>
+                <td style={tdStyle}>{t.from_location_name ?? "-"}</td>
+                <td style={tdStyle}>{t.to_location_name ?? "-"}</td>
+                <td style={tdStyle}>
+                  {Number.isFinite(Number(t.quantity)) ? Math.abs(Number(t.quantity)) : "-"}
+                </td>
+
+                {/* keep existing fallbacks to avoid empty cells */}
+                <td style={tdStyle}>
+                  {t.from_quantity_on_hand ?? t.from_qty_after ?? t.from_quantity_after ?? "-"}
+                </td>
+                <td style={tdStyle}>
+                  {t.to_quantity_on_hand ?? t.to_qty_after ?? t.to_quantity_after ?? "-"}
+                </td>
+              </tr>
+            ))}
+
+            {pagedRows.length === 0 && (
+              <tr style={{ borderTop: "1px solid #e5e7eb" }}>
+                <td colSpan={7} style={{ ...tdStyle, textAlign: "center", color: "#6b7280" }}>
+                  No transfers
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
+            Page {page} of {totalPages} · {safeRows.length} transfers
+          </span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}
+
 
 const thStyle = {
   textAlign: "left",
@@ -425,5 +528,7 @@ const tdStyle = {
   padding: "6px 10px",
   color: "#374151",
 };
+
+
 
 export default TransfersPage;

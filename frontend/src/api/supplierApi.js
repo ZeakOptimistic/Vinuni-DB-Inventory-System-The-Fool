@@ -24,6 +24,21 @@ export const supplierApi = {
     return res.data; // { count, next, previous, results }
   },
 
+  async listAll({ search = "", ordering = "name", status = "", pageSize = 200 } = {}) {
+    let page = 1;
+    let out = [];
+
+    while (true) {
+      const data = await this.list({ page, pageSize, search, ordering, status });
+      const results = Array.isArray(data) ? data : (data?.results || []);
+      out = out.concat(results);
+
+      if (Array.isArray(data) || !data?.next) break;
+      page += 1;
+    }
+    return out;
+  },
+
   async get(id) {
     const res = await httpClient.get(`/api/suppliers/${id}/`);
     return res.data;

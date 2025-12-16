@@ -21,7 +21,7 @@ export const transferApi = {
     return res.data;
   },
 
-  async list({ limit = 50 } = {}) {
+  async list({ limit = 5000 } = {}) {
     const res = await httpClient.get("/api/transfers/", {
       params: { limit },
     });

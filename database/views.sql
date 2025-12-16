@@ -16,6 +16,8 @@ SELECT
     l.name        AS location_name,
     il.quantity_on_hand,
     p.reorder_level,
+    p.unit_price,
+    (COALESCE(il.quantity_on_hand, 0) * COALESCE(p.unit_price, 0)) AS stock_value,
     (il.quantity_on_hand < p.reorder_level) AS is_below_reorder_level
 FROM inventory_level AS il
 JOIN product  AS p ON p.product_id   = il.product_id
@@ -27,7 +29,7 @@ SELECT *
 FROM view_stock_per_location
 WHERE quantity_on_hand < reorder_level;
 
--- 3. (Optional) Top selling products in the last 30 days
+-- 3. Top selling products in the last 30 days
 CREATE VIEW view_top_selling_products_last_30_days AS
 SELECT
     si.product_id,

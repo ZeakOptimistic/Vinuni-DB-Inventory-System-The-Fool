@@ -69,15 +69,15 @@ const PurchaseOrderFormModal = ({ open, onClose, onCreated }) => {
     const fetchLookups = async () => {
       setLoadingLookups(true);
       try {
-        const [supData, locData, prodData] = await Promise.all([
-          supplierApi.list({ pageSize: 1000, status: "ACTIVE"}),
-          locationApi.list({ pageSize: 1000, status: "ACTIVE" }),
-          productApi.list({ pageSize: 1000, status: "ACTIVE" }),
+        const [supList, locList, prodList] = await Promise.all([
+          supplierApi.listAll({ status: "ACTIVE"}),
+          locationApi.listAll({ status: "ACTIVE" }),
+          productApi.listAll({ status: "ACTIVE" }),
         ]);
 
-        setSuppliers(supData.results || supData || []);
-        setLocations(locData.results || locData || []);
-        setProducts(prodData.results || prodData || []);
+        setSuppliers(supList);
+        setLocations(locList);
+        setProducts(prodList);
       } catch (err) {
         console.error(err);
         setError("Failed to load suppliers/locations/products.");
@@ -124,7 +124,9 @@ const PurchaseOrderFormModal = ({ open, onClose, onCreated }) => {
         (it) =>
           it.product_id &&
           it.ordered_qty &&
-          Number(it.ordered_qty) > 0
+          Number(it.ordered_qty) > 0 &&
+          it.unit_price !== "" &&
+          Number(it.unit_price) >= 0
       ),
     [items]
   );
@@ -164,8 +166,7 @@ const PurchaseOrderFormModal = ({ open, onClose, onCreated }) => {
       items: validItems.map((it) => ({
         product_id: Number(it.product_id),
         ordered_qty: Number(it.ordered_qty),
-        // unit_price is optional; backend may use product unit_price if null
-        unit_price: it.unit_price ? String(it.unit_price) : null,
+        unit_price: String(it.unit_price),
       })),
     };
 
@@ -327,98 +328,107 @@ const PurchaseOrderFormModal = ({ open, onClose, onCreated }) => {
             </div>
           )}
 
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-                background: "#f9fafb",
-                borderRadius: 8,
-                overflow: "hidden",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th style={thItemStyle}>Product</th>
-                  <th style={thItemStyle}>Quantity</th>
-                  <th style={thItemStyle}>Unit price</th>
-                  <th style={thItemStyle}>Line total</th>
-                  <th style={thItemStyle}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((it, index) => {
-                  const qty = Number(it.ordered_qty) || 0;
-                  const price = parseFloat(it.unit_price || "0") || 0;
-                  const lineTotal = qty * price;
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {items.map((it, index) => {
+              const qty = Number(it.ordered_qty) || 0;
+              const price = parseFloat(it.unit_price || "0") || 0;
+              const lineTotal = qty * price;
 
-                  return (
-                    <tr key={index}>
-                      <td style={tdItemStyle}>
-                        <select
-                          className="form-input"
-                          value={it.product_id}
-                          onChange={(e) =>
-                            handleChangeItem(index, "product_id", e.target.value)
-                          }
-                        >
-                          <option value="">Select product</option>
-                          {products.map((p) => (
-                            <option key={p.product_id} value={p.product_id}>
-                              {p.name} ({p.sku})
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td style={tdItemStyle}>
-                        <input
-                          type="number"
-                          min="1"
-                          className="form-input"
-                          value={it.ordered_qty}
-                          onChange={(e) =>
-                            handleChangeItem(index, "ordered_qty", e.target.value)
-                          }
-                        />
-                      </td>
-                      <td style={tdItemStyle}>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="form-input"
-                          value={it.unit_price}
-                          onChange={(e) =>
-                            handleChangeItem(index, "unit_price", e.target.value)
-                          }
-                          placeholder="Optional"
-                        />
-                      </td>
-                      <td style={tdItemStyle}>
-                        {lineTotal > 0 ? `${lineTotal.toFixed(2)} ₫` : "-"}
-                      </td>
-                      <td style={tdItemStyle}>
-                        {items.length > 1 && (
-                          <button
-                            type="button"
-                            className="btn btn-outline"
-                            style={{
-                              fontSize: 12,
-                              padding: "4px 8px",
-                              borderColor: "#fecaca",
-                            }}
-                            onClick={() => handleRemoveItem(index)}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div
+                  key={index}
+                  style={{
+                    background: "#f9fafb",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  {/* Row 1: Product */}
+                  <label className="form-label" style={{ marginBottom: 8 }}>
+                    Product
+                    <select
+                      className="form-input"
+                      value={it.product_id}
+                      onChange={(e) => {
+                        const pid = e.target.value;
+                        const p = products.find(x => String(x.product_id) === String(pid));
+
+                        setItems(prev => prev.map((row, i) => {
+                          if (i !== index) return row;
+                          return {
+                            ...row,
+                            product_id: pid,
+                            unit_price: row.unit_price === "" ? String(p?.unit_price ?? "") : row.unit_price,
+                          };
+                        }));
+                      }}
+                    >
+                      <option value="">Select product</option>
+                      {products.map((p) => (
+                        <option key={p.product_id} value={p.product_id}>
+                          {p.name} ({p.sku})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Row 2: Qty + Unit price */}
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <label className="form-label" style={{ width: 280 }}>
+                      Quantity
+                      <input
+                        type="number"
+                        min="1"
+                        className="form-input"
+                        value={it.ordered_qty}
+                        onChange={(e) => handleChangeItem(index, "ordered_qty", e.target.value)}
+                      />
+                    </label>
+
+                    <label className="form-label" style={{ width: 280 }}>
+                      Unit price (optional)
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="form-input"
+                        value={it.unit_price}
+                        onChange={(e) => handleChangeItem(index, "unit_price", e.target.value)}
+                        placeholder="Optional"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Row 3: Line total + Remove */}
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ fontSize: 13, color: "#4b5563" }}>
+                      Line total:{" "}
+                      <strong>{lineTotal > 0 ? `${lineTotal.toFixed(2)} ₫` : "-"}</strong>
+                    </div>
+
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ fontSize: 12, padding: "4px 10px", borderColor: "#fecaca" }}
+                        onClick={() => handleRemoveItem(index)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Estimated total */}

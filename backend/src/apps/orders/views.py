@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from collections import defaultdict
+from apps.inventory.models import InventoryLevel
 
 from .serializers import (
     SalesOrderCreateSerializer,
@@ -37,7 +39,13 @@ class SalesOrderListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        orders = SalesOrder.objects.all().order_by("-created_at")[:50]
+        limit = request.query_params.get("limit", 5000)
+        try:
+            limit = min(max(int(limit), 1), 5000)
+        except Exception:
+            limit = 5000
+
+        orders = SalesOrder.objects.all().order_by("-created_at")[:limit]
         serializer = SalesOrderSerializer(orders, many=True)
         return Response(serializer.data)
 
@@ -121,7 +129,13 @@ class PurchaseOrderListCreateView(APIView):
         return [IsManagerOrAdmin()]
 
     def get(self, request):
-        orders = PurchaseOrder.objects.all().order_by("-created_at")[:50]
+        limit = request.query_params.get("limit", 5000)
+        try:
+            limit = min(max(int(limit), 1), 5000)
+        except Exception:
+            limit = 5000
+
+        orders = PurchaseOrder.objects.all().order_by("-created_at")[:limit]
         serializer = PurchaseOrderSerializer(orders, many=True)
         return Response(serializer.data)
 
@@ -185,7 +199,7 @@ class PurchaseOrderReceiveAllView(APIView):
         items_to_update = []
 
         for item in items:
-            remaining = item.ordered_qty - item.received_qty
+            remaining = (item.ordered_qty or 0) - (item.received_qty or 0)
             if remaining <= 0:
                 continue
 
@@ -208,24 +222,36 @@ class PurchaseOrderReceiveAllView(APIView):
             items_to_update.append(item)
 
         if not movements:
-            return Response(
-                {"detail": "All items in PO have been received in full."},
-                status=status.HTTP_400_BAD_REQUEST,
+            # Nothing to receive, but still sync status (maybe old data had wrong status)
+            all_items = PurchaseOrderItem.objects.filter(po=po)
+            all_received = all(
+                (item.received_qty or 0) >= (item.ordered_qty or 0)
+                for item in all_items
             )
+            po.status = "CLOSED" if all_received else "PARTIALLY_RECEIVED"
+            po.save(update_fields=["status"])
+
+            po.refresh_from_db()
+            data = PurchaseOrderSerializer(po).data
+            return Response(data, status=status.HTTP_200_OK)
 
         with transaction.atomic():
             # 1) Record stock movements
             StockMovement.objects.bulk_create(movements)
 
             # 2) Update received_qty for PO lines
-            PurchaseOrderItem.objects.bulk_update(items_to_update, ["received_qty"])
+            for it in items_to_update:
+                PurchaseOrderItem.objects.filter(po=po, product_id=it.product_id).update(
+                    received_qty=it.received_qty
+                )
+
 
             # 3) Update the Purchase Order status after receiving the goods.
             all_items = PurchaseOrderItem.objects.filter(po=po)
 
             # Check if all lines have been received.
             all_received = all(
-                item.ordered_qty == item.received_qty
+                (item.received_qty or 0) >= (item.ordered_qty or 0)
                 for item in all_items
             )
 
@@ -404,43 +430,122 @@ class TransferStockView(APIView):
         )
 
     def get(self, request):
-        limit = request.query_params.get("limit", 50)
+        limit = request.query_params.get("limit", 5000)
         try:
-            limit = min(max(int(limit), 1), 200)
+            limit = min(max(int(limit), 1), 5000)
         except Exception:
-            limit = 50
+            limit = 5000
 
+        # 1) get TRANSFER_OUT (main history)
         out_rows = list(
             StockMovement.objects.select_related("product", "location")
-            .filter(movement_type="TRANSFER_OUT", related_document_type="TRANSFER")
+            .filter(
+                movement_type="TRANSFER_OUT",
+                related_document_type="TRANSFER",
+            )
             .order_by("-created_at")[:limit]
         )
 
-        transfer_ids = [r.related_document_id for r in out_rows]
+        # 2) map to TRANSFER_IN
+        # prioritize matching by out_mv.movement_id (new standard), fallback to related_document_id (old data)
+        key_ids = set()
+        for r in out_rows:
+            key_ids.add(r.movement_id)
+            if r.related_document_id:
+                key_ids.add(r.related_document_id)
+
         in_rows = list(
             StockMovement.objects.select_related("location")
             .filter(
                 movement_type="TRANSFER_IN",
                 related_document_type="TRANSFER",
-                related_document_id__in=transfer_ids,
+                related_document_id__in=list(key_ids),
             )
         )
         in_map = {r.related_document_id: r for r in in_rows}
 
+        # 3) prepare set of (product, location) to compute historical qty_after
+        pairs = set()
+        for out_mv in out_rows:
+            pairs.add((out_mv.product_id, out_mv.location_id))
+            in_mv = in_map.get(out_mv.movement_id) or in_map.get(out_mv.related_document_id)
+            if in_mv:
+                pairs.add((in_mv.product_id, in_mv.location_id))
+
+        product_ids = {p for (p, _) in pairs}
+        location_ids = {l for (_, l) in pairs}
+
+        # current qty snapshot
+        il_rows = InventoryLevel.objects.filter(
+            product_id__in=product_ids,
+            location_id__in=location_ids,
+        )
+        current_qty = {(il.product_id, il.location_id): il.quantity_on_hand for il in il_rows}
+
+        # find earliest movement_date in out_rows
+        if out_rows:
+            earliest_dt = min(r.movement_date for r in out_rows)
+        else:
+            earliest_dt = timezone.now()
+
+        # 4) in order to compute historical qty_after
+        move_rows = list(
+            StockMovement.objects.filter(
+                product_id__in=product_ids,
+                location_id__in=location_ids,
+                movement_date__gte=earliest_dt,
+                movement_type__in=[
+                    "PURCHASE_RECEIPT",
+                    "SALES_ISSUE",
+                    "ADJUSTMENT",
+                    "TRANSFER_OUT",
+                    "TRANSFER_IN",
+                ],
+            ).order_by("-movement_date", "-movement_id")
+        )
+
+        def delta(mv):
+            q = mv.quantity or 0
+            if mv.movement_type in ("PURCHASE_RECEIPT", "TRANSFER_IN", "ADJUSTMENT"):
+                return q
+            if mv.movement_type in ("SALES_ISSUE", "TRANSFER_OUT"):
+                return -q
+            return 0
+
+        future_sum = defaultdict(int)
+        qty_after_by_movement_id = {}
+
+        for mv in move_rows:
+            k = (mv.product_id, mv.location_id)
+            now_qty = current_qty.get(k, 0)
+            qty_after_by_movement_id[mv.movement_id] = now_qty - future_sum[k]
+            future_sum[k] += delta(mv)
+
+        # 5) return data
         data = []
         for out_mv in out_rows:
-            in_mv = in_map.get(out_mv.related_document_id)
+            in_mv = in_map.get(out_mv.movement_id) or in_map.get(out_mv.related_document_id)
+
             data.append(
                 {
-                    "transfer_id": out_mv.related_document_id,
+                    # IMPORTANT: show real unique id of the transfer
+                    "transfer_id": out_mv.movement_id,
+
                     "product_id": out_mv.product_id,
                     "product_name": getattr(out_mv.product, "name", None),
+
                     "from_location_id": out_mv.location_id,
                     "from_location_name": getattr(out_mv.location, "name", None),
+
                     "to_location_id": getattr(in_mv, "location_id", None),
                     "to_location_name": getattr(getattr(in_mv, "location", None), "name", None),
+
                     "quantity": out_mv.quantity,
                     "created_at": out_mv.created_at,
+
+                    # historical qty after (after the movement)
+                    "from_qty_after": qty_after_by_movement_id.get(out_mv.movement_id),
+                    "to_qty_after": qty_after_by_movement_id.get(getattr(in_mv, "movement_id", None)),
                 }
             )
 

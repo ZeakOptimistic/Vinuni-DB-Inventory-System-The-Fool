@@ -4,6 +4,13 @@ import { useAuth } from "../../hooks/useAuth";
 import { locationApi } from "../../api/locationApi";
 import { reportApi } from "../../api/reportApi";
 
+const normText = (v) => String(v ?? "").trim().toLowerCase();
+
+const toNumber = (v, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
 const TABS = [
   { id: "low-stock", label: "Low stock" },
   { id: "stock-per-location", label: "Stock per location" },
@@ -44,12 +51,7 @@ const ReportsPage = () => {
 
     const loadLocations = async () => {
       try {
-        const res = await locationApi.list({
-          page: 1,
-          pageSize: 1000,
-          ordering: "name",
-        });
-        const list = res.results || res || [];
+        const list = await locationApi.listAll({status: "ACTIVE", ordering: "name",});
         setLocations(list);
       } catch (err) {
         console.error(err);
@@ -105,7 +107,18 @@ const ReportsPage = () => {
   if (!isStaff) {
     return (
       <div>
-        <h2 style={{ marginBottom: 16 }}>Reports</h2>
+        <div
+          style={{
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Reports</h2>
+
+        </div>
         <div
           style={{
             padding: 12,
@@ -130,7 +143,18 @@ const ReportsPage = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 16 }}>Reports</h2>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Reports</h2>
+
+      </div>
 
       {/* Tabs */}
       <div
@@ -186,7 +210,7 @@ const ReportsPage = () => {
             placeholder="Search by product name or SKU..."
           />
         </div>
-        
+
         <label
           className="form-label"
           style={{ marginBottom: 0, minWidth: 220 }}
@@ -260,15 +284,53 @@ const ReportsPage = () => {
 const LowStockReportTable = ({ rows, searchTerm }) => {
 
   const filteredRows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return rows;
+    const q = normText(searchTerm);
+    const base = Array.isArray(rows) ? rows : [];
 
-    return rows.filter((r) => {
-      const name = String(r.product_name || "").toLowerCase();
-      const sku = String(r.sku || "").toLowerCase();
-      return name.includes(q) || sku.includes(q);
+    const filtered = !q
+      ? base
+      : base.filter((r) => {
+          const name = normText(r.product_name ?? r.name);
+          const sku  = normText(r.sku ?? r.product_sku);
+          return name.includes(q) || sku.includes(q);
+        });
+
+    // Sort: on hand ASC (lowest first), then product name, sku
+    return [...filtered].sort((a, b) => {
+      const aOnHand = toNumber(a.quantity_on_hand ?? a.stock_quantity, Number.POSITIVE_INFINITY);
+      const bOnHand = toNumber(b.quantity_on_hand ?? b.stock_quantity, Number.POSITIVE_INFINITY);
+      if (aOnHand !== bOnHand) return aOnHand - bOnHand;
+
+      // tie-break: product name, sku
+      const an = normText(a.product_name ?? a.name);
+      const bn = normText(b.product_name ?? b.name);
+      if (an !== bn) return an.localeCompare(bn);
+
+      const asku = normText(a.sku ?? a.product_sku);
+      const bsku = normText(b.sku ?? b.product_sku);
+      return asku.localeCompare(bsku);
     });
   }, [rows, searchTerm]);
+
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    setPage(1); // change searchTerm back page 1
+  }, [searchTerm, pageSize]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize]);
 
   if (!rows || rows.length === 0) {
     return (
@@ -279,60 +341,159 @@ const LowStockReportTable = ({ rows, searchTerm }) => {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>SKU</th>
-            <th style={thStyle}>Location</th>
-            <th style={thStyle}>On hand</th>
-            <th style={thStyle}>Reorder level</th>
-            <th style={thStyle}>Stock value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.map((r) => (
-            <tr
-              key={`${r.product_id}-${r.location_id}`}
-              style={{ borderTop: "1px solid #e5e7eb" }}
-            >
-              <td style={tdStyle}>{r.product_name}</td>
-              <td style={tdStyle}>{r.sku}</td>
-              <td style={tdStyle}>{r.location_name}</td>
-              <td style={tdStyle}>{r.quantity_on_hand}</td>
-              <td style={tdStyle}>{r.reorder_level}</td>
-              <td style={tdStyle}>
-                {r.stock_value != null
-                  ? formatCurrency(r.stock_value)
-                  : "-"}
-              </td>
+    <>
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={thStyle}>Product</th>
+              <th style={thStyle}>SKU</th>
+              <th style={thStyle}>Location</th>
+              <th style={thStyle}>On hand</th>
+              <th style={thStyle}>Reorder level</th>
+              <th style={thStyle}>Stock value</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {pagedRows.map((r) => (
+              <tr
+                key={`${r.product_id}-${r.location_id}`}
+                style={{ borderTop: "1px solid #e5e7eb" }}
+              >
+                <td style={tdStyle}>{r.product_name}</td>
+                <td style={tdStyle}>{r.sku}</td>
+                <td style={tdStyle}>{r.location_name}</td>
+                <td style={tdStyle}>{r.quantity_on_hand}</td>
+                <td style={tdStyle}>{r.reorder_level}</td>
+                <td style={tdStyle}>
+                  {r.stock_value != null
+                    ? formatCurrency(r.stock_value)
+                    : "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          {/* Left info – giống sample */}
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
+            Page{" "}
+            {filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1}
+            {" - "}
+            {Math.min(page * pageSize, filteredRows.length)}
+            {" of "}
+            {filteredRows.length}
+          </span>
+          {/* Right controls – giống sample */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
 const StockPerLocationTable = ({ rows, searchTerm }) => {
 
   const filteredRows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return rows;
+    const q = normText(searchTerm);
+    const base = Array.isArray(rows) ? rows : [];
 
-    return rows.filter((r) => {
-      const name = String(r.product_name || "").toLowerCase();
-      const sku = String(r.sku || "").toLowerCase();
-      return name.includes(q) || sku.includes(q);
+    const filtered = !q
+      ? base
+      : base.filter((r) => {
+          const name = normText(r.product_name);
+          const sku  = normText(r.sku);
+          const loc  = normText(r.location_name);
+          return name.includes(q) || sku.includes(q) || loc.includes(q);
+        });
+
+    // Sort: product name A->Z
+    return [...filtered].sort((a, b) => {
+      const an = normText(a.product_name);
+      const bn = normText(b.product_name);
+      if (an !== bn) return an.localeCompare(bn);
+
+      // tie-break: location A->Z
+      const al = normText(a.location_name);
+      const bl = normText(b.location_name);
+      if (al !== bl) return al.localeCompare(bl);
+
+      const asku = normText(a.sku);
+      const bsku = normText(b.sku);
+      return asku.localeCompare(bsku);
     });
   }, [rows, searchTerm]);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    setPage(1); // change searchTerm back page 1
+  }, [searchTerm, pageSize]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize]);
 
   if (!rows || rows.length === 0) {
     return (
@@ -343,60 +504,161 @@ const StockPerLocationTable = ({ rows, searchTerm }) => {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>SKU</th>
-            <th style={thStyle}>Location</th>
-            <th style={thStyle}>On hand</th>
-            <th style={thStyle}>Reorder level</th>
-            <th style={thStyle}>Stock value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.map((r) => (
-            <tr
-              key={`${r.product_id}-${r.location_id}`}
-              style={{ borderTop: "1px solid #e5e7eb" }}
-            >
-              <td style={tdStyle}>{r.product_name}</td>
-              <td style={tdStyle}>{r.sku}</td>
-              <td style={tdStyle}>{r.location_name}</td>
-              <td style={tdStyle}>{r.quantity_on_hand}</td>
-              <td style={tdStyle}>{r.reorder_level}</td>
-              <td style={tdStyle}>
-                {r.stock_value != null
-                  ? formatCurrency(r.stock_value)
-                  : "-"}
-              </td>
+    <>
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={thStyle}>Product</th>
+              <th style={thStyle}>SKU</th>
+              <th style={thStyle}>Location</th>
+              <th style={thStyle}>On hand</th>
+              <th style={thStyle}>Reorder level</th>
+              <th style={thStyle}>Stock value</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {pagedRows.map((r) => (
+              <tr
+                key={`${r.product_id}-${r.location_id}`}
+                style={{ borderTop: "1px solid #e5e7eb" }}
+              >
+                <td style={tdStyle}>{r.product_name}</td>
+                <td style={tdStyle}>{r.sku}</td>
+                <td style={tdStyle}>{r.location_name}</td>
+                <td style={tdStyle}>{r.quantity_on_hand}</td>
+                <td style={tdStyle}>{r.reorder_level}</td>
+                <td style={tdStyle}>
+                  {r.stock_value != null
+                    ? formatCurrency(r.stock_value)
+                    : "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          {/* Left info – giống sample */}
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
+            Showing{" "}
+            {filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1}
+            {" - "}
+            {Math.min(page * pageSize, filteredRows.length)}
+            {" of "}
+            {filteredRows.length}
+          </span>
+
+          {/* Right controls – giống sample */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+    </>
   );
 };
 
 const TopSellingReportTable = ({ rows , searchTerm }) => {
 
   const filteredRows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    if (!q) return rows;
+    const q = normText(searchTerm);
+    const base = Array.isArray(rows) ? rows : [];
 
-    return rows.filter((r) => {
-      const name = String(r.product_name || "").toLowerCase();
-      const sku = String(r.sku || "").toLowerCase();
-      return name.includes(q) || sku.includes(q);
+    const filtered = !q
+      ? base
+      : base.filter((r) => {
+          const name = normText(r.product_name);
+          const sku  = normText(r.sku);
+          return name.includes(q) || sku.includes(q);
+        });
+
+    // Sort: total_revenue DESC (highest first)
+    return [...filtered].sort((a, b) => {
+      const ar = toNumber(a.total_revenue, 0);
+      const br = toNumber(b.total_revenue, 0);
+      if (ar !== br) return br - ar;
+
+      // tie-break: quantity sold DESC then name A->Z
+      const aq = toNumber(a.total_qty_sold, 0);
+      const bq = toNumber(b.total_qty_sold, 0);
+      if (aq !== bq) return bq - aq;
+
+      const an = normText(a.product_name);
+      const bn = normText(b.product_name);
+      return an.localeCompare(bn);
     });
   }, [rows, searchTerm]);
+
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  useEffect(() => {
+    setPage(1); // change searchTerm back page 1
+  }, [searchTerm, pageSize]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize]);
 
   if (!rows || rows.length === 0) {
     return (
@@ -408,38 +670,101 @@ const TopSellingReportTable = ({ rows , searchTerm }) => {
 
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>SKU</th>
-            <th style={thStyle}>Total quantity sold</th>
-            <th style={thStyle}>Total revenue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.map((r) => (
-            <tr key={r.product_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={tdStyle}>{r.product_name}</td>
-              <td style={tdStyle}>{r.sku}</td>
-              <td style={tdStyle}>{r.total_qty_sold}</td>
-              <td style={tdStyle}>
-                {r.total_revenue != null
-                  ? formatCurrency(r.total_revenue)
-                  : "-"}
-              </td>
+    <>
+      <div style={{ overflowX: "auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: 13,
+          }}
+        >
+          <thead>
+            <tr>
+              <th style={thStyle}>Product</th>
+              <th style={thStyle}>SKU</th>
+              <th style={thStyle}>Total quantity sold</th>
+              <th style={thStyle}>Total revenue</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {pagedRows.map((r) => (
+              <tr key={r.product_id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                <td style={tdStyle}>{r.product_name}</td>
+                <td style={tdStyle}>{r.sku}</td>
+                <td style={tdStyle}>{r.total_qty_sold}</td>
+                <td style={tdStyle}>
+                  {r.total_revenue != null
+                    ? formatCurrency(r.total_revenue)
+                    : "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}
+        >
+          {/* Left info – giống sample */}
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
+            Showing{" "}
+            {filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1}
+            {" - "}
+            {Math.min(page * pageSize, filteredRows.length)}
+            {" of "}
+            {filteredRows.length}
+          </span>
+
+          {/* Right controls – giống sample */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </button>
+
+            <button
+              className="btn btn-outline"
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+    </>
   );
 };
 

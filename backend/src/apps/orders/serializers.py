@@ -218,7 +218,7 @@ class PurchaseOrderItemInputSerializer(serializers.Serializer):
     unit_price = serializers.DecimalField(
         max_digits=10,
         decimal_places=2,
-        required=False,
+        required=True,
     )
 
     def validate_product_id(self, value):
@@ -345,7 +345,7 @@ class PurchaseOrderCreateSerializer(serializers.Serializer):
                 )
 
             ordered_qty = item["ordered_qty"]
-            unit_price = item.get("unit_price") or product.unit_price
+            unit_price = item.get("unit_price")
 
             line_total = unit_price * ordered_qty
             total_amount += line_total

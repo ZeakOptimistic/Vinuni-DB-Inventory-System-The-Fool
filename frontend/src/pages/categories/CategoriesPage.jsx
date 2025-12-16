@@ -4,8 +4,6 @@ import { categoryApi } from "../../api/categoryApi";
 import CategoryFormModal from "../../components/categories/CategoryFormModal";
 import { useAuth } from "../../hooks/useAuth";
 
-const PAGE_SIZE = 10;
-
 /**
  * CategoriesPage:
  * - List, search, sort, paginate categories
@@ -18,6 +16,7 @@ const CategoriesPage = () => {
 
   const [categories, setCategories] = useState([]);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [count, setCount] = useState(0);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -29,7 +28,7 @@ const CategoriesPage = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-  const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
+  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -37,7 +36,7 @@ const CategoriesPage = () => {
     try {
       const data = await categoryApi.list({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         search,
         ordering,
       });
@@ -54,7 +53,7 @@ const CategoriesPage = () => {
   useEffect(() => {
     fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, ordering]);
+  }, [page, pageSize, search, ordering]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -154,6 +153,7 @@ const CategoriesPage = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 12,
         }}
       >
         <h2 style={{ margin: 0 }}>Categories</h2>
@@ -343,7 +343,24 @@ const CategoriesPage = () => {
           <span style={{ fontSize: 13, color: "#6b7280" }}>
             Page {page} of {totalPages} · {count} categories
           </span>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
             <button
               className="btn btn-outline"
               type="button"

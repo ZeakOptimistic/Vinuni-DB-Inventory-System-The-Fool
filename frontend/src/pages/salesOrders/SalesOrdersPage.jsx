@@ -24,8 +24,6 @@ const SalesOrdersPage = () => {
   const canCancelSalesOrders =
     user && (user.role === "ADMIN" || user.role === "MANAGER");
 
-
-
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -38,6 +36,8 @@ const SalesOrdersPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // ---------------- Data loading ----------------
 
@@ -81,6 +81,25 @@ const SalesOrdersPage = () => {
       return matchCustomer && matchStatus && matchLocation;
     });
   }, [orders, filterCustomer, filterStatus, filterLocation]);
+
+  // ---------------- Pagination (client-side) ----------------
+
+  // Reset back to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [filterCustomer, filterStatus, filterLocation]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
+
+  // If current page exceeds total pages (due to filtering), reset to last valid page
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedOrders = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredOrders.slice(start, start + pageSize);
+  }, [filteredOrders, page, pageSize]);
 
   // ---------------- Handlers ----------------
 
@@ -229,166 +248,236 @@ const SalesOrdersPage = () => {
 
       {/* Table */}
       {!loading && filteredOrders.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: 14,
-              background: "#fff",
-              borderRadius: 12,
-              overflow: "hidden",
-            }}
-          >
-            <thead style={{ background: "#f9fafb" }}>
-              <tr>
-                <th style={thStyle}>SO #</th>
-                <th style={thStyle}>Customer</th>
-                <th style={thStyle}>Location</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}>Order date</th>
-                <th style={thStyle}>Total</th>
-                <th style={thStyle}>Created at</th>
-                <th style={thStyle}>Items</th>
-                <th style={thStyle}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((o) => {
-                const isExpanded = expandedIds.has(o.so_id);
-                const normalizedStatus = (o.status || "").toUpperCase();
-                const isCancelledOrClosed =
-                  normalizedStatus === "CANCELLED" || normalizedStatus === "CLOSED";
+        <>
 
-                return (
-                  <React.Fragment key={o.so_id}>
-                    <tr
-                      style={
-                        isCancelledOrClosed
-                          ? { opacity: 0.6, background: "#f9fafb" }
-                          : undefined
-                      }
-                    >
-                      <td style={tdStyle}>{o.so_id}</td>
-                      <td style={tdStyle}>{o.customer_name || "-"}</td>
-                      <td style={tdStyle}>{o.location_name || "-"}</td>
-                      <td style={tdStyle}>{renderStatusBadge(o.status)}</td>
-                      <td style={tdStyle}>{o.order_date || "-"}</td>
-                      <td style={tdStyle}>
-                        {o.total_amount != null ? o.total_amount : "-"}
-                      </td>
-                      <td style={tdStyle}>
-                        {o.created_at
-                          ? new Date(o.created_at).toLocaleString()
-                          : "-"}
-                      </td>
-                      <td style={tdStyle}>
-                        {o.items && o.items.length > 0 ? (
-                          <button
-                            style={{
-                              fontSize: 13,
-                              padding: "4px 8px",
-                            }}
-                            type="button"
-                            className="btn btn-xs btn-outline"
-                            onClick={() => toggleExpand(o.so_id)}
-                          >
-                            {isExpanded
-                              ? "Hide items"
-                              : `View items (${o.items.length})`}
-                          </button>
-                        ) : (
-                          <span style={{ color: "#6b7280" }}>No items</span>
-                        )}
-                      </td>
-                      <td style={tdStyle}>
-                        {canCancelSalesOrders && o.status === "CONFIRMED" ? (
-                          <button
-                            style={{
-                              fontSize: 13,
-                              padding: "4px 8px",
-                            }}
-                            type="button"
-                            className="btn btn-xs btn-danger"
-                            onClick={() => handleCancel(o)}
-                            disabled={cancellingId === o.so_id}
-                          >
-                            {cancellingId === o.so_id ? "Cancelling..." : "Cancel"}
-                          </button>
-                        ) : (
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 13,
-                              padding: "4px 8px",
-                              borderRadius: 999,
-                              border: "1px dashed #d1d5db",
-                              background: "#f9fafb",
-                              color: "#9ca3af",
-                              fontSize: 13,
-                              fontWeight: 500,
-                              letterSpacing: 0.3,
-                            }}>Cancelled</span>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 14,
+                background: "#fff",
+                borderRadius: 12,
+                overflow: "hidden",
+              }}
+            >
+              <thead style={{ background: "#f9fafb" }}>
+                <tr>
+                  <th style={thStyle}>SO #</th>
+                  <th style={thStyle}>Customer</th>
+                  <th style={thStyle}>Location</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Order date</th>
+                  <th style={thStyle}>Total</th>
+                  <th style={thStyle}>Created at</th>
+                  <th style={thStyle}>Items</th>
+                  <th style={thStyle}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedOrders.map((o) => {
+                  const isExpanded = expandedIds.has(o.so_id);
+
+                  const itemsTotal = (o.items || []).reduce(
+                    (sum, it) => sum + Number(it.line_total || 0),
+                    0
+                  );
+
+                  const normalizedStatus = (o.status || "").toUpperCase();
+                  const isCancelledOrClosed =
+                    normalizedStatus === "CANCELLED" || normalizedStatus === "CLOSED";
+
+                  return (
+                    <React.Fragment key={o.so_id}>
+                      <tr
+                        style={
+                          isCancelledOrClosed
+                            ? { opacity: 0.6, background: "#f9fafb" }
+                            : undefined
+                        }
+                      >
+                        <td style={tdStyle}>{o.so_id}</td>
+                        <td style={tdStyle}>{o.customer_name || "-"}</td>
+                        <td style={tdStyle}>{o.location_name || "-"}</td>
+                        <td style={tdStyle}>{renderStatusBadge(o.status)}</td>
+                        <td style={tdStyle}>{o.order_date || "-"}</td>
+                        <td style={tdStyle}>
+                          {o.total_amount != null ? o.total_amount : "-"}
+                        </td>
+                        <td style={tdStyle}>
+                          {o.created_at
+                            ? new Date(o.created_at).toLocaleString()
+                            : "-"}
+                        </td>
+                        <td style={tdStyle}>
+                          {o.items && o.items.length > 0 ? (
+                            <button
+                              style={{
+                                fontSize: 13,
+                                padding: "4px 8px",
+                              }}
+                              type="button"
+                              className="btn btn-xs btn-outline"
+                              onClick={() => toggleExpand(o.so_id)}
+                            >
+                              {isExpanded
+                                ? "Hide items"
+                                : `View items (${o.items.length})`}
+                            </button>
+                          ) : (
+                            <span style={{ color: "#6b7280" }}>No items</span>
                           )}
-                      </td>
-                    </tr>
-
-                    {isExpanded && o.items && o.items.length > 0 && (
-                      <tr>
-                        <td style={tdStyle} colSpan={8}>
-                          <table
-                            style={{
-                              width: "100%",
-                              borderCollapse: "collapse",
-                              fontSize: 13,
-                            }}
-                          >
-                            <thead>
-                              <tr>
-                                <th style={subThStyle}>Product</th>
-                                <th style={subThStyle}>SKU</th>
-                                <th style={subThStyle}>Quantity</th>
-                                <th style={subThStyle}>Unit price</th>
-                                <th style={subThStyle}>Discount</th>
-                                <th style={subThStyle}>Line total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {o.items.map((item) => (
-                                <tr key={item.item_id}>
-                                  <td style={subTdStyle}>
-                                    {item.product_name || "-"}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.product_sku || "-"}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.quantity}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.unit_price}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.discount_amount ?? "-"}
-                                  </td>
-                                  <td style={subTdStyle}>
-                                    {item.line_total}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                        </td>
+                        <td style={tdStyle}>
+                          {canCancelSalesOrders && o.status === "CONFIRMED" ? (
+                            <button
+                              style={{
+                                fontSize: 13,
+                                padding: "4px 8px",
+                              }}
+                              type="button"
+                              className="btn btn-xs btn-danger"
+                              onClick={() => handleCancel(o)}
+                              disabled={cancellingId === o.so_id}
+                            >
+                              {cancellingId === o.so_id ? "Cancelling..." : "Cancel"}
+                            </button>
+                          ) : (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 13,
+                                padding: "4px 8px",
+                                borderRadius: 999,
+                                border: "1px dashed #d1d5db",
+                                background: "#f9fafb",
+                                color: "#9ca3af",
+                                fontSize: 13,
+                                fontWeight: 500,
+                                letterSpacing: 0.3,
+                              }}>Cancelled</span>
+                            )}
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+
+                      {isExpanded && o.items && o.items.length > 0 && (
+                        <tr>
+                          <td style={tdStyle} colSpan={9}>
+                            <table
+                              style={{
+                                width: "100%",
+                                borderCollapse: "collapse",
+                                fontSize: 13,
+                              }}
+                            >
+                              <thead>
+                                <tr>
+                                  <th style={subThStyle}>Product</th>
+                                  <th style={subThStyle}>SKU</th>
+                                  <th style={subThStyle}>Quantity</th>
+                                  <th style={subThStyle}>Unit price</th>
+                                  <th style={subThStyle}>Line total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {o.items.map((item) => (
+                                  <tr key={item.item_id}>
+                                    <td style={subTdStyle}>
+                                      {item.product_name || "-"}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.product_sku || item.sku || "-"}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.quantity}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.unit_price}
+                                    </td>
+                                    <td style={subTdStyle}>
+                                      {item.line_total}
+                                    </td>
+                                  </tr>
+                                ))}
+                                <tr>
+                                  <td style={{ ...subTdStyle, fontWeight: 700 }} colSpan={4}>
+                                    Total
+                                  </td>
+                                  <td style={{ ...subTdStyle, fontWeight: 700 }}>
+                                    {o.total_amount ?? itemsTotal}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <>
+            {/* Pagination */}
+            {totalPages > 0 && (
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <span style={{ fontSize: 13, color: "#6b7280" }}>
+                  Page {page} of {totalPages} · {filteredOrders.length} orders
+                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <select
+                    className="form-input"
+                    style={{ width: 100 }}
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }}
+                  >
+                    {[10, 20, 50, 100].map((n) => (
+                      <option key={n} value={n}>
+                        {n}/page
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  >
+                    Previous
+                  </button>
+
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+
+        </>
+
       )}
 
       {/* Create SO modal */}

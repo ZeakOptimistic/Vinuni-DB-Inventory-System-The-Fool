@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { userApi } from "../../api/userApi";
 
-const PAGE_SIZE = 10;
 const TOKEN_KEY = "sipms_token";
 const USER_KEY = "sipms_user";
 const BACKUP_TOKEN_KEY = "sipms_admin_token_backup";
@@ -13,6 +12,7 @@ const UsersPage = () => {
   const [count, setCount] = useState(0);
 
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("-user_id");
@@ -24,7 +24,7 @@ const UsersPage = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
+  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
 
   const load = async () => {
     setLoading(true);
@@ -32,7 +32,7 @@ const UsersPage = () => {
     try {
       const data = await userApi.list({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         search,
         ordering,
       });
@@ -49,7 +49,7 @@ const UsersPage = () => {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, ordering]);
+  }, [page, pageSize, search, ordering]);
 
   const onNew = () => {
     setEditing(null);
@@ -352,20 +352,37 @@ const UsersPage = () => {
             Page {page} of {totalPages} · {count} users
           </span>
 
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
             <button
-              className="btn btn-outline"
               type="button"
+              className="btn btn-outline"
               onClick={handlePrevPage}
               disabled={page <= 1}
             >
               Previous
             </button>
+
             <button
-              className="btn btn-outline"
               type="button"
+              className="btn btn-outline"
               onClick={handleNextPage}
-              disabled={page >= totalPages}
+              disabled={totalPages === 0 || page >= totalPages}
             >
               Next
             </button>

@@ -67,13 +67,13 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
     const fetchLookups = async () => {
       setLoadingLookups(true);
       try {
-        const [locData, prodData] = await Promise.all([
-          locationApi.list({ pageSize: 1000, status: "ACTIVE" }),
-          productApi.list({ pageSize: 1000, status: "ACTIVE" }),
+        const [locList, prodList] = await Promise.all([
+          locationApi.listAll({status: "ACTIVE" }),
+          productApi.listAll({status: "ACTIVE" }),
         ]);
 
-        setLocations(locData.results || locData || []);
-        setProducts(prodData.results || prodData || []);
+        setLocations(locList);
+        setProducts(prodList);
       } catch (err) {
         console.error(err);
         setError("Failed to load locations and products.");
@@ -242,14 +242,13 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
       return;
     }
 
+    const customerName = (form.customer_name || "").trim();
+
     const payload = {
       location_id: Number(form.location_id),
       order_date: form.order_date || todayStr,
-      customer_name: form.customer_name.trim() || null,
-      items: validItems.map((it) => ({
-        product_id: Number(it.product_id),
-        quantity: Number(it.quantity),
-      })),
+      ...(customerName ? { customer_name: customerName } : {}), // empty -> omit
+      items: validItems,
     };
 
     try {
@@ -385,104 +384,108 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
             </div>
           )}
 
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 13,
-                background: "#f9fafb",
-                borderRadius: 8,
-                overflow: "hidden",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th style={thItemStyle}>Product</th>
-                  <th style={thItemStyle}>Quantity</th>
-                  <th style={thItemStyle}>Unit price</th>
-                  <th style={thItemStyle}>Line total</th>
-                  <th style={thItemStyle}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((it, index) => {
-                  const product = findProduct(it.product_id);
-                  const qty = Number(it.quantity) || 0;
-                  const price = product ? Number(product.unit_price || 0) : 0;
-                  const lineTotal = qty * price;
-                  const maxQty = it.product_id
-                    ? (availableQtyByProductId[Number(it.product_id)] || 0)
-                    : 0;
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+            {items.map((it, idx) => {
+              const product = products.find(
+                (p) => String(p.product_id) === String(it.product_id)
+              );
 
-                  return (
-                    <tr key={index}>
-                      <td style={tdItemStyle}>
-                        <select
-                          className="form-input"
-                          value={it.product_id}
-                          onChange={(e) =>
-                            handleChangeItem(index, "product_id", e.target.value)
-                          }
-                          disabled={!form.location_id || loadingStock}
-                        >
-                          <option value="">
-                            {!form.location_id ? "Select location first" : "Select product"}
-                          </option>
+              const maxQty = it.product_id
+                ? (availableQtyByProductId[Number(it.product_id)] ?? 0)
+                : null;
 
-                          {availableProducts.map((p) => {
-                            const avail = availableQtyByProductId[Number(p.product_id)] || 0;
-                            return (
-                              <option key={p.product_id} value={p.product_id}>
-                                {p.name} ({p.sku}) — {avail} available
-                              </option>
-                            );
-                          })}
+              // unit price is read-only from product
+              const unitPrice = product ? Number(product.unit_price || 0) : 0;
+              const qty = Number(it.quantity || 0);
+              const lineTotal = unitPrice * qty;
 
-                        </select>
-                      </td>
-                      <td style={tdItemStyle}>
-                        <input
-                          type="number"
-                          min="1"
-                          max={maxQty > 0 ? maxQty : undefined}
-                          className="form-input"
-                          value={it.quantity}
-                          onChange={(e) => handleChangeItem(index, "quantity", e.target.value)}
-                        />
-                        {it.product_id && Number(it.quantity || 0) > maxQty && (
-                          <div className="field-error">Max available: {maxQty}</div>
-                        )}
-                      </td>
-                      <td style={tdItemStyle}>
-                        {product
-                          ? `${product.unit_price} ₫`
-                          : "-"}
-                      </td>
-                      <td style={tdItemStyle}>
-                        {lineTotal > 0 ? `${lineTotal.toFixed(2)} ₫` : "-"}
-                      </td>
-                      <td style={tdItemStyle}>
-                        {items.length > 1 && (
-                          <button
-                            type="button"
-                            className="btn btn-outline"
-                            style={{
-                              fontSize: 12,
-                              padding: "4px 8px",
-                              borderColor: "#fecaca",
-                            }}
-                            onClick={() => handleRemoveItem(index)}
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div
+                  key={`${it.product_id || "p"}-${idx}`}
+                  style={{
+                    background: "#f9fafb",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  {/* Row 1: Product */}
+                  <label className="form-label" style={{ marginBottom: 8 }}>
+                    Product
+                    <select
+                      value={it.product_id}
+                      onChange={(e) => handleChangeItem(idx, "product_id", e.target.value)}
+                      className="form-input"
+                    >
+                      <option value="">Select product</option>
+                      {availableProducts.map((p) => (
+                        <option key={p.product_id} value={p.product_id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Row 2: Quantity + Unit price (same row like PO) */}
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <label className="form-label" style={{ width: 280 }}>
+                      Quantity
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxQty ?? undefined}
+                        value={it.quantity}
+                        onChange={(e) => handleChangeItem(idx, "quantity", e.target.value)}
+                        className="form-input"
+                      />
+                      {maxQty !== null && Number(it.quantity || 0) > maxQty && (
+                        <div style={{ marginTop: 4, fontSize: 12, color: "#b91c1c" }}>
+                          Max {maxQty}
+                        </div>
+                      )}
+                    </label>
+
+                    <label className="form-label" style={{ width: 280 }}>
+                      Unit price
+                      <input
+                        className="form-input"
+                        value={product ? unitPrice.toFixed(2) : "-"}
+                        readOnly
+                        disabled
+                      />
+                    </label>
+                  </div>
+
+                  {/* Row 3: Line total + Remove */}
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ fontSize: 13, color: "#4b5563" }}>
+                      Line total:{" "}
+                      <strong>{lineTotal > 0 ? `${lineTotal.toFixed(2)} ₫` : "-"}</strong>
+                    </div>
+
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ fontSize: 12, padding: "4px 10px", borderColor: "#fecaca" }}
+                        onClick={() => handleRemoveItem(idx)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+
+            })}
           </div>
 
           {/* Estimated total */}
@@ -525,17 +528,6 @@ const SalesOrderFormModal = ({ open, onClose, onCreated }) => {
       </div>
     </div>
   );
-};
-
-const thItemStyle = {
-  textAlign: "left",
-  padding: "6px 8px",
-  fontWeight: 600,
-  color: "#4b5563",
-};
-
-const tdItemStyle = {
-  padding: "4px 8px",
 };
 
 export default SalesOrderFormModal;

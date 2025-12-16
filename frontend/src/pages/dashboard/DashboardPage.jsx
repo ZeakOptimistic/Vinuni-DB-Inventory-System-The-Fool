@@ -92,7 +92,18 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 16 }}>Dashboard</h2>
+      <div
+        style={{
+          marginBottom: 16,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <h2 style={{ margin: 0 }}>DashBoard</h2>
+
+      </div>
 
       {role && (
         <div

@@ -4,8 +4,6 @@ import { productApi } from "../../api/productApi";
 import ProductFormModal from "../../components/products/ProductFormModal";
 import { useAuth } from "../../hooks/useAuth";
 
-const PAGE_SIZE = 10;
-
 /**
  * ProductsPage: view, search, sort, and basic CRUD for products.
  */
@@ -20,6 +18,8 @@ const ProductsPage = () => {
 
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [count, setCount] = useState(0);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -31,7 +31,7 @@ const ProductsPage = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-  const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
+  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -39,7 +39,7 @@ const ProductsPage = () => {
     try {
       const data = await productApi.list({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         search,
         ordering,
       });
@@ -56,7 +56,7 @@ const ProductsPage = () => {
   useEffect(() => {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, ordering]);
+  }, [page, pageSize, search, ordering]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -161,6 +161,7 @@ const ProductsPage = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 12,
         }}
       >
         <h2 style={{ margin: 0 }}>Products</h2>
@@ -378,7 +379,24 @@ const ProductsPage = () => {
           <span style={{ fontSize: 13, color: "#6b7280" }}>
             Page {page} of {totalPages} · {count} products
           </span>
+
           <div style={{ display: "flex", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
             <button
               className="btn btn-outline"
               type="button"

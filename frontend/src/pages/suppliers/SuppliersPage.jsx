@@ -4,8 +4,6 @@ import { supplierApi } from "../../api/supplierApi";
 import SupplierFormModal from "../../components/suppliers/SupplierFormModal";
 import { useAuth } from "../../hooks/useAuth";
 
-const PAGE_SIZE = 10;
-
 const getStatusBadgeStyles = (status) => {
   switch (status) {
     case "ACTIVE":
@@ -40,6 +38,7 @@ const SuppliersPage = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -53,7 +52,7 @@ const SuppliersPage = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-  const totalPages = totalCount > 0 ? Math.ceil(totalCount / PAGE_SIZE) : 0;
+  const totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0;
 
   // ----------------- Data loading -----------------
   useEffect(() => {
@@ -64,7 +63,7 @@ const SuppliersPage = () => {
       try {
         const params = {
           page,
-          pageSize: PAGE_SIZE,
+          pageSize,
           search: search || undefined,
           ordering: ordering || undefined,
         };
@@ -82,7 +81,7 @@ const SuppliersPage = () => {
     };
 
     load();
-  }, [page, search, ordering]);
+  }, [page, pageSize, search, ordering]);
 
   // ----------------- Handlers -----------------
   const openCreateModal = () => {
@@ -441,7 +440,23 @@ const SuppliersPage = () => {
           <div>
             Page {page} of {totalPages} · {totalCount} suppliers
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
             <button
               type="button"
               className="btn btn-outline"
@@ -450,6 +465,7 @@ const SuppliersPage = () => {
             >
               Previous
             </button>
+
             <button
               type="button"
               className="btn btn-outline"

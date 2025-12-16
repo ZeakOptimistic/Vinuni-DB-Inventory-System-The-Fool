@@ -4,8 +4,6 @@ import { locationApi } from "../../api/locationApi";
 import LocationFormModal from "../../components/locations/LocationFormModal";
 import { useAuth } from "../../hooks/useAuth";
 
-const PAGE_SIZE = 10;
-
 /**
  * LocationsPage: view, search, sort, and basic CRUD for locations.
  *
@@ -23,7 +21,9 @@ const LocationsPage = () => {
 
   const [locations, setLocations] = useState([]);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [count, setCount] = useState(0);
+
 
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -37,7 +37,7 @@ const LocationsPage = () => {
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
 
-  const totalPages = count > 0 ? Math.ceil(count / PAGE_SIZE) : 0;
+  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
 
   // --------- Load data ----------
   const fetchLocations = async () => {
@@ -46,7 +46,7 @@ const LocationsPage = () => {
     try {
       const data = await locationApi.list({
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         search,
         ordering,
       });
@@ -63,7 +63,11 @@ const LocationsPage = () => {
   useEffect(() => {
     fetchLocations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, ordering]);
+  }, [page, pageSize, search, ordering]);
+
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   // --------- Handlers ----------
   const handleSearchSubmit = (e) => {
@@ -82,7 +86,8 @@ const LocationsPage = () => {
   };
 
   const handleNextPage = () => {
-    setPage((p) => p + 1);
+    if (totalPages === 0) return;
+    setPage((p) => Math.min(totalPages, p + 1));
   };
 
   const openCreateModal = () => {
@@ -401,7 +406,23 @@ const LocationsPage = () => {
           <span style={{ fontSize: 13, color: "#6b7280" }}>
             Page {page} of {totalPages} · {count} locations
           </span>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <select
+              className="form-input"
+              style={{ width: 100 }}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              {[10, 20, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}/page
+                </option>
+              ))}
+            </select>
+
             <button
               className="btn btn-outline"
               type="button"
@@ -410,6 +431,7 @@ const LocationsPage = () => {
             >
               Previous
             </button>
+
             <button
               className="btn btn-outline"
               type="button"
