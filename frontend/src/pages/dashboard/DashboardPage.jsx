@@ -1,25 +1,20 @@
 // src/pages/dashboard/DashboardPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { reportApi } from "../../api/reportApi";
 import { purchaseOrderApi } from "../../api/purchaseOrderApi";
 import { salesOrderApi } from "../../api/salesOrderApi";
 
-/**
- * DashboardPage
- *
- * Data sources:
- * - /api/reports/overview/      → product & stock cards
- * - /api/reports/low-stock/     → low-stock table
- * - /api/reports/top-selling/   → top-selling chart
- * - /api/purchase-orders/       → purchase order metrics + recent PO
- * - /api/sales-orders/          → sales order metrics + recent SO
- */
+const PREVIEW_LIMIT = 6;
+const RANGE_OPTIONS = [7, 14, 30];
+
 const DashboardPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  // Role-based flags used only for contextual messaging on the dashboard
   const role = user?.role;
+  const canViewReports = role === "ADMIN" || role === "MANAGER";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,10 +23,13 @@ const DashboardPage = () => {
   const [lowStockRows, setLowStockRows] = useState([]);
   const [topSellingRows, setTopSellingRows] = useState([]);
 
+  const [purchaseOrdersAll, setPurchaseOrdersAll] = useState([]);
+  const [salesOrdersAll, setSalesOrdersAll] = useState([]);
+
   const [poMetrics, setPoMetrics] = useState(null);
   const [soMetrics, setSoMetrics] = useState(null);
-  const [recentPurchaseOrders, setRecentPurchaseOrders] = useState([]);
-  const [recentSalesOrders, setRecentSalesOrders] = useState([]);
+
+  const [rangeDays, setRangeDays] = useState(14);
 
   useEffect(() => {
     const load = async () => {
@@ -39,40 +37,29 @@ const DashboardPage = () => {
       setError(null);
 
       try {
-        const [
-          overviewData,
-          lowStockData,
-          topSellingData,
-          poListRaw,
-          soListRaw,
-        ] = await Promise.all([
-          reportApi.getOverview(),
-          reportApi.getLowStock(),
-          reportApi.getTopSelling(),
-          purchaseOrderApi.list(),
-          salesOrderApi.list(),
-        ]);
+        const [overviewData, lowStockData, topSellingData, poListRaw, soListRaw] =
+          await Promise.all([
+            reportApi.getOverview(),
+            reportApi.getLowStock(),
+            reportApi.getTopSelling(),
+            purchaseOrderApi.list(),
+            salesOrderApi.list(),
+          ]);
 
         setOverview(overviewData || null);
-        setLowStockRows(Array.isArray(lowStockData) ? lowStockData : []);
-        setTopSellingRows(Array.isArray(topSellingData) ? topSellingData : []);
+
+        // Be robust: accept array or {results: []}
+        setLowStockRows(normalizeList(lowStockData));
+        setTopSellingRows(normalizeList(topSellingData));
 
         const purchaseOrders = normalizeList(poListRaw);
         const salesOrders = normalizeList(soListRaw);
 
-        const computedPoMetrics = computePurchaseOrderMetrics(purchaseOrders);
-        const computedSoMetrics = computeSalesOrderMetrics(salesOrders);
-        const {
-          recentPurchaseOrders,
-          recentSalesOrders,
-          ordersSeries,
-        } = computeRecentOrdersAndSeries(purchaseOrders, salesOrders);
+        setPurchaseOrdersAll(purchaseOrders);
+        setSalesOrdersAll(salesOrders);
 
-        setPoMetrics(computedPoMetrics);
-        setSoMetrics(computedSoMetrics);
-        setRecentPurchaseOrders(recentPurchaseOrders);
-        setRecentSalesOrders(recentSalesOrders);
-        setOrdersSeries(ordersSeries);
+        setPoMetrics(computePurchaseOrderMetrics(purchaseOrders));
+        setSoMetrics(computeSalesOrderMetrics(salesOrders));
       } catch (err) {
         console.error(err);
         setError("Failed to load dashboard data. Please try again.");
@@ -84,7 +71,21 @@ const DashboardPage = () => {
     load();
   }, []);
 
-  const [ordersSeries, setOrdersSeries] = useState([]);
+  const ordersSeries = useMemo(() => {
+    return buildOrdersSeries(purchaseOrdersAll, salesOrdersAll, rangeDays);
+  }, [purchaseOrdersAll, salesOrdersAll, rangeDays]);
+
+  const revenueSeries = useMemo(() => {
+    return buildSalesRevenueSeries(salesOrdersAll, rangeDays);
+  }, [salesOrdersAll, rangeDays]);
+
+  const lowStockPreview = useMemo(() => {
+    return (lowStockRows || []).slice(0, PREVIEW_LIMIT);
+  }, [lowStockRows]);
+
+  const topSellingPreview = useMemo(() => {
+    return (topSellingRows || []).slice(0, PREVIEW_LIMIT);
+  }, [topSellingRows]);
 
   if (loading && !overview && !poMetrics && !soMetrics) {
     return <div>Loading dashboard...</div>;
@@ -92,6 +93,7 @@ const DashboardPage = () => {
 
   return (
     <div>
+      {/* Header */}
       <div
         style={{
           marginBottom: 16,
@@ -101,10 +103,40 @@ const DashboardPage = () => {
           gap: 12,
         }}
       >
-        <h2 style={{ margin: 0 }}>DashBoard</h2>
+        <h2 style={{ margin: 0 }}>Dashboard</h2>
 
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => navigate("/sales-orders")}
+          >
+            Sales Orders
+          </button>
+
+          {role !== "CLERK" && (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => navigate("/purchase-orders")}
+            >
+              Purchase Orders
+            </button>
+          )}
+
+          {canViewReports && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => navigate("/reports")}
+            >
+              Reports
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Role banner */}
       {role && (
         <div
           style={{
@@ -128,9 +160,8 @@ const DashboardPage = () => {
         >
           {role === "ADMIN" && (
             <>
-              You are signed in as <strong>Admin</strong>. You have full
-              access to master data, purchase flows, stock transfers, and
-              reports.
+              You are signed in as <strong>Admin</strong>. You have full access
+              to master data, purchase flows, stock transfers, and reports.
             </>
           )}
           {role === "MANAGER" && (
@@ -142,9 +173,9 @@ const DashboardPage = () => {
           )}
           {role === "CLERK" && (
             <>
-              You are signed in as <strong>Clerk</strong>. You can create
-              sales orders and view data, but master data, purchase orders,
-              and transfers are read-only for your account.
+              You are signed in as <strong>Clerk</strong>. You can create sales
+              orders and view data, but master data, purchase orders, and
+              transfers are read-only for your account.
             </>
           )}
         </div>
@@ -185,9 +216,8 @@ const DashboardPage = () => {
             {soMetrics ? soMetrics.total_sales_orders : "—"}
           </div>
           <div className="dashboard-card-sub">
-            Confirmed:{" "}
-            {soMetrics ? soMetrics.confirmed_sales_orders : "—"} · Cancelled:{" "}
-            {soMetrics ? soMetrics.cancelled_sales_orders : "—"}
+            Confirmed: {soMetrics ? soMetrics.confirmed_sales_orders : "—"} ·
+            Cancelled: {soMetrics ? soMetrics.cancelled_sales_orders : "—"}
           </div>
         </div>
 
@@ -206,48 +236,80 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Orders chart + low stock */}
-      <div className="dashboard-grid-two">
+      {/* Trends (visual, not history) */}
+      <div className="dashboard-grid-two" style={{ marginTop: 16 }}>
         <div className="dashboard-card">
-          <div className="dashboard-card-header">
-            Orders in the last 7 days
-          </div>
+          <CardHeader
+            title={`Orders trend (last ${rangeDays} days)`}
+            right={
+              <RangeSelect value={rangeDays} onChange={setRangeDays} />
+            }
+          />
           <OrdersMiniChart series={ordersSeries} />
         </div>
 
         <div className="dashboard-card">
-          <div className="dashboard-card-header">Low stock products</div>
-          <LowStockTable rows={lowStockRows} />
+          <CardHeader
+            title={`Sales revenue trend (last ${rangeDays} days)`}
+            right={
+              <RangeSelect value={rangeDays} onChange={setRangeDays} />
+            }
+          />
+          <MiniLineChart
+            series={revenueSeries}
+            valueLabel="Revenue"
+            formatValue={formatCurrency}
+          />
         </div>
       </div>
 
-      {/* Top selling products */}
-      <div className="dashboard-card" style={{ marginTop: 16 }}>
-        <div className="dashboard-card-header">Top selling products</div>
-        <TopSellingTable rows={topSellingRows} />
-      </div>
-
-      {/* Recent orders */}
+      {/* Highlights (short, actionable) */}
       <div className="dashboard-grid-two" style={{ marginTop: 16 }}>
         <div className="dashboard-card">
-          <div className="dashboard-card-header">Recent purchase orders</div>
-          <RecentPurchaseOrdersTable rows={recentPurchaseOrders} />
+          <CardHeader
+            title={`Low stock highlights`}
+            right={
+              canViewReports ? (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => navigate("/reports")}
+                >
+                  View reports
+                </button>
+              ) : null
+            }
+          />
+          <LowStockHighlights
+            rows={lowStockPreview}
+            totalCount={(lowStockRows || []).length}
+          />
         </div>
 
         <div className="dashboard-card">
-          <div className="dashboard-card-header">Recent sales orders</div>
-          <RecentSalesOrdersTable rows={recentSalesOrders} />
+          <CardHeader
+            title={`Top selling highlights`}
+            right={
+              canViewReports ? (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => navigate("/reports")}
+                >
+                  View reports
+                </button>
+              ) : null
+            }
+          />
+          <TopSellingHighlights
+            rows={topSellingPreview}
+            totalCount={(topSellingRows || []).length}
+          />
         </div>
       </div>
 
       {user && (
-        <div
-          style={{
-            marginTop: 8,
-            fontSize: 12,
-            color: "#9ca3af",
-          }}
-        >
+        <div style={{ marginTop: 8, fontSize: 12, color: "#9ca3af" }}>
           Signed in as <strong>{user.username}</strong> ({user.role})
         </div>
       )}
@@ -255,15 +317,57 @@ const DashboardPage = () => {
   );
 };
 
-/**
- * Normalize list responses: handle both plain array
- * and paginated { results: [...] } shapes.
- */
+/** ---------- Small UI helpers ---------- */
+
+const CardHeader = ({ title, right }) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        marginBottom: 8,
+      }}
+    >
+      <div className="dashboard-card-header" style={{ marginBottom: 0 }}>
+        {title}
+      </div>
+      {right}
+    </div>
+  );
+};
+
+const RangeSelect = ({ value, onChange }) => {
+  return (
+    <select
+      className="form-input"
+      style={{ height: 34, fontSize: 12, padding: "6px 8px" }}
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+    >
+      {RANGE_OPTIONS.map((d) => (
+        <option key={d} value={d}>
+          Last {d}d
+        </option>
+      ))}
+    </select>
+  );
+};
+
+/** ---------- Data helpers ---------- */
+
 const normalizeList = (raw) => {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   if (Array.isArray(raw.results)) return raw.results;
   return [];
+};
+
+const pickOrderDateIso = (order) => {
+  const v = order?.order_date || order?.created_at;
+  if (!v) return null;
+  return String(v).slice(0, 10);
 };
 
 const computePurchaseOrderMetrics = (purchaseOrders) => {
@@ -303,37 +407,11 @@ const computeSalesOrderMetrics = (salesOrders) => {
   };
 };
 
-/**
- * Build:
- * - list of recent purchase orders
- * - list of recent sales orders
- * - 7-day orders series for the mini chart
- */
-const computeRecentOrdersAndSeries = (purchaseOrders, salesOrders) => {
-  const recentPurchaseOrders = sortByDateDesc(purchaseOrders, [
-    "order_date",
-    "created_at",
-  ]).slice(0, 5);
-
-  const recentSalesOrders = sortByDateDesc(salesOrders, [
-    "order_date",
-    "created_at",
-  ]).slice(0, 5);
-
-  const ordersSeries = buildOrdersSeries(purchaseOrders, salesOrders);
-
-  return {
-    recentPurchaseOrders,
-    recentSalesOrders,
-    ordersSeries,
-  };
-};
-
-const buildOrdersSeries = (purchaseOrders, salesOrders) => {
+const buildOrdersSeries = (purchaseOrders, salesOrders, daysBack) => {
   const today = new Date();
   const days = [];
 
-  for (let i = 6; i >= 0; i -= 1) {
+  for (let i = daysBack - 1; i >= 0; i -= 1) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const iso = d.toISOString().slice(0, 10);
@@ -342,52 +420,58 @@ const buildOrdersSeries = (purchaseOrders, salesOrders) => {
 
   const map = {};
   days.forEach((iso) => {
-    map[iso] = {
-      dateIso: iso,
-      poCount: 0,
-      soCount: 0,
-    };
+    map[iso] = { dateIso: iso, poCount: 0, soCount: 0 };
   });
 
-  const addOrder = (order, type) => {
-    if (!order.order_date) return;
-    const dateStr = String(order.order_date).slice(0, 10);
-    if (!map[dateStr]) return;
-    if (type === "PO") map[dateStr].poCount += 1;
-    else map[dateStr].soCount += 1;
-  };
+  purchaseOrders.forEach((po) => {
+    const iso = pickOrderDateIso(po);
+    if (!iso || !map[iso]) return;
+    map[iso].poCount += 1;
+  });
 
-  purchaseOrders.forEach((po) => addOrder(po, "PO"));
-  salesOrders.forEach((so) => addOrder(so, "SO"));
+  salesOrders.forEach((so) => {
+    const iso = pickOrderDateIso(so);
+    if (!iso || !map[iso]) return;
+    map[iso].soCount += 1;
+  });
 
   return days.map((iso) => {
     const row = map[iso];
-    const d = new Date(iso);
+    const d = new Date(`${iso}T00:00:00`);
     const label = `${d.getMonth() + 1}/${d.getDate()}`;
     const total = row.poCount + row.soCount;
-    return {
-      ...row,
-      label,
-      total,
-    };
+    return { ...row, label, total };
   });
 };
 
-const sortByDateDesc = (items, fields) => {
-  const getDate = (obj) => {
-    for (const f of fields) {
-      if (obj[f]) return new Date(obj[f]);
-    }
-    return null;
-  };
+const buildSalesRevenueSeries = (salesOrders, daysBack) => {
+  const today = new Date();
+  const days = [];
 
-  return [...items].sort((a, b) => {
-    const da = getDate(a);
-    const db = getDate(b);
-    if (!da && !db) return 0;
-    if (!da) return 1;
-    if (!db) return -1;
-    return db - da;
+  for (let i = daysBack - 1; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const iso = d.toISOString().slice(0, 10);
+    days.push(iso);
+  }
+
+  const map = {};
+  days.forEach((iso) => {
+    map[iso] = { dateIso: iso, value: 0 };
+  });
+
+  (salesOrders || []).forEach((so) => {
+    const iso = pickOrderDateIso(so);
+    if (!iso || !map[iso]) return;
+    const amount = Number(so.total_amount);
+    if (!Number.isFinite(amount)) return;
+    map[iso].value += amount;
+  });
+
+  return days.map((iso) => {
+    const d = new Date(`${iso}T00:00:00`);
+    const label = `${d.getMonth() + 1}/${d.getDate()}`;
+    return { dateIso: iso, label, value: map[iso].value };
   });
 };
 
@@ -399,26 +483,24 @@ const formatCurrency = (value) => {
       currency: "VND",
       maximumFractionDigits: 0,
     }).format(value);
-  } catch (e) {
+  } catch {
     const num = Number(value) || 0;
     return `${num.toFixed(0)} ₫`;
   }
 };
 
-/**
- * Simple stacked bar chart for PO/SO counts in the last 7 days.
- */
+/** ---------- Charts (simple, lightweight) ---------- */
+
 const OrdersMiniChart = ({ series }) => {
   if (!series || series.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
-        No orders in the last 7 days.
+        No orders in the selected range.
       </div>
     );
   }
 
-  const maxTotal =
-    series.reduce((max, s) => Math.max(max, s.total), 0) || 1;
+  const maxTotal = series.reduce((m, s) => Math.max(m, s.total), 0) || 1;
 
   return (
     <div>
@@ -426,7 +508,7 @@ const OrdersMiniChart = ({ series }) => {
         style={{
           display: "flex",
           alignItems: "flex-end",
-          gap: 8,
+          gap: 6,
           height: 130,
           marginTop: 4,
         }}
@@ -443,8 +525,9 @@ const OrdersMiniChart = ({ series }) => {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                fontSize: 11,
+                fontSize: 10,
                 color: "#6b7280",
+                minWidth: 6,
               }}
             >
               <div
@@ -455,6 +538,7 @@ const OrdersMiniChart = ({ series }) => {
                   alignItems: "flex-end",
                   gap: 2,
                 }}
+                title={`${s.label} | PO ${s.poCount} | SO ${s.soCount}`}
               >
                 <div
                   style={{
@@ -462,9 +546,7 @@ const OrdersMiniChart = ({ series }) => {
                     height: `${poHeight || 0}%`,
                     background: "#2563eb",
                     borderRadius: "999px 999px 0 0",
-                    transition: "height 0.2s",
                   }}
-                  title={`PO: ${s.poCount}`}
                 />
                 <div
                   style={{
@@ -472,9 +554,7 @@ const OrdersMiniChart = ({ series }) => {
                     height: `${soHeight || 0}%`,
                     background: "#10b981",
                     borderRadius: "999px 999px 0 0",
-                    transition: "height 0.2s",
                   }}
-                  title={`SO: ${s.soCount}`}
                 />
               </div>
               <div style={{ marginTop: 4 }}>{s.label}</div>
@@ -482,46 +562,14 @@ const OrdersMiniChart = ({ series }) => {
           );
         })}
       </div>
-      <div
-        style={{
-          marginTop: 4,
-          fontSize: 11,
-          color: "#6b7280",
-        }}
-      >
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            marginRight: 8,
-          }}
-        >
-          <span
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 999,
-              background: "#2563eb",
-              marginRight: 4,
-            }}
-          />
+
+      <div style={{ marginTop: 4, fontSize: 11, color: "#6b7280" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", marginRight: 10 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: "#2563eb", marginRight: 4 }} />
           PO
         </span>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-          }}
-        >
-          <span
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 999,
-              background: "#10b981",
-              marginRight: 4,
-            }}
-          />
+        <span style={{ display: "inline-flex", alignItems: "center" }}>
+          <span style={{ width: 10, height: 10, borderRadius: 999, background: "#10b981", marginRight: 4 }} />
           SO
         </span>
       </div>
@@ -529,7 +577,60 @@ const OrdersMiniChart = ({ series }) => {
   );
 };
 
-const LowStockTable = ({ rows }) => {
+const MiniLineChart = ({ series, valueLabel, formatValue }) => {
+  if (!series || series.length === 0) {
+    return (
+      <div style={{ fontSize: 13, color: "#6b7280" }}>
+        No data in the selected range.
+      </div>
+    );
+  }
+
+  const values = series.map((s) => Number(s.value) || 0);
+  const max = Math.max(...values, 0);
+  const min = Math.min(...values, 0);
+  const span = max - min || 1;
+
+  const points = series
+    .map((s, idx) => {
+      const x = (idx / Math.max(series.length - 1, 1)) * 100;
+      const y = 28 - ((Number(s.value) - min) / span) * 24;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+
+  const last = series[series.length - 1]?.value || 0;
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ fontSize: 12, color: "#6b7280" }}>
+          {valueLabel}: <strong style={{ color: "#111827" }}>{formatValue(last)}</strong>
+        </div>
+        <div style={{ fontSize: 12, color: "#6b7280" }}>
+          Max: {formatValue(max)}
+        </div>
+      </div>
+
+      <svg viewBox="0 0 100 30" width="100%" height="110" style={{ marginTop: 8 }}>
+        <polyline
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth="1.6"
+          points={points}
+        />
+      </svg>
+
+      <div style={{ fontSize: 11, color: "#6b7280" }}>
+        Hover on chart bars (orders) for tooltip. Revenue is the polyline trend.
+      </div>
+    </div>
+  );
+};
+
+/** ---------- Highlights (short lists, not full tables) ---------- */
+
+const LowStockHighlights = ({ rows, totalCount }) => {
   if (!rows || rows.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
@@ -539,38 +640,52 @@ const LowStockTable = ({ rows }) => {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>SKU</th>
-            <th style={thStyle}>Stock</th>
-            <th style={thStyle}>Reorder level</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.product_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={tdStyle}>{r.name}</td>
-              <td style={tdStyle}>{r.sku}</td>
-              <td style={tdStyle}>{r.stock_quantity}</td>
-              <td style={tdStyle}>{r.reorder_level}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ fontSize: 12, color: "#6b7280" }}>
+        Showing {rows.length} of {totalCount} low-stock items
+      </div>
+
+      {rows.map((r) => {
+        const stock = Number(r.stock_quantity) || 0;
+        const reorder = Number(r.reorder_level) || 0;
+        const pct =
+          reorder > 0 ? Math.max(0, Math.min(100, (stock / reorder) * 100)) : 100;
+        const deficit = reorder - stock;
+
+        return (
+          <div key={r.product_id} style={{ padding: "8px 10px", border: "1px solid #e5e7eb", borderRadius: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ fontWeight: 600, color: "#111827", fontSize: 13 }}>
+                {r.name}
+              </div>
+              <div style={{ fontSize: 12, color: deficit > 0 ? "#b91c1c" : "#6b7280" }}>
+                Stock {stock} / RL {reorder}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 6, height: 8, background: "#e5e7eb", borderRadius: 999 }}>
+              <div
+                style={{
+                  height: "100%",
+                  width: `${pct}%`,
+                  background: deficit > 0 ? "#ef4444" : "#10b981",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+
+            <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+              SKU: {r.sku}
+              {deficit > 0 ? ` · Need +${deficit}` : ""}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-const TopSellingTable = ({ rows }) => {
+const TopSellingHighlights = ({ rows, totalCount }) => {
   if (!rows || rows.length === 0) {
     return (
       <div style={{ fontSize: 13, color: "#6b7280" }}>
@@ -579,144 +694,49 @@ const TopSellingTable = ({ rows }) => {
     );
   }
 
-  return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>Product</th>
-            <th style={thStyle}>SKU</th>
-            <th style={thStyle}>Quantity sold</th>
-            <th style={thStyle}>Total revenue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.product_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={tdStyle}>{r.product_name}</td>
-              <td style={tdStyle}>{r.product_sku}</td>
-              <td style={tdStyle}>{r.total_quantity}</td>
-              <td style={tdStyle}>{formatCurrency(r.total_revenue)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
+  const maxRevenue =
+    rows.reduce((m, r) => Math.max(m, Number(r.total_revenue) || 0), 0) || 1;
 
-const RecentPurchaseOrdersTable = ({ rows }) => {
-  if (!rows || rows.length === 0) {
-    return (
-      <div style={{ fontSize: 13, color: "#6b7280" }}>
-        No recent purchase orders.
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ fontSize: 12, color: "#6b7280" }}>
+        Showing {rows.length} of {totalCount} top-selling items
       </div>
-    );
-  }
 
-  return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>PO #</th>
-            <th style={thStyle}>Supplier</th>
-            <th style={thStyle}>Status</th>
-            <th style={thStyle}>Order date</th>
-            <th style={thStyle}>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((o) => (
-            <tr key={o.po_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={tdStyle}>{o.po_id}</td>
-              <td style={tdStyle}>{o.supplier_name}</td>
-              <td style={tdStyle}>{o.status}</td>
-              <td style={tdStyle}>{o.order_date}</td>
-              <td style={tdStyle}>
-                {o.total_amount != null
-                  ? formatCurrency(o.total_amount)
-                  : "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {rows.map((r) => {
+        const revenue = Number(r.total_revenue) || 0;
+        const pct = Math.max(0, Math.min(100, (revenue / maxRevenue) * 100));
+
+        return (
+          <div key={r.product_id} style={{ padding: "8px 10px", border: "1px solid #e5e7eb", borderRadius: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ fontWeight: 600, color: "#111827", fontSize: 13 }}>
+                {r.product_name}
+              </div>
+              <div style={{ fontSize: 12, color: "#111827" }}>
+                {formatCurrency(revenue)}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 6, height: 8, background: "#e5e7eb", borderRadius: 999 }}>
+              <div
+                style={{
+                  height: "100%",
+                  width: `${pct}%`,
+                  background: "#2563eb",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+
+            <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+              SKU: {r.product_sku} · Qty sold: {r.total_quantity}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
-};
-
-const RecentSalesOrdersTable = ({ rows }) => {
-  if (!rows || rows.length === 0) {
-    return (
-      <div style={{ fontSize: 13, color: "#6b7280" }}>
-        No recent sales orders.
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ overflowX: "auto" }}>
-      <table
-        style={{
-          width: "100%",
-          borderCollapse: "collapse",
-          fontSize: 13,
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={thStyle}>SO #</th>
-            <th style={thStyle}>Customer</th>
-            <th style={thStyle}>Location</th>
-            <th style={thStyle}>Status</th>
-            <th style={thStyle}>Order date</th>
-            <th style={thStyle}>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((o) => (
-            <tr key={o.so_id} style={{ borderTop: "1px solid #e5e7eb" }}>
-              <td style={tdStyle}>{o.so_id}</td>
-              <td style={tdStyle}>{o.customer_name || "-"}</td>
-              <td style={tdStyle}>{o.location_name}</td>
-              <td style={tdStyle}>{o.status}</td>
-              <td style={tdStyle}>{o.order_date}</td>
-              <td style={tdStyle}>
-                {o.total_amount != null
-                  ? formatCurrency(o.total_amount)
-                  : "-"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-const thStyle = {
-  textAlign: "left",
-  padding: "8px 10px",
-  fontWeight: 600,
-  color: "#4b5563",
-};
-
-const tdStyle = {
-  padding: "6px 10px",
-  color: "#374151",
 };
 
 export default DashboardPage;
