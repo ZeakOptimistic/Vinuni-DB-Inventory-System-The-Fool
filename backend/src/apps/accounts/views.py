@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import status as drf_status, viewsets
+from django.db import IntegrityError
+from django.db.models.deletion import ProtectedError
 
 from .models import AppUser, Role
 from .services import verify_user_password
@@ -37,13 +39,13 @@ class LoginView(APIView):
         except AppUser.DoesNotExist:
             return Response(
                 {"detail": "Invalid credentials"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=drf_status.HTTP_400_BAD_REQUEST,
             )
 
         if not user.is_active or not verify_user_password(user, password):
             return Response(
                 {"detail": "Invalid credentials"},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=drf_status.HTTP_400_BAD_REQUEST,
             )
 
         now = datetime.datetime.utcnow()
@@ -72,7 +74,7 @@ class RoleViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Role.objects.all().order_by("role_name")
     serializer_class = RoleSerializer
     permission_classes = [IsAdmin]
-
+    pagination_class = None
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = AppUser.objects.select_related("role").all().order_by("-user_id")
@@ -87,6 +89,26 @@ class UserViewSet(viewsets.ModelViewSet):
             return UserUpsertSerializer
         return UserSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        user_obj = self.get_object()
+
+        # 1) Cannot delete self
+        req_user_id = getattr(request.user, "user_id", None)
+        if req_user_id == user_obj.user_id:
+            return Response(
+                {"detail": "You cannot delete your own account."},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2) If user is referenced by transactions/audit (FK constraint) -> DB will block
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except (ProtectedError, IntegrityError):
+            return Response(
+                {"detail": "Cannot delete user because it is referenced by transactions/audit. Deactivate instead."},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+
     @action(detail=True, methods=["post"], url_path="set-status")
     def set_status(self, request, pk=None):
         user_obj = self.get_object()
@@ -95,7 +117,6 @@ class UserViewSet(viewsets.ModelViewSet):
         s.is_valid(raise_exception=True)
         new_status = s.validated_data["status"]
 
-        # optional: không cho tự deactivate chính mình
         req_user_id = getattr(request.user, "user_id", None)
         if req_user_id == user_obj.user_id and new_status == "INACTIVE":
             return Response(
@@ -104,6 +125,41 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         user_obj.status = new_status
-        user_obj.save(update_fields=["status"])  # KHÔNG có updated_at
+        user_obj.save(update_fields=["status"])
 
         return Response(UserSerializer(user_obj).data, status=drf_status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="impersonate")
+    def impersonate(self, request, pk=None):
+        target = self.get_object()
+
+        if target.status != "ACTIVE":
+            return Response(
+                {"detail": "Target user is inactive."},
+                status=drf_status.HTTP_400_BAD_REQUEST,
+            )
+
+        now = datetime.datetime.utcnow()
+        payload = {
+            "user_id": target.user_id,
+            "role": target.role_name,
+            "iat": now,
+            "exp": now + datetime.timedelta(hours=24),
+            "impersonated_by": getattr(request.user, "user_id", None),
+        }
+
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+
+        return Response(
+            {
+                "access": token,
+                "user": {
+                    "id": target.user_id,
+                    "username": target.username,
+                    "full_name": target.full_name,
+                    "role": target.role_name,
+                },
+                "impersonated_by": getattr(request.user, "user_id", None),
+            },
+            status=drf_status.HTTP_200_OK,
+        )

@@ -3,6 +3,10 @@ import React, { useEffect, useState } from "react";
 import { userApi } from "../../api/userApi";
 
 const PAGE_SIZE = 10;
+const TOKEN_KEY = "sipms_token";
+const USER_KEY = "sipms_user";
+const BACKUP_TOKEN_KEY = "sipms_admin_token_backup";
+const BACKUP_USER_KEY = "sipms_admin_user_backup";
 
 const UsersPage = () => {
   const [rows, setRows] = useState([]);
@@ -57,6 +61,36 @@ const UsersPage = () => {
     setOpen(true);
   };
 
+  const onImpersonate = async (u) => {
+    const ok = window.confirm(`Login as "${u.username}"? You can switch back later.`);
+    if (!ok) return;
+
+    setBusyId(u.user_id);
+    try {
+      const { access, user } = await userApi.impersonate(u.user_id);
+
+      // backup admin session (only once)
+      if (!localStorage.getItem(BACKUP_TOKEN_KEY)) {
+        localStorage.setItem(BACKUP_TOKEN_KEY, localStorage.getItem(TOKEN_KEY) || "");
+        localStorage.setItem(BACKUP_USER_KEY, localStorage.getItem(USER_KEY) || "");
+      }
+
+      // swap to user session
+      localStorage.setItem(TOKEN_KEY, access);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+      // reload app to let AuthContext re-read the new user/token
+      window.location.href = "/dashboard";
+    } catch (e) {
+      console.error(e);
+      const msg = e?.response?.data?.detail || "Failed to login as user.";
+      alert(msg);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+
   const onDelete = async (u) => {
     if (!window.confirm(`Delete user "${u.username}"?`)) return;
     setBusyId(u.user_id);
@@ -65,7 +99,8 @@ const UsersPage = () => {
       await load();
     } catch (e) {
       console.error(e);
-      alert("Failed to delete user. Please try again.");
+      const msg = e?.response?.data?.detail || "Failed to delete user. Please try again.";
+      alert(msg);
     } finally {
       setBusyId(null);
     }
@@ -240,6 +275,16 @@ const UsersPage = () => {
                         Edit
                       </button>
 
+                      <button
+                        type="button"
+                        className="btn btn-outline"
+                        style={{ fontSize: 12, padding: "4px 8px" }}
+                        onClick={() => onImpersonate(u)}
+                        disabled={busyId === u.user_id}
+                        >
+                        Login as
+                      </button>
+
                       {u.status === "ACTIVE" ? (
                         <button
                           type="button"
@@ -373,11 +418,12 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
     (async () => {
       try {
         const data = await userApi.listRoles();
-        setRoles(data || []);
-        if (!(editing?.role_id) && !roleId && data?.length) {
-          setRoleId(String(data[0].role_id));
+        const list = Array.isArray(data) ? data : (data?.results ?? []);
+        setRoles(list);
+        if (!(editing?.role_id) && !roleId && list.length) {
+          setRoleId(String(list[0].role_id));
         }
-      } catch (e) {
+       } catch (e) {
         console.error(e);
         setError("Failed to load roles. Please try again.");
       }
@@ -476,7 +522,7 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
             <label className="form-label" style={{ flex: 1 }}>
               Role
               <select className="form-input" value={roleId} onChange={(e) => setRoleId(e.target.value)} required>
-                {roles.map((r) => (
+                {(Array.isArray(roles) ? roles : []).map((r) => (
                   <option key={r.role_id} value={String(r.role_id)}>
                     {r.role_name}
                   </option>

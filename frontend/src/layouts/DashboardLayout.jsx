@@ -3,6 +3,11 @@ import React from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
+const TOKEN_KEY = "sipms_token";
+const USER_KEY = "sipms_user";
+const BACKUP_TOKEN_KEY = "sipms_admin_token_backup";
+const BACKUP_USER_KEY = "sipms_admin_user_backup";
+
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const role = user?.role;
@@ -10,6 +15,30 @@ const DashboardLayout = () => {
   const canManageMasterData = role === "ADMIN" || role === "MANAGER";
   const canViewReports = role === "ADMIN" || role === "MANAGER";
   const canManageUsers = user?.role === "ADMIN";
+
+  const hasAdminBackup = Boolean(localStorage.getItem(BACKUP_TOKEN_KEY));
+
+  const backToAdmin = () => {
+    const backupToken = localStorage.getItem(BACKUP_TOKEN_KEY) || "";
+    const backupUser = localStorage.getItem(BACKUP_USER_KEY) || "";
+
+    if (!backupToken || !backupUser) return;
+
+    localStorage.setItem(TOKEN_KEY, backupToken);
+    localStorage.setItem(USER_KEY, backupUser);
+
+    localStorage.removeItem(BACKUP_TOKEN_KEY);
+    localStorage.removeItem(BACKUP_USER_KEY);
+
+    window.location.href = "/dashboard";
+  };
+
+  const logoutAll = () => {
+    // Logout should also clear backup to avoid "getting stuck"
+    localStorage.removeItem(BACKUP_TOKEN_KEY);
+    localStorage.removeItem(BACKUP_USER_KEY);
+    logout();
+  };
 
   return (
     <div className="dashboard-layout">
@@ -73,7 +102,13 @@ const DashboardLayout = () => {
             <span className="header-user">
               {user?.full_name || user?.username} ({user?.role})
             </span>
-            <button className="btn btn-outline" onClick={logout}>
+            {hasAdminBackup && (
+              <button className="btn btn-outline" onClick={backToAdmin}>
+                Back to Admin
+              </button>
+            )}
+
+            <button className="btn btn-outline" onClick={logoutAll}>
               Logout
             </button>
           </div>

@@ -31,4 +31,9 @@ export const userApi = {
     const res = await httpClient.post(`/api/auth/users/${id}/set-status/`, { status });
     return res.data;
   },
+
+  async impersonate(id) {
+    const res = await httpClient.post(`/api/auth/users/${id}/impersonate/`);
+    return res.data;
+  },
 };
