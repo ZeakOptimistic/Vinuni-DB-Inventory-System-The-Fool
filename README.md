@@ -105,6 +105,9 @@ The system should provide at least the following features:
 
 ## 🧱 Core Entitie
 
+![Diagram SIPMS](/database/erd/erd.png)
+
+
 This is an outline; details will be refined in the ERD and DDL.
 
 - **Product**
