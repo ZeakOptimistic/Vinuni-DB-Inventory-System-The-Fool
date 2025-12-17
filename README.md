@@ -688,14 +688,14 @@ Inside:
 from apps.accounts.models import AppUser
 from apps.accounts.services import set_user_password
 
-user = AppUser.objects.get(username="admin_demo")
+user = AppUser.objects.get(username="admin")
 set_user_password(user, "admin123")
 
 print("Updated password for:", user.username)
 exit()
 ```
 
-Repeat for other users if needed (`admin_demo`, `manager_demo`, …).
+Repeat for other users if needed (`admin`, `manager_demo`, …).
 
 ---
 
@@ -763,7 +763,7 @@ Login page:
 ➡️ http://localhost:5173/login
 
 Credentials (if set earlier):
-- Username: `admin_demo`
+- Username: `admin`
 - Password: `admin123`
 
 ---
@@ -808,7 +808,7 @@ Set demo password:
 python manage.py shell
 >>> from apps.accounts.models import AppUser
 >>> from apps.accounts.services import set_user_password
->>> set_user_password(AppUser.objects.get(username="admin_demo"), "admin123")
+>>> set_user_password(AppUser.objects.get(username="admin"), "admin123")
 >>> exit()
 ```
 
@@ -833,7 +833,7 @@ Open:
 ➡️ http://localhost:5173/login
 
 Login:
-- Username: `admin_demo`
+- Username: `admin`
 - Password: `admin123`
 
 

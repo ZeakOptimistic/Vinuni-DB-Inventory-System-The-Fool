@@ -840,3 +840,477 @@ a {
   font-size: 12px;
   color: #94a3b8;
 }
+
+/* =========================
+   Moon Theme (LOGIN) - merged
+   ========================= */
+
+.auth-layout--moon {
+  /* --- tune nhanh ở đây --- */
+  --bg-image: url("/colombina.avif");
+  --card-x: 400px;
+  --card-y: 0px;
+  --card-scale: 1;
+
+  --text: rgba(226, 232, 240, 0.95);
+  --text-soft: rgba(226, 232, 240, 0.82);
+
+  --glass-bg: rgba(15, 23, 42, 0.25);
+  --glass-border: rgba(148, 163, 184, 0.28);
+
+  /* rect size */
+  --rect-w: 360px;
+  --rect-pad: 24px;
+
+  /* moon size */
+  --moon-size: 420px;
+
+  position: relative;
+  overflow: hidden;
+  background: #071425;
+}
+
+/* Background image */
+.auth-layout--moon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--bg-image) center / cover no-repeat;
+  opacity: 0.55;
+  transform: scale(1.03);
+  filter: saturate(1.05) contrast(1.05);
+}
+
+/* Dark overlay + glow */
+.auth-layout--moon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 520px at 55% 40%, rgba(255,255,255,0.30), transparent 60%),
+    linear-gradient(120deg, rgba(2, 6, 23, 0.75), rgba(2, 6, 23, 0.30));
+}
+
+/* =========================
+   Base card (applies to both)
+   ========================= */
+.auth-layout--moon .auth-card {
+  position: relative;
+  z-index: 1;
+
+  transform: translate(var(--card-x), var(--card-y)) scale(var(--card-scale));
+  transform-origin: center;
+
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.55);
+
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* Common text tones */
+.auth-layout--moon .auth-title {
+  color: var(--text);
+  letter-spacing: 0.2px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.auth-layout--moon .form-label {
+  color: var(--text-soft);
+}
+
+.auth-layout--moon .form-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(148, 163, 184, 0.30);
+  color: var(--text);
+}
+
+.auth-layout--moon .form-input::placeholder {
+  color: rgba(226, 232, 240, 0.55);
+}
+
+.auth-layout--moon .form-input:focus {
+  border-color: rgba(59, 130, 246, 0.75);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+
+.auth-layout--moon .form-error {
+  color: rgba(254, 226, 226, 0.95);
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+.auth-layout--moon .btn-primary {
+  width: 100%;
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  box-shadow: 0 18px 50px rgba(37, 99, 235, 0.40);
+}
+.auth-layout--moon .btn-primary:hover {
+  background: linear-gradient(180deg, #60a5fa, #2563eb);
+}
+
+/* =========================
+   Variant A: Rect Glass
+   Use class: auth-card auth-card--glass
+   ========================= */
+.auth-layout--moon .auth-card--glass {
+  width: min(var(--rect-w), 92vw);
+  padding: var(--rect-pad);
+  border-radius: 16px;
+  background: var(--glass-bg);
+}
+
+.auth-layout--moon .auth-card--glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.35),
+    rgba(255,255,255,0.06),
+    rgba(59,130,246,0.18)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* =========================
+   Variant B: Moon Circle
+   Use class: auth-card auth-card--moon
+   ========================= */
+.auth-layout--moon .auth-card--moon {
+  isolation: isolate;
+
+  width: var(--moon-size);
+  height: var(--moon-size);
+  border-radius: 9999px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 46px 46px;
+
+  background: radial-gradient(
+    circle at 35% 30%,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.10) 45%,
+    rgba(15, 23, 42, 0.55) 100%
+  );
+}
+
+/* halo rings for moon */
+.auth-layout--moon .auth-card--moon::before {
+  content: "";
+  position: absolute;
+  inset: -22px;
+  border-radius: 9999px;
+  border: 10px solid rgba(120, 170, 255, 0.16);
+  box-shadow: 0 0 60px rgba(120, 170, 255, 0.18);
+  z-index: -1;
+}
+
+.auth-layout--moon .auth-card--moon::after {
+  content: "";
+  position: absolute;
+  inset: -46px;
+  border-radius: 9999px;
+  border: 10px solid rgba(120, 170, 255, 0.08);
+  z-index: -2;
+}
+
+/* Make inputs pill-like to match moon */
+.auth-layout--moon .auth-card--moon .form-input,
+.auth-layout--moon .auth-card--moon .btn-primary {
+  border-radius: 999px;
+}
+
+/* Mobile */
+@media (max-width: 520px) {
+  .auth-layout--moon {
+    --card-x: 0px; 
+    --card-y: 0px;
+    --moon-size: 320px;
+  }
+  .auth-layout--moon .auth-card--moon {
+    padding: 28px 26px;
+  }
+}
+
+/* ===== Tune nhanh ở đây (override) ===== */
+.auth-layout--moon {
+  --moon-size: 250px;     /* giảm size circle */
+  --card-scale: 0.95;     /* giảm thêm chút */
+  --card-x: 380px;        /* chỉnh vị trí theo ý */
+  --card-y: -70px;
+}
+
+/* ===== Moon circle: mềm hơn + hợp background ===== */
+.auth-layout--moon .auth-card--moon {
+  width: var(--moon-size);
+  height: var(--moon-size);
+
+  /* bớt “phẳng” -> nhìn như mặt trăng / glass */
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255,255,255,0.22), rgba(255,255,255,0.10) 40%, rgba(12, 20, 40, 0.58) 100%),
+    radial-gradient(circle at 70% 65%, rgba(120,170,255,0.10), transparent 55%);
+
+  border: 1px solid rgba(160, 190, 230, 0.22);
+  box-shadow:
+    0 26px 70px rgba(2, 6, 23, 0.55),
+    inset 0 1px 0 rgba(255,255,255,0.10);
+
+  padding: 34px 34px; /* bớt padding -> gọn */
+}
+
+/* Halo: mỏng + nhẹ hơn */
+.auth-layout--moon .auth-card--moon::before {
+  inset: -16px;
+  border-width: 6px;
+  border-color: rgba(120, 170, 255, 0.12);
+  box-shadow: 0 0 46px rgba(120, 170, 255, 0.14);
+}
+.auth-layout--moon .auth-card--moon::after {
+  inset: -32px;
+  border-width: 6px;
+  border-color: rgba(120, 170, 255, 0.06);
+}
+
+/* Typography: nhỏ lại + tinh hơn */
+.auth-layout--moon .auth-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: rgba(235, 245, 255, 0.92);
+}
+
+.auth-layout--moon .form-label {
+  font-size: 12px;
+  color: rgba(220, 235, 255, 0.72);
+}
+
+/* Input: đúng “glass” + viền nhẹ */
+.auth-layout--moon .auth-card--moon .form-input {
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(170, 200, 240, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.auth-layout--moon .auth-card--moon .form-input:focus {
+  border-color: rgba(150, 200, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(130, 190, 255, 0.18);
+}
+
+/* Button: đổi sang “moon-blue / violet” hợp Colombina */
+.auth-layout--moon .auth-card--moon .btn-primary {
+  height: 38px;
+  border-radius: 999px;
+
+  background: linear-gradient(135deg, rgba(120,170,255,0.95), rgba(90,120,255,0.95), rgba(155,120,255,0.90));
+  box-shadow:
+    0 16px 36px rgba(90,120,255,0.28),
+    0 0 0 1px rgba(180, 210, 255, 0.16) inset;
+
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+}
+
+.auth-layout--moon .auth-card--moon .btn-primary:hover {
+  background: linear-gradient(135deg, rgba(150,200,255,0.95), rgba(110,150,255,0.95), rgba(180,140,255,0.90));
+  box-shadow:
+    0 18px 44px rgba(90,120,255,0.34),
+    0 0 0 1px rgba(200, 230, 255, 0.18) inset;
+}
+
+/* Mobile: tự về center + nhỏ thêm */
+@media (max-width: 520px) {
+  .auth-layout--moon { --card-x: 0px; --card-y: 0px; --moon-size: 300px; }
+  .auth-layout--moon .auth-card--moon { padding: 26px 22px; }
+}
+
+/* =========================
+   Tune: smaller inputs + moon-surface feel
+   ========================= */
+
+/* 1) Thu nhỏ input + button */
+.auth-layout--moon .auth-card--moon form {
+  justify-items: center; /* canh giữa các control */
+  gap: 8px;
+}
+
+.auth-layout--moon .auth-card--moon .form-label {
+  width: 86%;
+  font-size: 11px;
+}
+
+.auth-layout--moon .auth-card--moon .form-input {
+  width: 86%;
+  height: 30px;          /* nhỏ lại */
+  font-size: 12px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+
+.auth-layout--moon .auth-card--moon .btn-primary {
+  width: 76%;
+  height: 32px;          /* nhỏ lại */
+  font-size: 12px;
+  border-radius: 999px;
+}
+
+/* 2) “Moon surface” texture (craters nhẹ) ngay trong board */
+.auth-layout--moon .auth-card--moon {
+  /* giữ base glass nhưng thêm nhiều lớp crater */
+  background:
+    /* highlight top-left */
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,0.20), rgba(255,255,255,0.08) 42%, rgba(12, 20, 40, 0.60) 100%),
+
+    /* craters (rất nhẹ) */
+    radial-gradient(18px 14px at 28% 38%, rgba(255,255,255,0.09) 0 40%, transparent 42%),
+    radial-gradient(26px 20px at 62% 33%, rgba(255,255,255,0.07) 0 40%, transparent 42%),
+    radial-gradient(14px 12px at 70% 58%, rgba(255,255,255,0.06) 0 40%, transparent 42%),
+    radial-gradient(22px 18px at 40% 68%, rgba(255,255,255,0.06) 0 40%, transparent 42%),
+
+    /* cool tint */
+    radial-gradient(circle at 72% 68%, rgba(120,170,255,0.10), transparent 55%);
+}
+
+/* Optional: làm crater “ăn” hơn chút mà vẫn không thô */
+.auth-layout--moon .auth-card--moon {
+  border: 1px solid rgba(170, 205, 255, 0.18);
+  box-shadow:
+    0 22px 60px rgba(2, 6, 23, 0.55),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Mobile: gọn hơn nữa */
+@media (max-width: 520px) {
+  .auth-layout--moon .auth-card--moon .form-label,
+  .auth-layout--moon .auth-card--moon .form-input,
+  .auth-layout--moon .auth-card--moon .btn-primary {
+    width: 90%;
+  }
+}
+
+/* === FINAL TUNE: smaller controls + moon-surface (no big dots) === */
+.auth-layout--moon {
+  --control-w: 78%;
+  --input-h: 32px;
+  --btn-h: 36px;
+}
+
+/* Label + input gọn và canh giữa */
+.auth-layout--moon .auth-card--moon .form-label {
+  width: var(--control-w);
+  margin: 0 auto;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* Input nhỏ lại */
+.auth-layout--moon .auth-card--moon .form-input {
+  width: 100%;
+  height: var(--input-h);
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(170, 205, 255, 0.16);
+}
+
+/* Button nhỏ lại (phải reset padding của .btn global) */
+.auth-layout--moon .auth-card--moon .btn {
+  padding: 0;
+}
+.auth-layout--moon .auth-card--moon .btn-primary {
+  width: var(--control-w);
+  height: var(--btn-h);
+  margin: 6px auto 0;
+  font-size: 12px;
+  border-radius: 999px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(110,170,255,0.95),
+    rgba(120,130,255,0.95),
+    rgba(175,140,255,0.92)
+  );
+  box-shadow:
+    0 14px 34px rgba(120,130,255,0.25),
+    0 0 0 1px rgba(210,230,255,0.14) inset;
+}
+
+/* Moon surface: mềm + giống mặt trăng (không “chấm tròn” rõ) */
+.auth-layout--moon .auth-card--moon {
+  background:
+    radial-gradient(circle at 35% 25%,
+      rgba(255,255,255,0.22) 0,
+      rgba(255,255,255,0.10) 38%,
+      rgba(10,18,36,0.62) 100%
+    ),
+    radial-gradient(90px 70px at 70% 35%, rgba(255,255,255,0.04), transparent 60%),
+    radial-gradient(70px 60px at 32% 68%, rgba(255,255,255,0.03), transparent 60%),
+    radial-gradient(circle at 72% 70%, rgba(120,170,255,0.10), transparent 60%);
+
+  box-shadow:
+    0 22px 60px rgba(2,6,23,0.55),
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 -18px 40px rgba(2,6,23,0.22);
+}
+
+/* ===== Layout balance fix ===== */
+.auth-layout--moon {
+  --card-x: 380px;
+  --card-y: -90px;
+}
+
+/* card alignment */
+.auth-layout--moon .auth-card--moon {
+  justify-content: flex-start;
+  padding-top: 48px;
+}
+
+/* title */
+.auth-layout--moon .auth-title {
+  margin-bottom: -41px;
+}
+
+/* form spacing */
+.auth-layout--moon .auth-card--moon form {
+  gap: 1px;
+  margin-top: 20px;
+}
+
+/* button breathing room */
+.auth-layout--moon .auth-card--moon .btn-primary {
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+/* Giảm độ rộng nút Login */
+.auth-layout--moon .auth-card--moon .btn-primary {
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Điều chỉnh vị trí chữ Login */
+.auth-layout--moon .auth-title {
+  margin-top: -20px;      /* đẩy xuống nhẹ */
+  margin-bottom: -25px; /* tách khỏi input */
+  text-align: center;
+
+  font-size: 20px;     /* nếu muốn nhỏ hơn: 20px */
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
