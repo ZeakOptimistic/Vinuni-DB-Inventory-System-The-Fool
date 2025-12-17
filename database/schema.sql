@@ -100,6 +100,7 @@ CREATE TABLE product (
     barcode          VARCHAR(50)  UNIQUE,
     description      TEXT,
     unit_price       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    unit_cost        DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     unit_of_measure  VARCHAR(20)   NOT NULL DEFAULT 'unit',
     reorder_level    INT UNSIGNED  NOT NULL DEFAULT 0,
     status           ENUM('ACTIVE','INACTIVE') NOT NULL DEFAULT 'ACTIVE',
@@ -173,7 +174,7 @@ CREATE TABLE stock_movement (
     movement_id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id             INT UNSIGNED NOT NULL,
     location_id            INT UNSIGNED NOT NULL,
-    quantity               INT NOT NULL,   -- >0: in, <0: out
+    quantity               INT NOT NULL,   -- absolute quantity (>0); movement_type decides in/out
     movement_type          ENUM('PURCHASE_RECEIPT','SALES_ISSUE',
                                 'TRANSFER_IN','TRANSFER_OUT',
                                 'ADJUSTMENT') NOT NULL,
@@ -216,6 +217,7 @@ CREATE TABLE sales_order_item (
     product_id INT UNSIGNED    NOT NULL,
     quantity   INT NOT NULL CHECK (quantity > 0),
     unit_price DECIMAL(10,2) NOT NULL,
+    unit_cost  DECIMAL(10,2) NULL,
     discount   DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     line_total DECIMAL(12,2) NOT NULL,
     PRIMARY KEY (so_id, product_id),

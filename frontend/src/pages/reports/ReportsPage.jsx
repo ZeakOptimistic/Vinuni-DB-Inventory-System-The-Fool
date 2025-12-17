@@ -230,8 +230,7 @@ const ReportsPage = () => {
         </label>
 
         {activeTab === "top-selling" && (
-          <div style={{ fontSize: 12, color: "#6b7280" }}>
-            Showing confirmed sales orders in the last 30 days
+          <div style={{ fontSize: 12, }}>
           </div>
         )}
       </div>
@@ -395,13 +394,9 @@ const LowStockReportTable = ({ rows, searchTerm }) => {
         >
           {/* Left info – giống sample */}
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Page{" "}
-            {filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1}
-            {" - "}
-            {Math.min(page * pageSize, filteredRows.length)}
-            {" of "}
-            {filteredRows.length}
+            Page {page} of {totalPages} · {filteredRows.length} products
           </span>
+
           {/* Right controls – giống sample */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <select
@@ -558,13 +553,9 @@ const StockPerLocationTable = ({ rows, searchTerm }) => {
         >
           {/* Left info – giống sample */}
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Showing{" "}
-            {filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1}
-            {" - "}
-            {Math.min(page * pageSize, filteredRows.length)}
-            {" of "}
-            {filteredRows.length}
+            Page {page} of {totalPages} · {filteredRows.length} records
           </span>
+
 
           {/* Right controls – giống sample */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -717,13 +708,9 @@ const TopSellingReportTable = ({ rows , searchTerm }) => {
         >
           {/* Left info – giống sample */}
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Showing{" "}
-            {filteredRows.length === 0 ? 0 : (page - 1) * pageSize + 1}
-            {" - "}
-            {Math.min(page * pageSize, filteredRows.length)}
-            {" of "}
-            {filteredRows.length}
+            Page {page} of {totalPages} · {filteredRows.length} products
           </span>
+
 
           {/* Right controls – giống sample */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

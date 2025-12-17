@@ -13,6 +13,14 @@ ALTER TABLE inventory_level
 ALTER TABLE stock_movement
   ADD INDEX idx_stock_movement_date_product (movement_date, product_id);
 
+-- Index for sales_order filtering by date/status (dashboard charts)
+ALTER TABLE sales_order
+  ADD INDEX idx_sales_order_order_date_status (order_date, status);
+
+-- Index for purchase_order filtering by date/status (dashboard charts)
+ALTER TABLE purchase_order
+  ADD INDEX idx_purchase_order_order_date_status (order_date, status);
+
 -- (Optional) Fulltext index on product description for search
 -- Need check MySQL version and storage engine support
 -- ALTER TABLE stock_movement

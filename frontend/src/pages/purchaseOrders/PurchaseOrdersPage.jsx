@@ -199,24 +199,6 @@ const PurchaseOrdersPage = () => {
         )}
       </div>
 
-      {/* Read-only notice for Clerk */}
-      {isClerk && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "8px 10px",
-            borderRadius: 8,
-            background: "#FEF3C7",
-            color: "#92400E",
-            fontSize: 13,
-          }}
-        >
-          You are signed in as <strong>Clerk</strong>. This page is read-only:
-          you can search and view purchase orders, but only managers and
-          admins can create new orders or perform receipt operations.
-        </div>
-      )}
-
       {/* Filters */}
       <div
         style={{

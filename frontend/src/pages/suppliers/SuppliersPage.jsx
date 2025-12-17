@@ -1,5 +1,5 @@
 // src/pages/suppliers/SuppliersPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supplierApi } from "../../api/supplierApi";
 import SupplierFormModal from "../../components/suppliers/SupplierFormModal";
 import { useAuth } from "../../hooks/useAuth";
@@ -26,6 +26,10 @@ const getStatusBadgeStyles = (status) => {
  * Permission model:
  * - ADMIN / MANAGER: full CRUD (create, edit, delete).
  * - CLERK: read-only. Can search and view details, but cannot modify.
+ *
+ * Pagination strategy:
+ * - Fetch ALL items (listAll)
+ * - Search/sort/paginate in frontend (slice)
  */
 const SuppliersPage = () => {
   const { user } = useAuth();
@@ -36,10 +40,12 @@ const SuppliersPage = () => {
   const isClerk = user && user.role === "CLERK";
 
   const [suppliers, setSuppliers] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
+
+  // client-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // client-side search/sort
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("name");
@@ -52,36 +58,66 @@ const SuppliersPage = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-  const totalPages = totalCount > 0 ? Math.ceil(totalCount / pageSize) : 0;
-
   // ----------------- Data loading -----------------
+  const loadSuppliers = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const items = await supplierApi.listAll();
+      setSuppliers(Array.isArray(items) ? items : []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load suppliers. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+    loadSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      try {
-        const params = {
-          page,
-          pageSize,
-          search: search || undefined,
-          ordering: ordering || undefined,
-        };
+  const filteredSuppliers = useMemo(() => {
+    const q = (search || "").trim().toLowerCase();
+    let list = Array.isArray(suppliers) ? [...suppliers] : [];
 
-        const data = await supplierApi.list(params);
-        const items = data.results || data || [];
-        setSuppliers(items);
-        setTotalCount(data.count ?? items.length);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load suppliers. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (q) {
+      list = list.filter((s) => {
+        const hay = [s?.name, s?.contact_name, s?.email, s?.phone]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
 
-    load();
-  }, [page, pageSize, search, ordering]);
+    const ord = ordering || "name";
+    const desc = ord.startsWith("-");
+    const key = desc ? ord.slice(1) : ord;
+
+    list.sort((a, b) => {
+      const sa = (a?.[key] ?? "").toString().toLowerCase();
+      const sb = (b?.[key] ?? "").toString().toLowerCase();
+      if (sa < sb) return desc ? 1 : -1;
+      if (sa > sb) return desc ? -1 : 1;
+      return 0;
+    });
+
+    return list;
+  }, [suppliers, search, ordering]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSuppliers.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedSuppliers = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredSuppliers.slice(start, start + pageSize);
+  }, [filteredSuppliers, page, pageSize]);
 
   // ----------------- Handlers -----------------
   const openCreateModal = () => {
@@ -102,19 +138,17 @@ const SuppliersPage = () => {
   };
 
   const handleSupplierSaved = (saved) => {
-    // Refresh list, but also do a small optimistic update for UX
+    // optimistic update
     setSuppliers((prev) => {
-      const exists = prev.find((s) => s.supplier_id === saved.supplier_id);
+      const list = Array.isArray(prev) ? prev : [];
+      const exists = list.find((s) => s.supplier_id === saved.supplier_id);
       if (exists) {
-        return prev.map((s) =>
-          s.supplier_id === saved.supplier_id ? saved : s
-        );
+        return list.map((s) => (s.supplier_id === saved.supplier_id ? saved : s));
       }
-      return [saved, ...prev];
+      return [saved, ...list];
     });
 
-    // To keep list in sync with server (esp. pagination), we can reload
-    // from page 1 after save:
+    // for UX: jump back to page 1 so user sees new item immediately
     setPage(1);
   };
 
@@ -129,14 +163,8 @@ const SuppliersPage = () => {
     setPage(1);
   };
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
-
-  const handleNextPage = () => {
-    if (totalPages === 0) return;
-    setPage((p) => Math.min(totalPages, p + 1));
-  };
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   const handleDelete = async (supplier) => {
     if (!canManageSuppliers) {
@@ -144,11 +172,7 @@ const SuppliersPage = () => {
       return;
     }
 
-    if (
-      !window.confirm(
-        `Are you sure you want to delete supplier "${supplier.name}"?`
-      )
-    ) {
+    if (!window.confirm(`Are you sure you want to delete supplier "${supplier.name}"?`)) {
       return;
     }
 
@@ -156,9 +180,8 @@ const SuppliersPage = () => {
     try {
       await supplierApi.remove(supplier.supplier_id);
       setSuppliers((prev) =>
-        prev.filter((s) => s.supplier_id !== supplier.supplier_id)
+        (Array.isArray(prev) ? prev : []).filter((s) => s.supplier_id !== supplier.supplier_id)
       );
-      setTotalCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error(err);
       alert("Failed to delete supplier. Please try again.");
@@ -181,14 +204,11 @@ const SuppliersPage = () => {
 
     try {
       setStatusUpdatingId(supplier.supplier_id);
-      const updated = await supplierApi.setStatus(
-        supplier.supplier_id,
-        nextStatus
-      );
+      const updated = await supplierApi.setStatus(supplier.supplier_id, nextStatus);
 
       // Update list in-place
       setSuppliers((prev) =>
-        prev.map((s) =>
+        (Array.isArray(prev) ? prev : []).map((s) =>
           s.supplier_id === updated.supplier_id ? updated : s
         )
       );
@@ -199,7 +219,6 @@ const SuppliersPage = () => {
       setStatusUpdatingId(null);
     }
   };
-
 
   // ----------------- Render -----------------
   return (
@@ -217,11 +236,7 @@ const SuppliersPage = () => {
         <h2 style={{ margin: 0 }}>Suppliers</h2>
 
         {canManageSuppliers && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={openCreateModal}
-          >
+          <button type="button" className="btn btn-primary" onClick={openCreateModal}>
             New Supplier
           </button>
         )}
@@ -287,14 +302,14 @@ const SuppliersPage = () => {
         </div>
       )}
 
-      {!loading && suppliers.length === 0 && (
+      {!loading && filteredSuppliers.length === 0 && (
         <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
           No suppliers found.
         </div>
       )}
 
       {/* Table */}
-      {suppliers.length > 0 && (
+      {filteredSuppliers.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -319,11 +334,8 @@ const SuppliersPage = () => {
               </tr>
             </thead>
             <tbody>
-              {suppliers.map((s) => (
-                <tr
-                  key={s.supplier_id}
-                  style={{ borderTop: "1px solid #e5e7eb" }}
-                >
+              {pagedSuppliers.map((s) => (
+                <tr key={s.supplier_id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={tdStyle}>{s.name}</td>
                   <td style={tdStyle}>{s.contact_name}</td>
                   <td style={tdStyle}>{s.phone}</td>
@@ -337,9 +349,7 @@ const SuppliersPage = () => {
                           padding: "2px 8px",
                           borderRadius: 999,
                           fontSize: 12,
-                          background:
-                            s.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
-                          color: s.status === "ACTIVE" ? "#15803d" : "#b91c1c",
+                          ...(getStatusBadgeStyles(s.status) || {}),
                         }}
                       >
                         {s.status}
@@ -350,13 +360,7 @@ const SuppliersPage = () => {
                   </td>
                   {canManageSuppliers && (
                     <td style={tdStyle}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 6,
-                          flexWrap: "wrap",
-                        }}
-                      >
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -365,6 +369,7 @@ const SuppliersPage = () => {
                         >
                           Edit
                         </button>
+
                         {s.status === "ACTIVE" ? (
                           <button
                             type="button"
@@ -411,9 +416,7 @@ const SuppliersPage = () => {
                           onClick={() => handleDelete(s)}
                           disabled={deletingId === s.supplier_id}
                         >
-                          {deletingId === s.supplier_id
-                            ? "Deleting..."
-                            : "Delete"}
+                          {deletingId === s.supplier_id ? "Deleting..." : "Delete"}
                         </button>
                       </div>
                     </td>
@@ -426,7 +429,7 @@ const SuppliersPage = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 0 && (
+      {filteredSuppliers.length > 0 && (
         <div
           style={{
             marginTop: 12,
@@ -437,9 +440,10 @@ const SuppliersPage = () => {
             fontSize: 13,
           }}
         >
-          <div>
-            Page {page} of {totalPages} · {totalCount} suppliers
-          </div>
+
+          <span style={{ fontSize: 13, color: "#6b7280" }}>
+            Page {page} of {totalPages} · {filteredSuppliers.length} suppliers
+          </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <select
               className="form-input"
@@ -470,7 +474,7 @@ const SuppliersPage = () => {
               type="button"
               className="btn btn-outline"
               onClick={handleNextPage}
-              disabled={totalPages === 0 || page >= totalPages}
+              disabled={page >= totalPages}
             >
               Next
             </button>

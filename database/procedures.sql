@@ -100,7 +100,7 @@ BEGIN
         'SALES_ISSUE',                 -- modified to correct enum movement_type
         'SALES_ORDER',
         p_so_id,
-        CURRENT_DATE,
+        NOW(),
         p_user_id,
         NOW()
     FROM sales_order_item si

@@ -240,23 +240,6 @@ const TransfersPage = () => {
         </div>
       )}
 
-      {/* Read-only notice for Clerk */}
-      {isClerk && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "8px 10px",
-            borderRadius: 8,
-            background: "#FEF3C7",
-            color: "#92400E",
-            fontSize: 13,
-          }}
-        >
-          You are signed in as <strong>Clerk</strong>. This page is read-only:
-          you can view recent transfers but cannot perform new transfers.
-        </div>
-      )}
-
       {/* Transfer form: only Admin / Manager */}
       {canTransfer && (
         <div className="dashboard-card" style={{ marginBottom: 16 }}>

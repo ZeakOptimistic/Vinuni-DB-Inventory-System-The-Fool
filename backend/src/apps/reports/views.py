@@ -25,8 +25,9 @@ class InventoryOverviewView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Total number of active products
-        total_products = Product.objects.count()
+        active_products = Product.objects.filter(status="ACTIVE").count()
+        inactive_products = Product.objects.filter(status="INACTIVE").count()
+        total_products = active_products + inactive_products
 
         # Use DB view to compute stock value per (product, location)
         stock_rows = query_view("view_stock_per_location")
@@ -46,6 +47,8 @@ class InventoryOverviewView(APIView):
 
         data = {
             "total_products": total_products,
+            "active_products": active_products,
+            "inactive_products": inactive_products,
             "total_stock_value": int(total_stock_value),
             "low_stock_count": low_stock_count,
         }

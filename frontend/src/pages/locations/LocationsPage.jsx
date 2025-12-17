@@ -1,5 +1,5 @@
 // src/pages/locations/LocationsPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { locationApi } from "../../api/locationApi";
 import LocationFormModal from "../../components/locations/LocationFormModal";
 import { useAuth } from "../../hooks/useAuth";
@@ -10,6 +10,10 @@ import { useAuth } from "../../hooks/useAuth";
  * Permission model:
  * - ADMIN / MANAGER: full CRUD (create, edit, delete).
  * - CLERK: read-only. Can search & view but not modify.
+ *
+ * Pagination strategy:
+ * - Fetch ALL items (listAll)
+ * - Search/sort/paginate in frontend (slice)
  */
 const LocationsPage = () => {
   const { user } = useAuth();
@@ -20,11 +24,12 @@ const LocationsPage = () => {
   const isClerk = user && user.role === "CLERK";
 
   const [locations, setLocations] = useState([]);
+
+  // client-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [count, setCount] = useState(0);
 
-
+  // client-side search/sort
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("name");
@@ -36,22 +41,13 @@ const LocationsPage = () => {
   const [editingLocation, setEditingLocation] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-
-  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
-
   // --------- Load data ----------
   const fetchLocations = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await locationApi.list({
-        page,
-        pageSize,
-        search,
-        ordering,
-      });
-      setLocations(data.results || []);
-      setCount(data.count || 0);
+      const items = await locationApi.listAll();
+      setLocations(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error(err);
       setError("Failed to load locations. Please try again.");
@@ -63,11 +59,51 @@ const LocationsPage = () => {
   useEffect(() => {
     fetchLocations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, ordering]);
+  }, []);
+
+  const filteredLocations = useMemo(() => {
+    const q = (search || "").trim().toLowerCase();
+    let list = Array.isArray(locations) ? [...locations] : [];
+
+    if (q) {
+      list = list.filter((l) => {
+        const hay = [l?.name, l?.address, l?.type].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const ord = ordering || "name";
+    const desc = ord.startsWith("-");
+    const key = desc ? ord.slice(1) : ord;
+
+    list.sort((a, b) => {
+      const va = a?.[key];
+      const vb = b?.[key];
+
+      const da = va ? Date.parse(va) : NaN;
+      const db = vb ? Date.parse(vb) : NaN;
+      if (!Number.isNaN(da) && !Number.isNaN(db)) return desc ? db - da : da - db;
+
+      const sa = (va ?? "").toString().toLowerCase();
+      const sb = (vb ?? "").toString().toLowerCase();
+      if (sa < sb) return desc ? 1 : -1;
+      if (sa > sb) return desc ? -1 : 1;
+      return 0;
+    });
+
+    return list;
+  }, [locations, search, ordering]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLocations.length / pageSize));
 
   useEffect(() => {
-    if (totalPages > 0 && page > totalPages) setPage(totalPages);
+    if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
+
+  const pagedLocations = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredLocations.slice(start, start + pageSize);
+  }, [filteredLocations, page, pageSize]);
 
   // --------- Handlers ----------
   const handleSearchSubmit = (e) => {
@@ -81,14 +117,8 @@ const LocationsPage = () => {
     setPage(1);
   };
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
-
-  const handleNextPage = () => {
-    if (totalPages === 0) return;
-    setPage((p) => Math.min(totalPages, p + 1));
-  };
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   const openCreateModal = () => {
     if (!canManageLocations) return;
@@ -124,11 +154,9 @@ const LocationsPage = () => {
 
     try {
       await locationApi.remove(location.location_id);
-      if (locations.length === 1 && page > 1) {
-        setPage((prev) => prev - 1);
-      } else {
-        fetchLocations();
-      }
+      setLocations((prev) =>
+        (Array.isArray(prev) ? prev : []).filter((l) => l.location_id !== location.location_id)
+      );
     } catch (err) {
       console.error(err);
       alert("Failed to delete location. Please try again.");
@@ -149,14 +177,11 @@ const LocationsPage = () => {
 
     try {
       setStatusUpdatingId(location.location_id);
-      const updated = await locationApi.setStatus(
-        location.location_id,
-        nextStatus
-      );
+      const updated = await locationApi.setStatus(location.location_id, nextStatus);
 
       // Update current list without refetching everything
       setLocations((prev) =>
-        prev.map((l) =>
+        (Array.isArray(prev) ? prev : []).map((l) =>
           l.location_id === updated.location_id ? updated : l
         )
       );
@@ -167,7 +192,6 @@ const LocationsPage = () => {
       setStatusUpdatingId(null);
     }
   };
-
 
   // --------- Render ----------
   return (
@@ -184,11 +208,7 @@ const LocationsPage = () => {
       >
         <h2 style={{ margin: 0 }}>Locations</h2>
         {canManageLocations && (
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={openCreateModal}
-          >
+          <button className="btn btn-primary" type="button" onClick={openCreateModal}>
             New Location
           </button>
         )}
@@ -206,9 +226,8 @@ const LocationsPage = () => {
             fontSize: 13,
           }}
         >
-          You are signed in as <strong>Clerk</strong>. This page is
-          read-only: you can search and view locations but cannot create,
-          edit, or delete.
+          You are signed in as <strong>Clerk</strong>. This page is read-only:
+          you can search and view locations but cannot create, edit, or delete.
         </div>
       )}
 
@@ -257,20 +276,14 @@ const LocationsPage = () => {
         </div>
       )}
 
-      {!loading && locations.length === 0 && (
-        <div
-          style={{
-            padding: 12,
-            borderRadius: 8,
-            background: "#f3f4f6",
-          }}
-        >
+      {!loading && filteredLocations.length === 0 && (
+        <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
           No locations found.
         </div>
       )}
 
       {/* Table */}
-      {locations.length > 0 && (
+      {filteredLocations.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -293,7 +306,7 @@ const LocationsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {locations.map((l) => (
+              {pagedLocations.map((l) => (
                 <tr key={l.location_id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={tdStyle}>{l.name}</td>
                   <td style={tdStyle}>{l.type}</td>
@@ -304,8 +317,7 @@ const LocationsPage = () => {
                         padding: "2px 8px",
                         borderRadius: 999,
                         fontSize: 12,
-                        background:
-                          l.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
+                        background: l.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
                         color: l.status === "ACTIVE" ? "#15803d" : "#b91c1c",
                       }}
                     >
@@ -313,19 +325,11 @@ const LocationsPage = () => {
                     </span>
                   </td>
                   <td style={tdStyle}>
-                    {l.created_at
-                      ? new Date(l.created_at).toLocaleString()
-                      : "-"}
+                    {l.created_at ? new Date(l.created_at).toLocaleString() : "-"}
                   </td>
                   {canManageLocations && (
                     <td style={tdStyle}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 6,
-                          flexWrap: "wrap",
-                        }}
-                      >
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -347,9 +351,7 @@ const LocationsPage = () => {
                             onClick={() => handleStatusChange(l, "INACTIVE")}
                             disabled={statusUpdatingId === l.location_id}
                           >
-                            {statusUpdatingId === l.location_id
-                              ? "Deactivating..."
-                              : "Deactivate"}
+                            {statusUpdatingId === l.location_id ? "Deactivating..." : "Deactivate"}
                           </button>
                         ) : (
                           <button
@@ -363,9 +365,7 @@ const LocationsPage = () => {
                             onClick={() => handleStatusChange(l, "ACTIVE")}
                             disabled={statusUpdatingId === l.location_id}
                           >
-                            {statusUpdatingId === l.location_id
-                              ? "Activating..."
-                              : "Activate"}
+                            {statusUpdatingId === l.location_id ? "Activating..." : "Activate"}
                           </button>
                         )}
 
@@ -393,7 +393,7 @@ const LocationsPage = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 0 && (
+      {filteredLocations.length > 0 && (
         <div
           style={{
             marginTop: 12,
@@ -404,7 +404,7 @@ const LocationsPage = () => {
           }}
         >
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Page {page} of {totalPages} · {count} locations
+            Page {page} of {totalPages} · {filteredLocations.length} locations
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <select

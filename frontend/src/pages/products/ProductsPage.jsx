@@ -1,11 +1,15 @@
 // src/pages/products/ProductsPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { productApi } from "../../api/productApi";
 import ProductFormModal from "../../components/products/ProductFormModal";
 import { useAuth } from "../../hooks/useAuth";
 
 /**
  * ProductsPage: view, search, sort, and basic CRUD for products.
+ *
+ * Pagination strategy (same as your SalesOrders/PurchaseOrders pages):
+ * - Fetch ALL items (via listAll)
+ * - Do search/sort/pagination in frontend with useMemo + slice()
  */
 const ProductsPage = () => {
   const { user } = useAuth();
@@ -13,17 +17,19 @@ const ProductsPage = () => {
   // Permission flags derived from role
   const canManageProducts =
     user && (user.role === "ADMIN" || user.role === "MANAGER");
-
   const isClerk = user && user.role === "CLERK";
 
   const [products, setProducts] = useState([]);
+
+  // client-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [count, setCount] = useState(0);
+  // client-side search/sort
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("name");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -31,20 +37,12 @@ const ProductsPage = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
-
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await productApi.list({
-        page,
-        pageSize,
-        search,
-        ordering,
-      });
-      setProducts(data.results || []);
-      setCount(data.count || 0);
+      const items = await productApi.listAll();
+      setProducts(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error(err);
       setError("Failed to load products. Please try again.");
@@ -56,7 +54,67 @@ const ProductsPage = () => {
   useEffect(() => {
     fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, ordering]);
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const q = (search || "").trim().toLowerCase();
+    let list = Array.isArray(products) ? [...products] : [];
+
+    if (q) {
+      list = list.filter((p) => {
+        const hay = [
+          p?.sku,
+          p?.name,
+          p?.barcode,
+          p?.category_name,
+          p?.unit_of_measure,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const ord = ordering || "name";
+    const desc = ord.startsWith("-");
+    const key = desc ? ord.slice(1) : ord;
+
+    list.sort((a, b) => {
+      const va = a?.[key];
+      const vb = b?.[key];
+
+      // date compare when possible
+      const da = va ? Date.parse(va) : NaN;
+      const db = vb ? Date.parse(vb) : NaN;
+      if (!Number.isNaN(da) && !Number.isNaN(db)) return desc ? db - da : da - db;
+
+      // numeric compare when possible
+      const na = Number(va);
+      const nb = Number(vb);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return desc ? nb - na : na - nb;
+
+      // string compare fallback
+      const sa = (va ?? "").toString().toLowerCase();
+      const sb = (vb ?? "").toString().toLowerCase();
+      if (sa < sb) return desc ? 1 : -1;
+      if (sa > sb) return desc ? -1 : 1;
+      return 0;
+    });
+
+    return list;
+  }, [products, search, ordering]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedProducts = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredProducts.slice(start, start + pageSize);
+  }, [filteredProducts, page, pageSize]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -69,14 +127,8 @@ const ProductsPage = () => {
     setPage(1);
   };
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
-
-  const handleNextPage = () => {
-    if (totalPages === 0) return;
-    setPage((p) => Math.min(totalPages, p + 1));
-  };
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   const openCreateModal = () => {
     setEditingProduct(null);
@@ -109,12 +161,9 @@ const ProductsPage = () => {
 
     try {
       await productApi.remove(product.product_id);
-      // If last item on this page was deleted, move one page back if needed
-      if (products.length === 1 && page > 1) {
-        setPage((prev) => prev - 1);
-      } else {
-        fetchProducts();
-      }
+      setProducts((prev) =>
+        (Array.isArray(prev) ? prev : []).filter((p) => p.product_id !== product.product_id)
+      );
     } catch (err) {
       console.error(err);
       alert("Failed to delete product. Please try again.");
@@ -139,7 +188,7 @@ const ProductsPage = () => {
 
       // Update list in-place without full refetch
       setProducts((prev) =>
-        prev.map((p) =>
+        (Array.isArray(prev) ? prev : []).map((p) =>
           p.product_id === updated.product_id ? updated : p
         )
       );
@@ -150,7 +199,6 @@ const ProductsPage = () => {
       setStatusUpdatingId(null);
     }
   };
-
 
   return (
     <div>
@@ -187,7 +235,6 @@ const ProductsPage = () => {
           you can search and view products but cannot create, edit, or delete.
         </div>
       )}
-
 
       {/* Search + sort */}
       <form
@@ -230,14 +277,14 @@ const ProductsPage = () => {
         </div>
       )}
 
-      {!loading && products.length === 0 && (
+      {!loading && filteredProducts.length === 0 && (
         <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
           No products found.
         </div>
       )}
 
       {/* Table */}
-      {products.length > 0 && (
+      {filteredProducts.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -263,7 +310,7 @@ const ProductsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {pagedProducts.map((p) => (
                 <tr key={p.product_id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={tdStyle}>{p.sku}</td>
                   <td style={tdStyle}>{p.name}</td>
@@ -279,8 +326,7 @@ const ProductsPage = () => {
                         padding: "2px 8px",
                         borderRadius: 999,
                         fontSize: 12,
-                        background:
-                          p.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
+                        background: p.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
                         color: p.status === "ACTIVE" ? "#15803d" : "#b91c1c",
                       }}
                     >
@@ -288,76 +334,72 @@ const ProductsPage = () => {
                     </span>
                   </td>
                   <td style={tdStyle}>
-                    {p.created_at
-                      ? new Date(p.created_at).toLocaleString()
-                      : "-"}
+                    {p.created_at ? new Date(p.created_at).toLocaleString() : "-"}
                   </td>
-                {canManageProducts && (
-                  <td style={tdStyle}>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: 6,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        style={{ fontSize: 12, padding: "4px 8px" }}
-                        onClick={() => openEditModal(p)}
-                      >
-                        Edit
-                      </button>
+                  {canManageProducts && (
+                    <td style={tdStyle}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          style={{ fontSize: 12, padding: "4px 8px" }}
+                          onClick={() => openEditModal(p)}
+                        >
+                          Edit
+                        </button>
 
-                      {p.status === "ACTIVE" ? (
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          style={{
-                            fontSize: 12,
-                            padding: "4px 8px",
-                            borderColor: "#fecaca",
-                          }}
-                          onClick={() => handleStatusChange(p, "INACTIVE")}
-                          disabled={statusUpdatingId === p.product_id}
-                        >
-                          {statusUpdatingId === p.product_id ? "Deactivating..." : "Deactivate"}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          style={{
-                            fontSize: 12,
-                            padding: "4px 8px",
-                            borderColor: "#bbf7d0",
-                          }}
-                          onClick={() => handleStatusChange(p, "ACTIVE")}
-                          disabled={statusUpdatingId === p.product_id}
-                        >
-                          {statusUpdatingId === p.product_id ? "Activating..." : "Activate"}
-                        </button>
-                      )}
+                        {p.status === "ACTIVE" ? (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#fecaca",
+                            }}
+                            onClick={() => handleStatusChange(p, "INACTIVE")}
+                            disabled={statusUpdatingId === p.product_id}
+                          >
+                            {statusUpdatingId === p.product_id
+                              ? "Deactivating..."
+                              : "Deactivate"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#bbf7d0",
+                            }}
+                            onClick={() => handleStatusChange(p, "ACTIVE")}
+                            disabled={statusUpdatingId === p.product_id}
+                          >
+                            {statusUpdatingId === p.product_id
+                              ? "Activating..."
+                              : "Activate"}
+                          </button>
+                        )}
 
-                      {/* Optional: keep hard delete only for ADMIN if you still want it */}
-                      {/* {user.role === "ADMIN" && (
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          style={{
-                            fontSize: 12,
-                            padding: "4px 8px",
-                            borderColor: "#fecaca",
-                          }}
-                          onClick={() => handleDelete(p)}
-                        >
-                          Delete
-                        </button>
-                      )} */}
-                    </div>
-                  </td>
-                )}
+                        {/* Delete */}
+                        {user.role === "ADMIN" || "CLERK" && (
+                          <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{
+                              fontSize: 12,
+                              padding: "4px 8px",
+                              borderColor: "#fecaca",
+                            }}
+                            onClick={() => handleDelete(p)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -366,7 +408,7 @@ const ProductsPage = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 0 && (
+      {filteredProducts.length > 0 && (
         <div
           style={{
             marginTop: 12,
@@ -377,7 +419,7 @@ const ProductsPage = () => {
           }}
         >
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Page {page} of {totalPages} · {count} products
+            Page {page} of {totalPages} · {filteredProducts.length} products
           </span>
 
           <div style={{ display: "flex", gap: 8 }}>

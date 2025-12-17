@@ -8,6 +8,23 @@ export const userApi = {
     return res.data; // DRF pagination: {count, results, next, previous}
   },
 
+  // Fetch all pages (works even if backend ignores page_size)
+  async listAll({ search = "", ordering = "-user_id", pageSize = 200 } = {}) {
+    let page = 1;
+    let out = [];
+
+    while (true) {
+      const data = await this.list({ page, pageSize, search, ordering });
+      const results = Array.isArray(data) ? data : (data?.results || []);
+      out = out.concat(results);
+
+      if (Array.isArray(data) || !data?.next) break;
+      page += 1;
+    }
+
+    return out;
+  },
+
   async listRoles() {
     const res = await httpClient.get("/api/auth/roles/");
     return res.data;

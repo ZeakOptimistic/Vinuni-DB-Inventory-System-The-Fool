@@ -117,6 +117,7 @@ const DashboardLayout = () => {
         <main className="main-content">
           <Outlet />
         </main>
+        <div className="page-signature">ZeakOptimistic</div>
       </div>
     </div>
   );

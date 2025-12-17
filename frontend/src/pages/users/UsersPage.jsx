@@ -1,5 +1,5 @@
 // src/pages/users/UsersPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { userApi } from "../../api/userApi";
 
 const TOKEN_KEY = "sipms_token";
@@ -9,10 +9,12 @@ const BACKUP_USER_KEY = "sipms_admin_user_backup";
 
 const UsersPage = () => {
   const [rows, setRows] = useState([]);
-  const [count, setCount] = useState(0);
 
+  // client-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // client-side search/sort
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("-user_id");
@@ -24,20 +26,12 @@ const UsersPage = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
-
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await userApi.list({
-        page,
-        pageSize,
-        search,
-        ordering,
-      });
-      setRows(data.results || []);
-      setCount(data.count || 0);
+      const items = await userApi.listAll();
+      setRows(Array.isArray(items) ? items : []);
     } catch (e) {
       console.error(e);
       setError("Failed to load users. Please try again.");
@@ -49,7 +43,67 @@ const UsersPage = () => {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, ordering]);
+  }, []);
+
+  const filteredRows = useMemo(() => {
+    const q = (search || "").trim().toLowerCase();
+    let list = Array.isArray(rows) ? [...rows] : [];
+
+    if (q) {
+      list = list.filter((u) => {
+        const hay = [
+          u?.username,
+          u?.full_name,
+          u?.email,
+          u?.role_name,
+          u?.status,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const ord = ordering || "-user_id";
+    const desc = ord.startsWith("-");
+    const key = desc ? ord.slice(1) : ord;
+
+    list.sort((a, b) => {
+      const va = a?.[key];
+      const vb = b?.[key];
+
+      // date compare when possible
+      const da = va ? Date.parse(va) : NaN;
+      const db = vb ? Date.parse(vb) : NaN;
+      if (!Number.isNaN(da) && !Number.isNaN(db)) return desc ? db - da : da - db;
+
+      // numeric compare when possible
+      const na = Number(va);
+      const nb = Number(vb);
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return desc ? nb - na : na - nb;
+
+      // string compare fallback
+      const sa = (va ?? "").toString().toLowerCase();
+      const sb = (vb ?? "").toString().toLowerCase();
+      if (sa < sb) return desc ? 1 : -1;
+      if (sa > sb) return desc ? -1 : 1;
+      return 0;
+    });
+
+    return list;
+  }, [rows, search, ordering]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredRows.slice(start, start + pageSize);
+  }, [filteredRows, page, pageSize]);
 
   const onNew = () => {
     setEditing(null);
@@ -62,7 +116,9 @@ const UsersPage = () => {
   };
 
   const onImpersonate = async (u) => {
-    const ok = window.confirm(`Login as "${u.username}"? You can switch back later.`);
+    const ok = window.confirm(
+      `Login as "${u.username}"? You can switch back later.`
+    );
     if (!ok) return;
 
     setBusyId(u.user_id);
@@ -71,8 +127,14 @@ const UsersPage = () => {
 
       // backup admin session (only once)
       if (!localStorage.getItem(BACKUP_TOKEN_KEY)) {
-        localStorage.setItem(BACKUP_TOKEN_KEY, localStorage.getItem(TOKEN_KEY) || "");
-        localStorage.setItem(BACKUP_USER_KEY, localStorage.getItem(USER_KEY) || "");
+        localStorage.setItem(
+          BACKUP_TOKEN_KEY,
+          localStorage.getItem(TOKEN_KEY) || ""
+        );
+        localStorage.setItem(
+          BACKUP_USER_KEY,
+          localStorage.getItem(USER_KEY) || ""
+        );
       }
 
       // swap to user session
@@ -90,7 +152,6 @@ const UsersPage = () => {
     }
   };
 
-
   const onDelete = async (u) => {
     if (!window.confirm(`Delete user "${u.username}"?`)) return;
     setBusyId(u.user_id);
@@ -99,7 +160,9 @@ const UsersPage = () => {
       await load();
     } catch (e) {
       console.error(e);
-      const msg = e?.response?.data?.detail || "Failed to delete user. Please try again.";
+      const msg =
+        e?.response?.data?.detail ||
+        "Failed to delete user. Please try again.";
       alert(msg);
     } finally {
       setBusyId(null);
@@ -109,7 +172,9 @@ const UsersPage = () => {
   const onToggleStatus = async (u) => {
     const next = u.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
     const actionLabel = next === "INACTIVE" ? "deactivate" : "activate";
-    const ok = window.confirm(`Are you sure you want to ${actionLabel} "${u.username}"?`);
+    const ok = window.confirm(
+      `Are you sure you want to ${actionLabel} "${u.username}"?`
+    );
     if (!ok) return;
 
     setBusyId(u.user_id);
@@ -153,10 +218,7 @@ const UsersPage = () => {
   };
 
   const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
-  const handleNextPage = () => {
-    if (totalPages === 0) return;
-    setPage((p) => Math.min(totalPages, p + 1));
-  };
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   return (
     <div>
@@ -222,14 +284,14 @@ const UsersPage = () => {
         </div>
       )}
 
-      {!loading && rows.length === 0 && (
+      {!loading && filteredRows.length === 0 && (
         <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
           No users found.
         </div>
       )}
 
       {/* Table */}
-      {rows.length > 0 && (
+      {filteredRows.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -253,7 +315,7 @@ const UsersPage = () => {
             </thead>
 
             <tbody>
-              {rows.map((u) => (
+              {pagedRows.map((u) => (
                 <tr key={u.user_id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={tdStyle}>{u.username}</td>
                   <td style={tdStyle}>{u.full_name || "-"}</td>
@@ -281,7 +343,7 @@ const UsersPage = () => {
                         style={{ fontSize: 12, padding: "4px 8px" }}
                         onClick={() => onImpersonate(u)}
                         disabled={busyId === u.user_id}
-                        >
+                      >
                         Login as
                       </button>
 
@@ -338,7 +400,7 @@ const UsersPage = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 0 && (
+      {filteredRows.length > 0 && (
         <div
           style={{
             marginTop: 12,
@@ -349,7 +411,7 @@ const UsersPage = () => {
           }}
         >
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Page {page} of {totalPages} · {count} users
+            Page {page} of {totalPages} · {filteredRows.length} users
           </span>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -382,7 +444,7 @@ const UsersPage = () => {
               type="button"
               className="btn btn-outline"
               onClick={handleNextPage}
-              disabled={totalPages === 0 || page >= totalPages}
+              disabled={page >= totalPages}
             >
               Next
             </button>
@@ -440,7 +502,7 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
         if (!(editing?.role_id) && !roleId && list.length) {
           setRoleId(String(list[0].role_id));
         }
-       } catch (e) {
+      } catch (e) {
         console.error(e);
         setError("Failed to load roles. Please try again.");
       }
@@ -506,7 +568,9 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
               required
             />
             {fieldErrors.username && (
-              <span className="field-error">{JSON.stringify(fieldErrors.username)}</span>
+              <span className="field-error">
+                {JSON.stringify(fieldErrors.username)}
+              </span>
             )}
           </label>
 
@@ -518,7 +582,9 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
               onChange={(e) => setFullName(e.target.value)}
             />
             {fieldErrors.full_name && (
-              <span className="field-error">{JSON.stringify(fieldErrors.full_name)}</span>
+              <span className="field-error">
+                {JSON.stringify(fieldErrors.full_name)}
+              </span>
             )}
           </label>
 
@@ -531,14 +597,21 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
               onChange={(e) => setEmail(e.target.value)}
             />
             {fieldErrors.email && (
-              <span className="field-error">{JSON.stringify(fieldErrors.email)}</span>
+              <span className="field-error">
+                {JSON.stringify(fieldErrors.email)}
+              </span>
             )}
           </label>
 
           <div style={{ display: "flex", gap: 12 }}>
             <label className="form-label" style={{ flex: 1 }}>
               Role
-              <select className="form-input" value={roleId} onChange={(e) => setRoleId(e.target.value)} required>
+              <select
+                className="form-input"
+                value={roleId}
+                onChange={(e) => setRoleId(e.target.value)}
+                required
+              >
                 {(Array.isArray(roles) ? roles : []).map((r) => (
                   <option key={r.role_id} value={String(r.role_id)}>
                     {r.role_name}
@@ -546,18 +619,27 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
                 ))}
               </select>
               {fieldErrors.role_id && (
-                <span className="field-error">{JSON.stringify(fieldErrors.role_id)}</span>
+                <span className="field-error">
+                  {JSON.stringify(fieldErrors.role_id)}
+                </span>
               )}
             </label>
 
             <label className="form-label" style={{ width: 160 }}>
               Status
-              <select className="form-input" value={status} onChange={(e) => setStatus(e.target.value)} required>
+              <select
+                className="form-input"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                required
+              >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
               {fieldErrors.status && (
-                <span className="field-error">{JSON.stringify(fieldErrors.status)}</span>
+                <span className="field-error">
+                  {JSON.stringify(fieldErrors.status)}
+                </span>
               )}
             </label>
           </div>
@@ -567,21 +649,38 @@ const UserFormModal = ({ open, editing, busy, onClose, onSubmit }) => {
             <input
               className="form-input"
               type="password"
-              placeholder={isEdit ? "New password (optional)" : "Password (leave empty if backend sets default)"}
+              placeholder={
+                isEdit
+                  ? "New password (optional)"
+                  : "Password (leave empty if backend sets default)"
+              }
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             {fieldErrors.password && (
-              <span className="field-error">{JSON.stringify(fieldErrors.password)}</span>
+              <span className="field-error">
+                {JSON.stringify(fieldErrors.password)}
+              </span>
             )}
           </label>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn-outline" onClick={onClose} disabled={busy}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={onClose}
+              disabled={busy}
+            >
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? (isEdit ? "Saving..." : "Creating...") : isEdit ? "Save changes" : "Create user"}
+              {busy
+                ? isEdit
+                  ? "Saving..."
+                  : "Creating..."
+                : isEdit
+                ? "Save changes"
+                : "Create user"}
             </button>
           </div>
         </form>

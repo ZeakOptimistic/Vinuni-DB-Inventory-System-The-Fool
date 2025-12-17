@@ -1,5 +1,5 @@
 // src/pages/categories/CategoriesPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { categoryApi } from "../../api/categoryApi";
 import CategoryFormModal from "../../components/categories/CategoryFormModal";
 import { useAuth } from "../../hooks/useAuth";
@@ -8,19 +8,26 @@ import { useAuth } from "../../hooks/useAuth";
  * CategoriesPage:
  * - List, search, sort, paginate categories
  * - Allow staff to create, edit, delete
+ *
+ * Pagination strategy:
+ * - Fetch ALL items (listAll)
+ * - Search/sort/paginate in frontend (slice)
  */
 const CategoriesPage = () => {
   const { user } = useAuth();
-  const isStaff =
-    user && ["ADMIN", "MANAGER", "CLERK"].includes(user.role);
+  const isStaff = user && ["ADMIN", "MANAGER", "CLERK"].includes(user.role);
 
   const [categories, setCategories] = useState([]);
+
+  // client-side pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [count, setCount] = useState(0);
+
+  // client-side search/sort
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [ordering, setOrdering] = useState("name");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -28,20 +35,12 @@ const CategoriesPage = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
 
-  const totalPages = count > 0 ? Math.ceil(count / pageSize) : 0;
-
   const fetchCategories = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await categoryApi.list({
-        page,
-        pageSize,
-        search,
-        ordering,
-      });
-      setCategories(data.results || []);
-      setCount(data.count || 0);
+      const items = await categoryApi.listAll();
+      setCategories(Array.isArray(items) ? items : []);
     } catch (err) {
       console.error(err);
       setError("Failed to load categories. Please try again.");
@@ -53,7 +52,44 @@ const CategoriesPage = () => {
   useEffect(() => {
     fetchCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, ordering]);
+  }, []);
+
+  const filteredCategories = useMemo(() => {
+    const q = (search || "").trim().toLowerCase();
+    let list = Array.isArray(categories) ? [...categories] : [];
+
+    if (q) {
+      list = list.filter((c) => {
+        const hay = [c?.name, c?.description].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    const ord = ordering || "name";
+    const desc = ord.startsWith("-");
+    const key = desc ? ord.slice(1) : ord;
+
+    list.sort((a, b) => {
+      const sa = (a?.[key] ?? "").toString().toLowerCase();
+      const sb = (b?.[key] ?? "").toString().toLowerCase();
+      if (sa < sb) return desc ? 1 : -1;
+      if (sa > sb) return desc ? -1 : 1;
+      return 0;
+    });
+
+    return list;
+  }, [categories, search, ordering]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCategories.length / pageSize));
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pagedCategories = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredCategories.slice(start, start + pageSize);
+  }, [filteredCategories, page, pageSize]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -66,14 +102,8 @@ const CategoriesPage = () => {
     setPage(1);
   };
 
-  const handlePrevPage = () => {
-    setPage((p) => Math.max(1, p - 1));
-  };
-
-  const handleNextPage = () => {
-    if (totalPages === 0) return;
-    setPage((p) => Math.min(totalPages, p + 1));
-  };
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   const openCreateModal = () => {
     setEditingCategory(null);
@@ -101,11 +131,9 @@ const CategoriesPage = () => {
 
     try {
       await categoryApi.remove(category.category_id);
-      if (categories.length === 1 && page > 1) {
-        setPage((prev) => prev - 1);
-      } else {
-        fetchCategories();
-      }
+      setCategories((prev) =>
+        (Array.isArray(prev) ? prev : []).filter((c) => c.category_id !== category.category_id)
+      );
     } catch (err) {
       console.error(err);
       alert("Failed to delete category. Please try again.");
@@ -126,13 +154,10 @@ const CategoriesPage = () => {
 
     try {
       setStatusUpdatingId(category.category_id);
-      const updated = await categoryApi.setStatus(
-        category.category_id,
-        nextStatus
-      );
+      const updated = await categoryApi.setStatus(category.category_id, nextStatus);
 
       setCategories((prev) =>
-        prev.map((c) =>
+        (Array.isArray(prev) ? prev : []).map((c) =>
           c.category_id === updated.category_id ? updated : c
         )
       );
@@ -205,14 +230,14 @@ const CategoriesPage = () => {
         </div>
       )}
 
-      {!loading && categories.length === 0 && (
+      {!loading && filteredCategories.length === 0 && (
         <div style={{ padding: 12, borderRadius: 8, background: "#f3f4f6" }}>
           No categories found.
         </div>
       )}
 
       {/* Table */}
-      {categories.length > 0 && (
+      {filteredCategories.length > 0 && (
         <div style={{ overflowX: "auto" }}>
           <table
             style={{
@@ -233,7 +258,7 @@ const CategoriesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {categories.map((c) => (
+              {pagedCategories.map((c) => (
                 <tr key={c.category_id} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={tdStyle}>{c.name}</td>
                   <td style={tdStyle}>{c.description || "-"}</td>
@@ -244,8 +269,7 @@ const CategoriesPage = () => {
                           padding: "2px 8px",
                           borderRadius: 999,
                           fontSize: 12,
-                          background:
-                            c.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
+                          background: c.status === "ACTIVE" ? "#dcfce7" : "#fee2e2",
                           color: c.status === "ACTIVE" ? "#15803d" : "#b91c1c",
                         }}
                       >
@@ -257,13 +281,7 @@ const CategoriesPage = () => {
                   </td>
                   {isStaff && (
                     <td style={tdStyle}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 6,
-                          flexWrap: "wrap",
-                        }}
-                      >
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         <button
                           type="button"
                           className="btn btn-outline"
@@ -285,9 +303,7 @@ const CategoriesPage = () => {
                             onClick={() => handleStatusChange(c, "INACTIVE")}
                             disabled={statusUpdatingId === c.category_id}
                           >
-                            {statusUpdatingId === c.category_id
-                              ? "Deactivating..."
-                              : "Deactivate"}
+                            {statusUpdatingId === c.category_id ? "Deactivating..." : "Deactivate"}
                           </button>
                         ) : (
                           <button
@@ -301,9 +317,7 @@ const CategoriesPage = () => {
                             onClick={() => handleStatusChange(c, "ACTIVE")}
                             disabled={statusUpdatingId === c.category_id}
                           >
-                            {statusUpdatingId === c.category_id
-                              ? "Activating..."
-                              : "Activate"}
+                            {statusUpdatingId === c.category_id ? "Activating..." : "Activate"}
                           </button>
                         )}
 
@@ -330,7 +344,7 @@ const CategoriesPage = () => {
       )}
 
       {/* Pagination */}
-      {totalPages > 0 && (
+      {filteredCategories.length > 0 && (
         <div
           style={{
             marginTop: 12,
@@ -341,10 +355,9 @@ const CategoriesPage = () => {
           }}
         >
           <span style={{ fontSize: 13, color: "#6b7280" }}>
-            Page {page} of {totalPages} · {count} categories
+            Page {page} of {totalPages} · {filteredCategories.length} categories
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-
             <select
               className="form-input"
               style={{ width: 100 }}
