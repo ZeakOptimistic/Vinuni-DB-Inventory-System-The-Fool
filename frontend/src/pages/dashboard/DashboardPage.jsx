@@ -127,7 +127,20 @@ const DashboardPage = () => {
   }, [lowStockGrouped]);
 
   const topSellingPreview = useMemo(() => {
-    return (topSellingRows || []).slice(0, PREVIEW_LIMIT);
+    const rows = topSellingRows || [];
+
+    const getQty = (r) =>
+      Number(r.total_quantity ?? r.total_qty_sold ?? r.qty_sold ?? 0) || 0;
+
+    const getRevenue = (r) => Number(r.total_revenue ?? r.revenue ?? 0) || 0;
+
+    const sorted = [...rows].sort((a, b) => {
+      const revDiff = getRevenue(b) - getRevenue(a);
+      if (revDiff !== 0) return revDiff;
+      return getQty(b) - getQty(a);
+    });
+
+    return sorted.slice(0, PREVIEW_LIMIT);
   }, [topSellingRows]);
 
   if (loading && !overview && !poMetrics && !soMetrics) {

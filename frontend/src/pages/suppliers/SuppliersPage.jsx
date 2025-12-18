@@ -284,8 +284,8 @@ const SuppliersPage = () => {
           className="form-input"
           style={{ minWidth: 180, maxWidth: 220 }}
         >
-          <option value="name">Name (A→Z)</option>
-          <option value="-name">Name (Z→A)</option>
+          <option value="name">Sort by Name (A→Z)</option>
+          <option value="-name">Sort by Name (Z→A)</option>
           <option value="contact_name">Contact name (A→Z)</option>
           <option value="-contact_name">Contact name (Z→A)</option>
         </select>
