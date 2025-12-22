@@ -269,16 +269,10 @@ INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmbx12.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\MiKTeX\fonts\map\pdftex\pdftex.map
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\enc\dvips\lm\lm-ec.enc
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmr17.tfm
+INPUT .\final_report.toc
+INPUT .\final_report.toc
+INPUT final_report.toc
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmbx12.tfm
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmbx12.tfm
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ts1lmr.fd
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ts1lmr.fd
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ts1lmr.fd
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ts1-lmr12.tfm
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\enc\dvips\lm\lm-ts1.enc
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmbx12.tfm
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmri12.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ot1lmr.fd
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ot1lmr.fd
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ot1lmr.fd
@@ -313,6 +307,19 @@ INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\amsfonts\
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm10.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\amsfonts\symbols\msbm7.tfm
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\t1lmtt.fd
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\t1lmtt.fd
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\t1lmtt.fd
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmtt12.tfm
+OUTPUT final_report.toc
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmr17.tfm
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmbx12.tfm
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ts1lmr.fd
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ts1lmr.fd
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\ts1lmr.fd
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ts1-lmr12.tfm
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\enc\dvips\lm\lm-ts1.enc
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmri12.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmr8.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\rm-lmr5.tfm
 INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\lmmi5.tfm
@@ -916,10 +923,7 @@ INPUT .\demo\login.png
 INPUT .\demo\login.png
 INPUT .\demo\login.png
 INPUT .\demo\login.png
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\t1lmtt.fd
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\t1lmtt.fd
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex\latex\lm\t1lmtt.fd
-INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmtt12.tfm
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\ec-lmbx12.tfm
 INPUT .\diagram sipms.png
 INPUT .\diagram sipms.png
 INPUT .\diagram sipms.png
@@ -950,6 +954,91 @@ INPUT ..\..\database\indexes.sql
 INPUT ..\..\database\security.sql
 INPUT ..\..\database\security.sql
 INPUT ..\..\database\security.sql
+INPUT .\demo\test1a.png
+INPUT .\demo\test1a.png
+INPUT .\demo\test1a.png
+INPUT .\demo\test1a.png
+INPUT .\demo\test1a.png
+INPUT .\demo\test1a.png
+INPUT .\demo\test1a.png
+INPUT C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\fonts\enc\dvips\lm\lm-rm.enc
+INPUT .\demo\test1b.png
+INPUT .\demo\test1b.png
+INPUT .\demo\test1b.png
+INPUT .\demo\test1b.png
+INPUT .\demo\test1b.png
+INPUT .\demo\test1b.png
+INPUT .\demo\test1b.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test1c.png
+INPUT .\demo\test2.png
+INPUT .\demo\test2.png
+INPUT .\demo\test2.png
+INPUT .\demo\test2.png
+INPUT .\demo\test2.png
+INPUT .\demo\test2.png
+INPUT .\demo\test2.png
+INPUT .\demo\test3.png
+INPUT .\demo\test3.png
+INPUT .\demo\test3.png
+INPUT .\demo\test3.png
+INPUT .\demo\test3.png
+INPUT .\demo\test3.png
+INPUT .\demo\test3.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4a.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test4b.png
+INPUT .\demo\test5.png
+INPUT .\demo\test5.png
+INPUT .\demo\test5.png
+INPUT .\demo\test5.png
+INPUT .\demo\test5.png
+INPUT .\demo\test5.png
+INPUT .\demo\test5.png
+INPUT .\demo\test6.png
+INPUT .\demo\test6.png
+INPUT .\demo\test6.png
+INPUT .\demo\test6.png
+INPUT .\demo\test6.png
+INPUT .\demo\test6.png
+INPUT .\demo\test6.png
+INPUT .\demo\test7.png
+INPUT .\demo\test7.png
+INPUT .\demo\test7.png
+INPUT .\demo\test7.png
+INPUT .\demo\test7.png
+INPUT .\demo\test7.png
+INPUT .\demo\test7.png
+INPUT .\demo\test8.png
+INPUT .\demo\test8.png
+INPUT .\demo\test8.png
+INPUT .\demo\test8.png
+INPUT .\demo\test8.png
+INPUT .\demo\test8.png
+INPUT .\demo\test8.png
+INPUT .\demo\test9.png
+INPUT .\demo\test9.png
+INPUT .\demo\test9.png
+INPUT .\demo\test9.png
+INPUT .\demo\test9.png
+INPUT .\demo\test9.png
+INPUT .\demo\test9.png
 INPUT final_report.aux
 INPUT .\final_report.out
 INPUT .\final_report.out

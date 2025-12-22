@@ -1,0 +1,90 @@
+\contentsline {chapter}{\numberline {1}Executive Summary}{3}{chapter.1}%
+\contentsline {section}{\numberline {1}Project Context and Motivation}{3}{section.1.1}%
+\contentsline {section}{\numberline {2}Objectives and Scope}{3}{section.1.2}%
+\contentsline {section}{\numberline {3}Deliverables}{3}{section.1.3}%
+\contentsline {section}{\numberline {4}Document Organization}{4}{section.1.4}%
+\contentsline {chapter}{\numberline {2}System Overview}{5}{chapter.2}%
+\contentsline {section}{\numberline {1}High-Level Architecture}{5}{section.2.1}%
+\contentsline {section}{\numberline {2}User Roles and Access Control}{5}{section.2.2}%
+\contentsline {section}{\numberline {3}Core Data Concepts}{6}{section.2.3}%
+\contentsline {chapter}{\numberline {3}Web Interface and Features Demonstration}{7}{chapter.3}%
+\contentsline {section}{\numberline {1}UI Layout and Navigation}{7}{section.3.1}%
+\contentsline {section}{\numberline {2}Dashboard Page}{7}{section.3.2}%
+\contentsline {section}{\numberline {3}Products Page}{10}{section.3.3}%
+\contentsline {section}{\numberline {4}Suppliers Page}{15}{section.3.4}%
+\contentsline {section}{\numberline {5}Locations Page}{19}{section.3.5}%
+\contentsline {section}{\numberline {6}Categories Page}{24}{section.3.6}%
+\contentsline {section}{\numberline {7}Purchase Orders Page}{28}{section.3.7}%
+\contentsline {section}{\numberline {8}Sales Orders Page}{33}{section.3.8}%
+\contentsline {section}{\numberline {9}Transfers Page}{37}{section.3.9}%
+\contentsline {section}{\numberline {10}Reports Page}{41}{section.3.10}%
+\contentsline {section}{\numberline {11}Users Page}{46}{section.3.11}%
+\contentsline {section}{\numberline {12}Authentication}{54}{section.3.12}%
+\contentsline {chapter}{\numberline {4}Database Implementation}{56}{chapter.4}%
+\contentsline {section}{\numberline {1}Implementation Artifacts and Execution Order}{56}{section.4.1}%
+\contentsline {subsection}{\numberline {1.1}SQL scripts}{56}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {1.2}Recommended execution order}{56}{subsection.4.1.2}%
+\contentsline {paragraph}{Database engine and encoding.}{57}{paragraph*.2}%
+\contentsline {section}{\numberline {2}Logical Data Model Summary}{58}{section.4.2}%
+\contentsline {subsection}{\numberline {2.1}ER diagram and relationships}{59}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {2.2}Core tables by domain}{59}{subsection.4.2.2}%
+\contentsline {paragraph}{Identity and roles.}{59}{paragraph*.3}%
+\contentsline {paragraph}{Master data.}{59}{paragraph*.4}%
+\contentsline {paragraph}{Procurement and sales documents.}{59}{paragraph*.5}%
+\contentsline {paragraph}{Inventory and audit trail.}{59}{paragraph*.6}%
+\contentsline {section}{\numberline {3}Constraints and Integrity Rules}{59}{section.4.3}%
+\contentsline {subsection}{\numberline {3.1}Keys and relationships}{60}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {3.2}Domain constraints and statuses}{60}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {3.3}Non-negative inventory invariant}{60}{subsection.4.3.3}%
+\contentsline {section}{\numberline {4}Inventory Consistency Design}{60}{section.4.4}%
+\contentsline {subsection}{\numberline {4.1}Stock movement as the system of record}{60}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.2}Current inventory snapshot}{60}{subsection.4.4.2}%
+\contentsline {section}{\numberline {5}Database Views for Reporting}{61}{section.4.5}%
+\contentsline {subsection}{\numberline {5.1}Implemented views}{61}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {5.2}Benefits}{61}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {5.3}SQL Listing: \texttt {views.sql}}{61}{subsection.4.5.3}%
+\contentsline {section}{\numberline {6}Stored Procedures for Critical Workflows}{62}{section.4.6}%
+\contentsline {subsection}{\numberline {6.1}\texttt {sp\_create\_purchase\_order}}{62}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {6.2}\texttt {sp\_confirm\_sales\_order}}{62}{subsection.4.6.2}%
+\contentsline {paragraph}{Error handling.}{63}{paragraph*.7}%
+\contentsline {subsection}{\numberline {6.3}SQL Listing: \texttt {procedures.sql}}{63}{subsection.4.6.3}%
+\contentsline {section}{\numberline {7}Triggers Enforcing Inventory Rules}{65}{section.4.7}%
+\contentsline {subsection}{\numberline {7.1}Validation trigger: quantity must be positive}{65}{subsection.4.7.1}%
+\contentsline {subsection}{\numberline {7.2}Consistency trigger: update inventory level and prevent negative stock}{65}{subsection.4.7.2}%
+\contentsline {subsection}{\numberline {7.3}SQL Listing: \texttt {triggers.sql}}{66}{subsection.4.7.3}%
+\contentsline {section}{\numberline {8}Deployment Notes and Verification Checklist}{67}{section.4.8}%
+\contentsline {subsection}{\numberline {8.1}Setup checklist}{67}{subsection.4.8.1}%
+\contentsline {subsection}{\numberline {8.2}Integration with the application}{67}{subsection.4.8.2}%
+\contentsline {section}{\numberline {9}Limitations and Future Improvements}{68}{section.4.9}%
+\contentsline {chapter}{\numberline {5}Performance Optimization and Security Configuration}{69}{chapter.5}%
+\contentsline {section}{\numberline {1}Performance Optimization}{69}{section.5.1}%
+\contentsline {subsection}{\numberline {1.1}Workload characteristics and query patterns}{69}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {1.2}Indexing strategy}{69}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {1.3}SQL Listing: \texttt {indexes.sql}}{70}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {1.4}Query design optimizations at the application layer}{70}{subsection.5.1.4}%
+\contentsline {subsection}{\numberline {1.5}Use of views for reporting performance}{71}{subsection.5.1.5}%
+\contentsline {subsection}{\numberline {1.6}Performance verification (recommended evidence)}{71}{subsection.5.1.6}%
+\contentsline {section}{\numberline {2}Security Configuration}{71}{section.5.2}%
+\contentsline {subsection}{\numberline {2.1}Application authentication}{71}{subsection.5.2.1}%
+\contentsline {paragraph}{Session lifecycle.}{71}{paragraph*.8}%
+\contentsline {subsection}{\numberline {2.2}Role-based authorization (RBAC) at the API layer}{72}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {2.3}Database security and least-privilege access}{72}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {2.4}SQL Listing: \texttt {security.sql}}{72}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {2.5}Operational notes and recommended hardening}{73}{subsection.5.2.5}%
+\contentsline {chapter}{\numberline {6}Testing and Validation}{75}{chapter.6}%
+\contentsline {section}{\numberline {1}Test Environment and Tools}{75}{section.6.1}%
+\contentsline {paragraph}{Dataset.}{75}{paragraph*.9}%
+\contentsline {section}{\numberline {2}Deployment and Test Setup Procedure}{75}{section.6.2}%
+\contentsline {subsection}{\numberline {2.1}Database deployment}{75}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {2.2}API and UI setup}{76}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {2.3}Postman environment}{76}{subsection.6.2.3}%
+\contentsline {section}{\numberline {3}Test Strategy}{76}{section.6.3}%
+\contentsline {section}{\numberline {4}Test Cases and Results}{76}{section.6.4}%
+\contentsline {subsection}{\numberline {4.1}Authentication and Role-Based Access Control}{76}{subsection.6.4.1}%
+\contentsline {subsection}{\numberline {4.2}Purchase Receiving and Inventory Increase}{79}{subsection.6.4.2}%
+\contentsline {subsection}{\numberline {4.3}Sales Order Validation and Automatic Confirmation}{80}{subsection.6.4.3}%
+\contentsline {paragraph}{PASS case (sufficient stock).}{81}{paragraph*.10}%
+\contentsline {paragraph}{FAIL case (insufficient stock).}{81}{paragraph*.11}%
+\contentsline {subsection}{\numberline {4.4}Direct Trigger Validation}{82}{subsection.6.4.4}%
+\contentsline {subsection}{\numberline {4.5}Reporting Views Validation}{83}{subsection.6.4.5}%
+\contentsline {section}{\numberline {5}Summary}{84}{section.6.5}%

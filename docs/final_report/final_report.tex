@@ -87,6 +87,11 @@
 
 \renewcommand{\thesection}{\arabic{section}}
 
+\tableofcontents
+\clearpage
+
+\newpage
+
 % ================== CHAPTER 1: EXECUTIVE SUMMARY ==================
 \chapter{Executive Summary}
 \section{Project Context and Motivation}
@@ -139,7 +144,7 @@ SIPMS follows a classic three-layer architecture:
   \item \textbf{Database (MySQL):} Stores normalized transactional data and enforces integrity rules. The database also provides views, triggers, and stored procedures to support reporting and consistent inventory updates.
 \end{itemize}
 
-\subsection{Technology Stack}
+Technology Stack
 \begin{itemize}
   \item Database: MySQL 8.x
   \item Backend: Python 3.10+, Django, Django REST Framework, MySQL client, SimpleJWT
@@ -169,7 +174,6 @@ Create Purchase Order           & $\checkmark$ & $\checkmark$ & $\times$ \\
 Approve / Cancel Purchase Order & $\checkmark$ & $\checkmark$ & $\times$ \\
 Receive Goods                   & $\checkmark$ & $\checkmark$ & $\times$ \\
 Create Sales Order              & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
-Confirm Sales Order             & $\checkmark$ & $\checkmark$ & $\times$ \\
 Create Stock Transfer           & $\checkmark$ & $\checkmark$ & $\times$ \\
 View Dashboard                  & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
 Manage Users / Roles            & $\checkmark$ & $\times$     & $\times$ \\
@@ -870,6 +874,7 @@ The database implementation is organized into the following scripts:
 
 \begin{itemize}
   \item \texttt{schema.sql}: core schema (database creation, tables, keys, constraints) and a small set of baseline indexes.
+  \item \texttt{seed\_data.sql}: demo dataset (users/products/locations/orders) used for testing.
   \item \texttt{views.sql}: reporting/analytics views used by dashboard and reports.
   \item \texttt{procedures.sql}: stored procedures for critical workflows (purchase order creation and sales confirmation).
   \item \texttt{triggers.sql}: triggers enforcing inventory consistency and preventing invalid stock movements.
@@ -882,6 +887,7 @@ A typical setup sequence is:
 
 \begin{enumerate}
   \item Run \texttt{schema.sql} to create the database (\texttt{sipms}), tables, and constraints.
+  \item Run \texttt{seed\_data.sql} to load demo/testing records.
   \item Run \texttt{views.sql} to create reporting views.
   \item Run \texttt{procedures.sql} to create stored procedures.
   \item Run \texttt{triggers.sql} to activate automatic inventory enforcement.
@@ -1274,285 +1280,232 @@ deployment configuration (environment variables/secrets). Additional practical h
 
 \newpage
 
-%================= CHAPTER 6: Testing and Validation =================
+%==============CHAPTER 6: Testing and Validation============
 
 \chapter{Testing and Validation}
 \label{chap:testing}
 
-This chapter presents the testing approach used to verify that SIPMS behaves correctly across
-the web interface, backend APIs, and database layer. The goal is to validate functional
-requirements (CRUD workflows, order processing, reporting) and key non-functional properties
-(security/RBAC enforcement and inventory consistency).
+This chapter presents the testing approach and validation evidence for SIPMS.
+Because Chapter~3 already demonstrates the implemented UI features, this chapter
+focuses on correctness and database enforcement using Postman API tests and
+MySQL Workbench verification queries (constraints, triggers, procedures, and views).
 
-% --------------------------------------------------------------------
-\section{Testing Scope and Objectives}
-\label{sec:test-scope}
+% ----------------------------------------------------------
+\section{Test Environment and Tools}
+\label{sec:test-environment}
 
-Testing in SIPMS focuses on the following objectives:
+We validate SIPMS using a black-box integration approach across three layers:
+
 \begin{itemize}
-  \item \textbf{Functional correctness:} ensure core workflows (Products, Purchase Orders, Sales Orders,
-  Reports) work as intended and produce correct data.
-  \item \textbf{Inventory integrity:} verify inventory never becomes negative and inventory snapshots stay
-  consistent with stock movements.
-  \item \textbf{Security and RBAC:} validate that authentication is required for protected modules and that
-  role permissions are enforced consistently (UI restrictions + API enforcement).
-  \item \textbf{Database correctness:} validate that procedures, triggers, and views behave correctly and
-  return expected outputs/errors.
+  \item \textbf{Web UI (React):} sanity checks for key workflows and role-based restrictions.
+  \item \textbf{Postman:} API-level testing for request/response validation, authentication, and RBAC.
+  \item \textbf{MySQL Workbench:} database-level verification (tables, procedures, triggers, views) and integrity tests.
 \end{itemize}
 
-% --------------------------------------------------------------------
-\section{Test Environment}
-\label{sec:test-env}
+\paragraph{Dataset.}
+A reproducible demo dataset is loaded using \texttt{seed\_data.sql}. This provides
+sample users (ADMIN/MANAGER/CLERK), products, locations, and baseline records
+to support repeatable testing.
 
-\subsection{System under test}
-The tested system includes:
-\begin{itemize}
-  \item \textbf{Frontend:} React web application (Dashboard, Products, Purchase Orders, Sales Orders, Reports).
-  \item \textbf{Backend:} Django REST API implementing authentication and business logic.
-  \item \textbf{Database:} MySQL database implementing schema, views, stored procedures, triggers, indexes, and security grants.
-\end{itemize}
+% ----------------------------------------------------------
+\section{Deployment and Test Setup Procedure}
+\label{sec:test-setup}
 
-\subsection{Test data}
-Testing was performed using a controlled dataset containing:
-\begin{itemize}
-  \item multiple products with different reorder levels and categories;
-  \item multiple locations to verify per-location inventory tracking;
-  \item suppliers for procurement workflows;
-  \item test users for each role (ADMIN, MANAGER, CLERK).
-\end{itemize}
-The dataset was designed to include both normal cases and edge cases (e.g., low stock, insufficient stock).
+\subsection{Database deployment}
+The database is deployed by executing SQL scripts in the following order:
 
-% --------------------------------------------------------------------
-\section{Testing Strategy}
+\begin{enumerate}
+  \item \texttt{schema.sql} (create database \texttt{sipms}, tables, constraints)
+  \item \texttt{seed\_data.sql} (demo/testing dataset)
+  \item \texttt{views.sql} (analytics/reporting views)
+  \item \texttt{procedures.sql} (stored procedures)
+  \item \texttt{triggers.sql} (inventory enforcement triggers)
+  \item \texttt{indexes.sql} (performance indexes)
+  \item \texttt{security.sql} (optional, DB user grants; passwords replaced before execution)
+\end{enumerate}
+
+\subsection{API and UI setup}
+The backend service is started and connected to the deployed MySQL schema.
+The frontend is started and configured to send authenticated requests to the backend.
+
+\subsection{Postman environment}
+A Postman environment is configured with:
+\texttt{base\_url}, and tokens for three test users (ADMIN/MANAGER/CLERK).
+Login is performed via \texttt{/api/auth/login/} and the issued token is attached to
+subsequent requests.
+
+% ----------------------------------------------------------
+\section{Test Strategy}
 \label{sec:test-strategy}
 
-We used a layered testing strategy to reduce defects early and validate end-to-end behavior:
+Testing targets three categories:
 
-\subsection{Manual end-to-end UI testing (black-box)}
-Each module was tested from the user perspective by performing actions through the UI and verifying:
-(i) UI state updates, (ii) API success/error responses reflected in the UI, and (iii) persisted database state.
-
-\subsection{API testing (integration)}
-Key endpoints were tested directly using an API client (e.g., Postman/Thunder Client) to verify:
 \begin{itemize}
-  \item correct request/response payloads and status codes;
-  \item validation errors for invalid inputs;
-  \item authorization behavior for different roles (403/401 responses where applicable).
+  \item \textbf{Authentication and RBAC:} verify login and role-based endpoint restrictions.
+  \item \textbf{Workflow correctness:} validate purchase receiving and sales order processing (inventory sufficiency and automatic confirmation).
+  \item \textbf{Database integrity enforcement:} validate triggers/procedures prevent invalid states
+  (quantity $>0$, non-negative inventory) and reporting views return consistent results.
 \end{itemize}
 
-\subsection{Database-level validation}
-Database procedures and triggers were validated by:
+% ----------------------------------------------------------
+\section{Test Cases and Results}
+\label{sec:test-cases}
+
+\subsection{Authentication and Role-Based Access Control}
+\label{subsec:test-auth-rbac}
+
 \begin{itemize}
-  \item executing stored procedures with normal and failing inputs;
-  \item inserting stock movements to confirm automatic updates to \texttt{inventory\_level};
-  \item attempting invalid operations (e.g., negative inventory) to ensure the database rejects them;
-  \item querying reporting views to confirm correct aggregation and filtering.
+  \item \textbf{Login (ADMIN/MANAGER/CLERK):} token is issued and stored on the client.
+  \item \textbf{RBAC negative test:} CLERK is forbidden from privileged operations such as creating purchase orders.
+  \item \textbf{RBAC positive test:} MANAGER/ADMIN can execute privileged operations successfully.
 \end{itemize}
 
-% --------------------------------------------------------------------
-\section{Functional Test Cases}
-\label{sec:functional-tests}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test1a.png}
+  \label{fig:test-login-users}
+\end{figure}
 
-This section summarizes representative test cases for each major module. The full detailed test
-log can be added as an appendix if required.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test1b.png}
+  \label{fig:test-login-users}
+\end{figure}
 
-% ---------------------- Authentication ----------------------
-\subsection{Authentication and Session Tests}
-\label{subsec:test-auth}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test1c.png}
+  \caption{Postman login tests: access token issued for ADMIN, MANAGER, and CLERK users.}
+  \label{fig:test-login-users}
+\end{figure}
 
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
-\hline
-\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
-\hline
-AUTH-01 & Login with valid credentials & Token/session is created and user is redirected to the dashboard. \\
-AUTH-02 & Login with invalid credentials & Login fails with a clear error message; no session is stored. \\
-AUTH-03 & Access protected module without login & User is redirected to login (or receives 401 on API calls). \\
-AUTH-04 & Logout & Token/session is cleared; protected modules require re-login. \\
-\hline
-\end{tabular}
-\caption{Authentication and session test cases.}
-\label{tab:test-auth}
-\end{table}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test2.png}
+  \caption{RBAC negative test: CLERK user is denied when attempting to create a Purchase Order (HTTP 403).}
+  \label{fig:test-rbac-clerk-po}
+\end{figure}
 
-% ---------------------- Products ----------------------
-\subsection{Products Module Tests}
-\label{subsec:test-products}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test3.png}
+  \caption{RBAC positive test: ADMIN/MANAGER can create a Purchase Order successfully (HTTP 201).}
+  \label{fig:test-rbac-admin-po}
+\end{figure}
 
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
-\hline
-\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
-\hline
-PROD-01 & Create a new product & Product is saved and appears in the product list. \\
-PROD-02 & Update product fields (price, reorder level) & Changes persist and are reflected in UI + database. \\
-PROD-03 & Search product by SKU/name & Matching products are returned; non-matching are excluded. \\
-PROD-04 & Invalid product data (empty required fields) & Validation error is shown; product is not created. \\
-\hline
-\end{tabular}
-\caption{Products module test cases.}
-\label{tab:test-products}
-\end{table}
+% ----------------------------------------------------------
+\subsection{Purchase Receiving and Inventory Increase}
+\label{subsec:test-po-receive}
 
-% ---------------------- Purchase Orders ----------------------
-\subsection{Purchase Orders Module Tests}
-\label{subsec:test-po}
+This test validates that receiving goods records stock movements and automatically updates
+\texttt{inventory\_level} via the \texttt{AFTER INSERT} trigger on \texttt{stock\_movement}.
 
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
-\hline
-\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
-\hline
-PO-01 & Create purchase order with valid items & PO is created; total amount is computed and stored. \\
-PO-02 & Receive goods for a purchase order & Stock movements are created; inventory level increases accordingly. \\
-PO-03 & Attempt receive with invalid quantity & Operation is rejected with a clear validation error. \\
-PO-04 & Filter/search purchase orders by status/date & UI displays correct subset of orders. \\
-\hline
-\end{tabular}
-\caption{Purchase orders module test cases.}
-\label{tab:test-po}
-\end{table}
-
-% ---------------------- Sales Orders ----------------------
-\subsection{Sales Orders Module Tests}
-\label{subsec:test-so}
-
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
-\hline
-\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
-\hline
-SO-01 & Create sales order with sufficient stock & SO is created; confirmation reduces inventory via stock movements. \\
-SO-02 & Create/confirm sales order with insufficient stock & Operation is rejected; inventory remains unchanged. \\
-SO-03 & Cancel a sales order & Status changes to CANCELLED; no stock reduction occurs (or reversal is applied if defined). \\
-SO-04 & Filter/search sales orders by status/date & UI displays correct subset of orders. \\
-\hline
-\end{tabular}
-\caption{Sales orders module test cases.}
-\label{tab:test-so}
-\end{table}
-
-% ---------------------- Reports ----------------------
-\subsection{Reports and Dashboard Tests}
-\label{subsec:test-reports}
-
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
-\hline
-\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
-\hline
-REP-01 & Low stock report & Displays products below reorder level with correct quantities. \\
-REP-02 & Stock per location report & Displays correct per-location quantities and valuation fields. \\
-REP-03 & Top-selling products (last 30 days) & Displays correct aggregation based on confirmed sales. \\
-\hline
-\end{tabular}
-\caption{Reporting and dashboard test cases.}
-\label{tab:test-reports}
-\end{table}
-
-% --------------------------------------------------------------------
-\section{Security and RBAC Validation}
-\label{sec:rbac-tests}
-
-To validate role-based access control, we tested each role against privileged operations using both
-the UI and direct API calls.
-
-\subsection{RBAC test matrix (representative)}
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{p{0.40\textwidth} c c c}
-\hline
-\textbf{Operation} & \textbf{ADMIN} & \textbf{MANAGER} & \textbf{CLERK} \\
-\hline
-Create purchase order & \checkmark & \checkmark & $\times$ \\
-Receive goods & \checkmark & \checkmark & $\times$ \\
-Create sales order & \checkmark & \checkmark & \checkmark \\
-Cancel sales order & \checkmark & \checkmark & $\times$ \\
-View reports & \checkmark & \checkmark & \checkmark \\
-Manage users/roles & \checkmark & $\times$ & $\times$ \\
-\hline
-\end{tabular}
-\caption{Representative RBAC validation matrix (expected access).}
-\label{tab:rbac-matrix}
-\end{table}
-
-\paragraph{Expected enforcement.}
-Restricted operations must be:
-(i) hidden/disabled in the UI for unauthorized roles, and
-(ii) blocked at the API layer (e.g., 403 Forbidden) if attempted directly.
-
-% --------------------------------------------------------------------
-\section{Database Correctness Tests}
-\label{sec:db-tests}
-
-\subsection{Trigger validation tests}
-We validated that triggers enforce inventory correctness under both normal and invalid conditions:
 \begin{itemize}
-  \item \textbf{TRG-01 (positive quantity):} inserting a stock movement with zero/negative quantity is rejected.
-  \item \textbf{TRG-02 (non-negative inventory):} inserting a movement that would reduce inventory below zero is rejected.
-  \item \textbf{TRG-03 (snapshot update):} valid stock movements automatically update \texttt{inventory\_level}.
+  \item Create a Purchase Order (MANAGER/ADMIN).
+  \item Execute \texttt{/api/purchase-orders/<po\_id>/receive-all/}.
+  \item Verify a \texttt{PURCHASE\_RECEIPT} movement is inserted and inventory increases at the destination location.
 \end{itemize}
 
-\subsection{Stored procedure validation tests}
-We validated stored procedures using both successful and failing inputs:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test4a.png}
+  \caption{Receive-all workflow: stock receipt succeeds and PO status is updated.}
+  \label{fig:test-receive-all}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test4b.png}
+  \caption{Workbench verification: inventory level increases after \texttt{PURCHASE\_RECEIPT} movement insert.}
+  \label{fig:test-inventory-increase}
+\end{figure}
+
+% ----------------------------------------------------------
+\subsection{Sales Order Validation and Automatic Confirmation}
+\label{subsec:test-sales-confirm}
+
+In SIPMS, sales orders are validated and confirmed at creation time. The backend calls the
+stored procedure \texttt{sp\_confirm\_sales\_order} as part of the sales order creation workflow:
+it checks inventory sufficiency before inserting \texttt{SALES\_ISSUE} movements and updating
+\texttt{inventory\_level} through triggers. Therefore, insufficient stock is observed as a
+\emph{create-time rejection} (HTTP 400) rather than a separate ``confirm later'' step.
+
+\paragraph{PASS case (sufficient stock).}
+Action: create a sales order via \texttt{POST /api/sales-orders/} with requested quantities within available stock.\\
+Expected: the sales order is created in \texttt{CONFIRMED} status, \texttt{SALES\_ISSUE} movements are inserted,
+and inventory decreases automatically.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test5.png}
+  \caption{Sales order PASS case: creation succeeds and the order is \texttt{CONFIRMED}; inventory is reduced accordingly.}
+  \label{fig:test-sales-confirm-pass}
+\end{figure}
+
+\paragraph{FAIL case (insufficient stock).}
+Action: attempt to create a sales order where at least one line item exceeds on-hand quantity.\\
+Expected: the request is rejected (HTTP 400) with a database validation error (e.g., \texttt{ERROR 1644}),
+no sales order is created, and inventory remains unchanged.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test6.png}
+  \caption{Sales order FAIL case: creation is rejected due to insufficient stock (HTTP 400 with DB error).}
+  \label{fig:test-sales-confirm-fail}
+\end{figure}
+
+% ----------------------------------------------------------
+\subsection{Direct Trigger Validation}
+\label{subsec:test-trigger-invariants}
+
+To demonstrate defense-in-depth, we validate database triggers directly in MySQL Workbench
+by inserting into \texttt{stock\_movement} (bypassing the API layer).
+
+Two critical invariants are enforced directly in the database:
+
 \begin{itemize}
-  \item \textbf{PROC-01:} \texttt{sp\_create\_purchase\_order} creates a purchase order with a consistent initial status.
-  \item \textbf{PROC-02:} \texttt{sp\_confirm\_sales\_order} rejects confirmation when stock is insufficient.
-  \item \textbf{PROC-03:} \texttt{sp\_confirm\_sales\_order} inserts \texttt{stock\_movement} rows and updates \texttt{inventory\_level} when stock is sufficient.
+  \item \textbf{Quantity must be $> 0$:} invalid movements are blocked by a \texttt{BEFORE INSERT} trigger.
+  \item \textbf{Non-negative inventory:} movements that would result in negative stock are rejected by
+  the \texttt{AFTER INSERT} trigger.
 \end{itemize}
 
-\subsection{View validation tests}
-Views were validated by comparing view outputs with base table aggregates:
-\begin{itemize}
-  \item \textbf{VIEW-01:} low stock view matches products where \texttt{qty\_on\_hand < reorder\_level}.
-  \item \textbf{VIEW-02:} top-selling view matches confirmed sales totals in the last 30 days.
-  \item \textbf{VIEW-03:} stock-per-location view matches \texttt{inventory\_level} joined with product metadata.
-\end{itemize}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test7.png}
+  \caption{Trigger validation: \texttt{stock\_movement.quantity} must be strictly positive.}
+  \label{fig:test-trigger-positive-qty}
+\end{figure}
 
-% --------------------------------------------------------------------
-\section{Testing Evidence and Screenshots (to be inserted)}
-\label{sec:test-evidence}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test8.png}
+  \caption{Trigger validation: movements that would cause negative inventory are rejected.}
+  \label{fig:test-trigger-nonnegative}
+\end{figure}
 
-To strengthen the report, the following evidence can be attached as figures:
-\begin{itemize}
-  \item UI screenshots of successful workflows (create PO, receive goods, create SO, cancel SO).
-  \item UI screenshots of validation failures (insufficient stock, unauthorized actions hidden/blocked).
-  \item API client screenshots showing HTTP status codes for RBAC enforcement (401/403 cases).
-  \item Database query screenshots verifying \texttt{inventory\_level} updates after stock movements.
-\end{itemize}
+% ----------------------------------------------------------
+\subsection{Reporting Views Validation}
+\label{subsec:test-views}
 
-% Example placeholders:
-% \begin{figure}[H]
-%   \centering
-%   \includegraphics[width=0.95\textwidth]{figures/test_auth_login_success.png}
-%   \caption{Authentication test: successful login and session creation.}
-%   \label{fig:test-auth-success}
-% \end{figure}
+Reporting views are validated by executing read queries and comparing results with the
+reporting pages in the web interface (without duplicating UI screenshots from Chapter~3).
 
-% --------------------------------------------------------------------
-\section{Limitations and Future Testing}
-\label{sec:test-limitations}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{demo/test9.png}
+  \caption{Workbench validation: \texttt{view\_low\_stock\_products} returns products below reorder level.}
+  \label{fig:test-view-low-stock}
+\end{figure}
 
-Current testing validates core behaviors and integrity constraints; however, future improvements include:
-\begin{itemize}
-  \item \textbf{Automated test suite:} add backend unit/integration tests (e.g., Django test cases) for
-  endpoints and permission rules.
-  \item \textbf{Concurrency tests:} test simultaneous stock updates (high load) to further validate locking and trigger behavior.
-  \item \textbf{Performance benchmarks:} measure response time for key endpoints and compare with/without indexes.
-  \item \textbf{Security hardening tests:} penetration-style checks for token expiration, replay, and privilege escalation attempts.
-\end{itemize}
+% ----------------------------------------------------------
+\section{Summary}
+\label{sec:test-summary}
 
+Overall, SIPMS testing confirms:
+(i) role-based access restrictions are enforced at the API layer,
+(ii) business workflows correctly generate stock movements and update inventory,
+and (iii) database triggers/procedures prevent invalid inventory states (negative stock, invalid quantities),
+while views support consistent reporting.
 
 \end{document}
 
