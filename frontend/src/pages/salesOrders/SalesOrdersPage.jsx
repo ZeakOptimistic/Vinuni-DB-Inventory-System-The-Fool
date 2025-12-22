@@ -217,10 +217,10 @@ const SalesOrdersPage = () => {
           style={{ minWidth: 200 }}
         >
           <option value="">All statuses</option>
-          <option value="DRAFT">DRAFT</option>
+          {/* <option value="DRAFT">DRAFT</option> */}
           <option value="CONFIRMED">CONFIRMED</option>
-          <option value="PARTIALLY_SHIPPED">PARTIALLY_SHIPPED</option>
-          <option value="CLOSED">CLOSED</option>
+          {/* <option value="PARTIALLY_SHIPPED">PARTIALLY_SHIPPED</option>
+          <option value="CLOSED">CLOSED</option> */}
           <option value="CANCELLED">CANCELLED</option>
         </select>
       </div>

@@ -784,12 +784,17 @@ cd Vinuni-DB-Inventory-System-The-Fool
 **MySQL**
 
 ```bash
-mysql -u root -p < database/schema.sql
-mysql -u root -p sipms < database/views.sql
-mysql -u root -p sipms < database/procedures.sql
-mysql -u root -p sipms < database/triggers.sql
-mysql -u root -p sipms < database/indexes.sql
-mysql -u root -p sipms < database/seed_data.sql
+cd Vinuni-DB-Inventory-System-The-Fool\database
+mysql -u root -p
+
+>>> DROP DATABASE IF EXISTS sipms;
+>>> SOURCE schema.sql;
+>>> SOURCE seed_data.sql;
+>>> SOURCE views.sql;
+>>> SOURCE procedures.sql;
+>>> SOURCE triggers.sql;
+>>> SOURCE indexes.sql;
+>>> SOURCE security.sql;
 ```
 
 ---
@@ -797,7 +802,7 @@ mysql -u root -p sipms < database/seed_data.sql
 **Backend**
 
 ```bash
-cd backend
+cd Vinuni-DB-Inventory-System-The-Fool\backend
 python -m venv venv
 .\venv\Scripts\activate        # or source venv/bin/activate
 pip install -r requirements.txt
@@ -826,7 +831,7 @@ python manage.py runserver
 **Frontend**
 
 ```bash
-cd ../../frontend
+cd Vinuni-DB-Inventory-System-The-Fool\frontend
 npm install
 npm run dev
 ```
@@ -839,7 +844,7 @@ Login:
 - Username: `admin`
 - Password: `admin123`
 
-
+<!--
 ---
 
 ## Docker
@@ -922,9 +927,9 @@ docker exec -it sipms-backend sh
 Enter MySQL container:
 ```bash
 docker exec -it sipms-mysql mysql -u root -p
-```bash
+```
 
 ## Common fixes
 If Docker cannot connect:
 - Start Docker Desktop
-- Restart Docker Desktop
+- Restart Docker Desktop -->

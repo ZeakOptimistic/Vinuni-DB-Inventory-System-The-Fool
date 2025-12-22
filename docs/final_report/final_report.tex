@@ -1,0 +1,1574 @@
+\documentclass[a4paper, 12pt]{report}
+% \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+% \usepackage[vietnamese]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage[top=25mm, left=20mm, right=20mm, bottom=25mm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{indentfirst}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage[svgnames]{xcolor}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{float}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+
+\DeclareUnicodeCharacter{00AD}{} % soft hyphen
+\DeclareUnicodeCharacter{FFFD}{} % replacement character
+
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=blue
+}
+
+% \pagestyle{fancy}
+% \fancyhf{}
+% \fancyfoot[C]{\thepage}
+% \fancyfoot[R]{\scriptsize 07/12/2025}
+% \renewcommand{\headrulewidth}{0pt}
+% \renewcommand{\footrulewidth}{0pt}
+
+\lstdefinestyle{sqlstyle}{
+  language=SQL,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{teal},
+  commentstyle=\color{gray},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  tabsize=2,
+  captionpos=b
+}
+
+
+\begin{document}
+
+% ================== TITLE PAGE ==================
+\begin{titlepage}
+    \centering
+
+    \vspace*{2cm}
+    {\large VinUniversity\par}
+
+    \vspace{4cm}
+    {\huge \textbf{Smart Inventory \& \\ Procurement Management System}\par}
+
+    \vfill
+    {\large Tran Quang Khai \par}
+    {\large Thai Huu Tri \par}
+    {\large Nguyen Ngoc Han \par}
+    \vspace{0.5cm}
+    {\large COMP3030 - Databases and Database Systems\par}
+    \large{Repository: \href{https://github.com/ZeakOptimistic/Vinuni-DB-Inventory-System-The-Fool}{Vinuni DB Inventory System The Fool}}\par
+    \vspace{0.4cm}
+    {\large Dec 22, 2025\par}
+
+\end{titlepage}
+
+\renewcommand{\thesection}{\arabic{section}}
+
+% ================== CHAPTER 1: EXECUTIVE SUMMARY ==================
+\chapter{Executive Summary}
+\section{Project Context and Motivation}
+Small retail stores and organizations operating across multiple sites (warehouses and stores) often struggle to maintain accurate, real-time visibility into inventory. Common operational issues include:
+(i) stockouts caused by delayed replenishment decisions,
+(ii) inconsistent stock records between locations,
+(iii) limited insight into which products are selling well over time,
+and (iv) manual processes that make auditing and accountability difficult.
+
+To address these challenges, we implemented \textbf{SIPMS (Smart Inventory \& Procurement Management System)}, a MySQL-backed information system with a web interface supporting inventory operations, procurement, sales, inter-location transfers, and reporting.
+
+\section{Objectives and Scope}
+The project objectives are:
+\begin{itemize}
+  \item Provide robust \textbf{entity management} for Products, Categories, Suppliers, Locations, and Users.
+  \item Support end-to-end \textbf{procurement workflow} via Purchase Orders (PO) and receiving operations.
+  \item Support \textbf{sales workflow} via Sales Orders (SO) with validation and cancellation.
+  \item Support \textbf{internal transfers} to move inventory between locations while preventing negative stock.
+  \item Provide \textbf{analytics and reporting}, including low-stock monitoring, stock-by-location, top-selling products, and dashboard trend charts.
+  \item Enforce \textbf{database-level integrity, security, and auditability} using constraints, triggers, procedures, views, indexes, and MySQL privilege configuration.
+\end{itemize}
+
+\section{Deliverables}
+The submission includes:
+\begin{itemize}
+  \item A complete MySQL implementation: tables, views, stored procedures, triggers, indexes, and security grants.
+  \item A fully working web application demonstrating CRUD workflows, analytics, reporting, and authentication.
+  \item Final report and slide deck PDFs, with screenshots and testing evidence.
+  \item A public GitHub repository containing all source code and setup instructions: \href{https://github.com/ZeakOptimistic/Vinuni-DB-Inventory-System-The-Fool}{Vinuni DB Inventory System The Fool}.
+\end{itemize}
+
+\section{Document Organization}
+This report is organized as follows:
+\begin{itemize}
+  \item Chapter 2 summarizes the system overview, architecture, and access control.
+  \item Chapter 3 demonstrates the implemented web interface modules with screenshots.
+  \item Chapter 4 details the database schema and implemented database objects (views, procedures, triggers).
+  \item Chapter 5 discusses performance optimizations and security configuration.
+  \item Chapter 6 presents testing strategy, sample queries, and validation results.
+\end{itemize}
+
+% ========================= CHAPTER 2: SYSTEM OVERVIEW ========================
+\chapter{System Overview}
+
+\section{High-Level Architecture}
+SIPMS follows a classic three-layer architecture:
+\begin{itemize}
+  \item \textbf{Frontend (Web UI):} A single-page application that provides module pages for dashboard, entity management, orders, transfers, reports, and user administration.
+  \item \textbf{Backend (Application Server):} Provides authenticated APIs and orchestrates business workflows (e.g., creating orders, receiving items, transferring stock, generating reports).
+  \item \textbf{Database (MySQL):} Stores normalized transactional data and enforces integrity rules. The database also provides views, triggers, and stored procedures to support reporting and consistent inventory updates.
+\end{itemize}
+
+\subsection{Technology Stack}
+\begin{itemize}
+  \item Database: MySQL 8.x
+  \item Backend: Python 3.10+, Django, Django REST Framework, MySQL client, SimpleJWT
+  \item Frontend: React 18 + Vite, React Router
+  \item Tools: MySQL Workbench, Postman, VS Code
+\end{itemize}
+
+\section{User Roles and Access Control}
+The system supports role-based access control aligned with operational responsibilities:
+\begin{itemize}
+  \item \textbf{ADMIN:} full administrative control, including user management and privileged actions. The web UI also supports an administrative \textit{``Login as''} function for testing or support scenarios (see Users module).
+  \item \textbf{MANAGER:} operational management access for business entities and order workflows.
+  \item \textbf{CLERK:} day-to-day usage for sales, viewing inventory, and basic operations depending on assigned permissions.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Feature} & \textbf{Admin} & \textbf{Manager} & \textbf{Clerk} \\
+\cmidrule(lr){1-4}
+
+CRUD Categories / Products      & $\checkmark$ & $\checkmark$ & $\times$ \\
+CRUD Suppliers / Locations      & $\checkmark$ & $\checkmark$ & $\times$ \\
+Create Purchase Order           & $\checkmark$ & $\checkmark$ & $\times$ \\
+Approve / Cancel Purchase Order & $\checkmark$ & $\checkmark$ & $\times$ \\
+Receive Goods                   & $\checkmark$ & $\checkmark$ & $\times$ \\
+Create Sales Order              & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+Confirm Sales Order             & $\checkmark$ & $\checkmark$ & $\times$ \\
+Create Stock Transfer           & $\checkmark$ & $\checkmark$ & $\times$ \\
+View Dashboard                  & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+Manage Users / Roles            & $\checkmark$ & $\times$     & $\times$ \\
+
+\bottomrule
+\end{tabular}
+\caption{Role-Based Access Control Matrix}
+\label{tab:rbac-matrix}
+\end{table}
+
+\section{Core Data Concepts}
+SIPMS is built around these core concepts:
+\begin{itemize}
+  \item Products are uniquely identified by SKU, optionally barcode, and belong to exactly one category.
+  \item Inventory is tracked per (product, location) pair with an explicit quantity on hand.
+  \item Purchase orders increase stock upon receiving; sales orders decrease stock upon confirmation; transfers move stock between locations.
+  \item Sales orders reduce inventory when confirmed; in the web app this confirmation is performed automatically during the sales order workflow (rather than a separate manual step).
+  \item In report, low stock is determined by comparing quantity on hand vs reorder level; top-selling products are computed from confirmed sales orders in the last 30 days.
+\end{itemize}
+
+% =========================CHAPTER 3: Web Interface and Features Demonstration ================================
+\chapter{Web Interface and Features Demonstration}
+
+\section{UI Layout and Navigation}
+The SIPMS web interface uses a consistent layout across modules:
+\begin{itemize}
+  \item A left sidebar navigation with pages: Dashboard, Products, Suppliers, Locations, Categories, Purchase Orders, Sales Orders, Transfers, Reports, and Users. Visible pages and available actions vary by role (Admin/Manager/Clerk).
+  \item A top header displaying the signed-in user and role, along with a Logout action.
+  \item Each module page provides search/filter controls, data tables, and context-specific actions.
+\end{itemize}
+
+\section{Dashboard Page}
+The Dashboard provides operational overview and analytics widgets designed for daily monitoring:
+\begin{itemize}
+  \item \textbf{Role banner:} displays current signed-in role (e.g., Admin).
+  \item \textbf{KPI cards:} summary counts for Products (active vs inactive), Purchase Orders (open vs closed), Sales Orders (confirmed vs cancelled), and an \textbf{estimated stock value}.
+  \item \textbf{Time range selector:} a dropdown (e.g., ``Last 30 days'') controls time-based analytics on the dashboard.
+  \item \textbf{Orders trend chart:} visualizes purchase and sales order activity over time.
+  \item \textbf{Sales revenue trend chart:} visualizes revenue fluctuations and highlights total revenue and peak values over the selected range.
+  \item \textbf{Highlights:}
+    (i) low stock highlights (with severity labels such as LOW and ``Need +X''), and
+    (ii) top selling highlights for quick attention, each linking to the Reports module.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/dashboard1.png}
+    \caption{Dashboard Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/dashboard2.png}
+    \caption{Interact with Chart}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/dashboard3.png}
+    \caption{Interact with Chart and Option Selector for Time Range}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/dashboard4.png}
+    \caption{The Modification of Time Range Affects the Charts}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/dashboard5.png}
+    \caption{Low Stock and Top Selling Highlights}
+\end{figure}
+
+\newpage
+
+\section{Products Page}
+The Products page supports full lifecycle management of the product catalog:
+\begin{itemize}
+  \item Create new products via a form capturing: SKU, Name, Category, Unit Price, Unit, Reorder Level, and Status (Active/Inactive).
+  \item Search by product name, SKU, or barcode.
+  \item Sorting (e.g., by name A$\rightarrow$Z).
+  \item Tabular view including: SKU, Name, Category, Unit Price, Unit, Reorder Level, Status, Created At, and Actions.
+  \item Actions include editing and status toggling (Activate/Deactivate).
+  \item Pagination controls including a \textbf{page size selector} (e.g., 10 per page), and Previous/Next navigation.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product1.png}
+    \caption{Product Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product2.png}
+    \caption{Edit Existing Product Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product3.png}
+    \caption{Sorting Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product4.png}
+    \caption{Searching Feature}
+\end{figure}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product5.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product6.png}
+    \caption{Notification Deactivate Product}
+\end{figure}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product7.png}
+    \caption{Notification Activate Product}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/product8.png}
+    \caption{Create New Product Form}
+\end{figure}
+
+\newpage
+\section{Suppliers Page}
+The Suppliers module manages vendor information required for procurement:
+\begin{itemize}
+  \item Create new suppliers via a form capturing: Name, Contact Person, Phone, Email, Address, Payment Terms, and Status (Active/Inactive).
+  \item Search by supplier name, phone, or email.
+  \item Sorting (e.g., by name A$\rightarrow$Z).
+  \item Supplier table includes: Name, Contact, Phone, Email, Address, Payment Terms, Status, and Actions.
+  \item Actions include Edit, Activate/Deactivate, and Delete.
+  \item Pagination with page size selector.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier1.png}
+    \caption{Suppliers Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier2.png}
+    \caption{Edit Existing Supplier Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier3.png}
+    \caption{Sorting Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier4.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier5.png}
+    \caption{Notification Deactivate Supplier}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier6.png}
+    \caption{Notification Activate Supplier}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier7.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/supplier8.png}
+    \caption{Create New Supplier Form}
+\end{figure}
+
+\newpage
+
+\section{Locations Page}
+Locations represent warehouses and stores and are used for inventory tracking and transfers:
+\begin{itemize}
+  \item Create new locations via a form capturing: Name, Type (STORE / WAREHOUSE), Address, and Status (Active/Inactive).
+  \item Search by location name or address.
+  \item Sorting by name.
+  \item Location table includes: Name, Type (STORE / WAREHOUSE), Address, Status, Created At, and Actions.
+  \item Actions include Edit, Activate/Deactivate, and Delete.
+  \item Pagination with page size selector.
+\end{itemize}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location1.png}
+    \caption{Locations Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location2.png}
+    \caption{Edit Existing Location Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location3.png}
+    \caption{Sorting Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location4.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location5.png}
+    \caption{Notification Deactivate Location}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location6.png}
+    \caption{Notification Activate Location}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location7.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/location8.png}
+    \caption{Create New Supplier Form}
+\end{figure}
+
+\newpage
+
+\section{Categories Page}
+Categories provide product classification and support filtering and reporting consistency:
+\begin{itemize}
+  \item Create new categories via a form capturing: Name, Description, and Status (Active/Inactive).
+  \item Sorting by name.
+  \item Search by category name.
+  \item Category table includes: Name, Description, Status, and Actions.
+  \item Actions include Edit, Activate/Deactivate, and Delete.
+  \item Pagination with page size selector.
+\end{itemize}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category1.png}
+    \caption{Categories Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category2.png}
+    \caption{Edit Existing Category Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category3.png}
+    \caption{Sorting Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category4.png}
+    \caption{Searching Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category5.png}
+    \caption{Notification Deactivate Category}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category6.png}
+    \caption{Notification Activate Category}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category7.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/category8.png}
+    \caption{Create New Supplier Form}
+\end{figure}
+
+\newpage
+
+\section{Purchase Orders Page}
+The Purchase Orders page supports procurement tracking and receiving operations:
+\begin{itemize}
+  \item Filters include supplier filter, location filter, and status filter.
+  \item Purchase order table includes: PO \#, Supplier, Location, Status, Order Date, Total, Created At, Items, and Actions.
+  \item ``View items (N)'' opens detailed line items for the selected PO.
+  \item ``Receive all'' is available when the order is in a receivable state (e.g., Approved) and disabled when not applicable (e.g., Closed).
+  \item Create/Receive actions are available to Admin/Manager; Clerk is view-only
+  \item Pagination with page size selector.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po1.png}
+    \caption{Purchase Orders Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po2.png}
+    \caption{Create New Purchase Order Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po3.png}
+    \caption{Show Items of a Purchase Order}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po4.png}
+    \caption{Receive All Items from a Purchase Order}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po5.png}
+    \caption{Filtering Status Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po6.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/po7.png}
+    \includegraphics[width=1\textwidth]{demo/po8.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\newpage
+
+\section{Sales Orders Page}
+The Sales Orders page supports sales tracking and order cancellation:
+\begin{itemize}
+  \item Filters include customer filter, location filter, and status filter.
+  \item Sales order table includes: SO \#, Customer, Location, Status, Order Date, Total, Created At, Items, and Actions.
+  \item ``View items (N)'' opens detailed line items.
+  \item ``Cancel'' action is provided for orders in a cancellable state; cancelled orders display status accordingly.
+  \item On confirmation/creation, the system validates stock sufficiency to prevent negative inventory; insufficient stock returns an error.
+  \item Pagination with page size selector.
+\end{itemize}
+
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so1.png}
+    \caption{Sales Orders Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so2.png}
+    \caption{Create New Sales Order Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so3.png}
+    \caption{Show Items of a Sales Order}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so4.png}
+    \caption{Notification Cancel a Sales Order}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so5.png}
+    \caption{Status After Cancelling a Sales Order}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so6.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so7.png}
+    \caption{Filtering Status Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/so8.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\newpage
+
+\section{Transfers Page}
+The Transfers module supports internal movement of stock across locations:
+\begin{itemize}
+  \item A transfer form includes: Product selection, Quantity input, From Location, and To Location.
+  \item A ``Transfer stock'' action executes the transfer.
+  \item A recent transfers table provides operational traceability, including:
+        Transfer \#, Product, From, To, Quantity, From qty after, and To qty after.
+  \item Pagination with page size selector for transfer history.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer1.png}
+    \caption{Transfers Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer2.png}
+    \caption{Filtering Product Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer3.png}
+    \caption{Filtering From Location Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer4.png}
+    \caption{Filtering To Location Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer5.png}
+    \caption{Notification Successful Stock Transfer}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer6.png}
+    \caption{Notification Failed Stock Transfer due to Insufficient Stock}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/transfer7.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+
+\newpage
+
+\section{Reports Page}
+The Reports module provides three main reporting modes using tab navigation:
+\begin{itemize}
+  \item \textbf{Low stock:} lists product-location pairs where quantity on hand is below reorder level.
+  \item \textbf{Stock per location:} shows inventory distribution across locations.
+  \item \textbf{Top selling (30 days):} ranks products by quantity sold and/or revenue (based on confirmed sales orders in the last 30 days).
+\end{itemize}
+
+\noindent Common controls include:
+\begin{itemize}
+  \item Search by product name or SKU.
+  \item Location filter (e.g., ``All locations'').
+  \item Paginated tables with page size selector.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report1.png}
+    \caption{Low Stock Tab}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report2.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report3.png}
+    \caption{Filtering Locations Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report4.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report5.png}
+    \caption{Top Selling Tab}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report6.png}
+    \caption{Stock per Location Tab}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report7.png}
+    \caption{Searching and Filtering Locations Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/report8.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\newpage
+
+\section{Users Page}
+The Users module provides administrative management of application accounts:
+\begin{itemize}
+  \item Search by username, name, or email; and sorting (e.g., ``Newest'').
+  \item Table fields include: Username, Full name, Email, Role, Status, and Actions.
+  \item Actions include: Edit, \textbf{Login as}, Activate/Deactivate, and Delete.
+  \item The ``Login as'' capability supports testing and support by allowing an admin to switch context to another user account.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user1.png}
+    \caption{Users Page Screenshot}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user2.png}
+    \caption{Edit Existing User Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user3.png}
+    \caption{Notification Deactivate User}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user4.png}
+    \caption{Login As Feature Without Password if Admin Role}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user5.png}
+    \caption{Notification Failed to Login As if User is Inactive}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user6.png}
+    \caption{Notification Activate User}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user7.png}
+    \caption{Pagination Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user8.png}
+    \caption{Sorting Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user9.png}
+    \caption{Searching Feature}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user10.png}
+    \caption{Create New User Form}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user11.png}
+    \caption{Login As Feature with Active User}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user12.png}
+    \caption{Screenshot After Using Login As Feature with Admin Role and Full Access}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user13.png}
+    \caption{Screenshot After Using Login As Feature with Manager Role and Limited Access}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user14.png}
+    \caption{Screenshot After Using Login As Feature with Clerk Role and Very Limited Access}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user15.png}
+    \caption{Notification Delete User}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/user16.png}
+    \caption{Notification Failed to Delete User if User is referring to Existing Records}
+\end{figure}
+\newpage
+\section{Authentication}
+SIPMS enforces authentication before a user can access any business module (Dashboard,
+Products, Purchase Orders, Sales Orders, Reports, and User Management). This design
+prevents unauthorized access to inventory and purchasing data, and it ensures that every
+action is associated with a specific user account and role.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{demo/login.png}
+    \caption{Login Page Screenshot}
+\end{figure}
+
+\newpage
+%==============CHAPTER 4: Database Implementation============
+
+\chapter{Database Implementation}
+\label{chap:db-implementation}
+
+This chapter documents the database layer of SIPMS, including the implemented schema,
+constraints, views, stored procedures, triggers, indexes, and security configuration.
+All database artifacts are provided as SQL scripts in the project repository. In this report,
+we focus on what was implemented and why, and we include the key SQL scripts as
+listings for completeness.
+
+% --------------------------------------------------------------------
+\section{Implementation Artifacts and Execution Order}
+\label{sec:db-artifacts-order}
+
+\subsection{SQL scripts}
+The database implementation is organized into the following scripts:
+
+\begin{itemize}
+  \item \texttt{schema.sql}: core schema (database creation, tables, keys, constraints) and a small set of baseline indexes.
+  \item \texttt{views.sql}: reporting/analytics views used by dashboard and reports.
+  \item \texttt{procedures.sql}: stored procedures for critical workflows (purchase order creation and sales confirmation).
+  \item \texttt{triggers.sql}: triggers enforcing inventory consistency and preventing invalid stock movements.
+  \item \texttt{indexes.sql}: additional indexes for performance and common query patterns.
+  \item \texttt{security.sql}: database users and privilege configuration (least privilege).
+\end{itemize}
+
+\subsection{Recommended execution order}
+A typical setup sequence is:
+
+\begin{enumerate}
+  \item Run \texttt{schema.sql} to create the database (\texttt{sipms}), tables, and constraints.
+  \item Run \texttt{views.sql} to create reporting views.
+  \item Run \texttt{procedures.sql} to create stored procedures.
+  \item Run \texttt{triggers.sql} to activate automatic inventory enforcement.
+  \item Run \texttt{indexes.sql} to add performance indexes.
+  \item Run \texttt{security.sql} to create database users and grant privileges.
+\end{enumerate}
+
+\paragraph{Database engine and encoding.}
+The schema is designed for MySQL and initializes the database with \texttt{utf8mb4} to
+support Unicode content (e.g., product names, supplier information) consistently.
+
+% --------------------------------------------------------------------
+\section{Logical Data Model Summary}
+\label{sec:db-logical-model}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{diagram sipms.png}
+  \label{fig:sipms-er}
+\end{figure}
+
+\newpage
+
+Figure~\ref{fig:sipms-er} illustrates the main entities and relationships used in SIPMS.
+
+\subsection{ER diagram and relationships}
+The SIPMS database follows a relational design separating:
+(i) master data (products, suppliers, locations),
+(ii) transactional documents (purchase orders, sales orders),
+and (iii) inventory state and auditability (inventory level, stock movement, audit log).
+
+\subsection{Core tables by domain}
+\paragraph{Identity and roles.}
+\begin{itemize}
+  \item \texttt{role}: role definitions (e.g., ADMIN, MANAGER, CLERK).
+  \item \texttt{app\_user}: application users, linked to \texttt{role} via foreign key.
+\end{itemize}
+
+\paragraph{Master data.}
+\begin{itemize}
+  \item \texttt{category}: product categories.
+  \item \texttt{product}: product master (SKU, barcode, pricing, reorder level), linked to \texttt{category}.
+  \item \texttt{supplier}: supplier master data used in procurement.
+  \item \texttt{location}: physical locations (warehouse/store) where inventory is tracked.
+\end{itemize}
+
+\paragraph{Procurement and sales documents.}
+\begin{itemize}
+  \item \texttt{purchase\_order} and \texttt{purchase\_order\_item}: purchase orders and their line items.
+  \item \texttt{sales\_order} and \texttt{sales\_order\_item}: sales orders and their line items.
+\end{itemize}
+
+\paragraph{Inventory and audit trail.}
+\begin{itemize}
+  \item \texttt{stock\_movement}: immutable event log of stock changes (receipts, sales issues, transfers, adjustments).
+  \item \texttt{inventory\_level}: current on-hand quantity per \texttt{(product, location)} pair.
+  \item \texttt{audit\_log}: optional audit entries that can record user actions and descriptions.
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Constraints and Integrity Rules}
+\label{sec:db-integrity}
+
+SIPMS enforces data integrity at the database layer to avoid inconsistent inventory states
+and to preserve referential correctness between entities.
+
+\subsection{Keys and relationships}
+\begin{itemize}
+  \item Primary keys are used for all master and document header tables (e.g., \texttt{product\_id}, \texttt{po\_id}, \texttt{so\_id}).
+  \item Composite primary keys are used for weak entities:
+        \texttt{inventory\_level(product\_id, location\_id)},
+        \texttt{purchase\_order\_item(po\_id, product\_id)},
+        \texttt{sales\_order\_item(so\_id, product\_id)}.
+  \item Foreign keys enforce valid references (e.g., order headers reference existing suppliers/locations/users; order items reference existing products).
+\end{itemize}
+
+\subsection{Domain constraints and statuses}
+Several attributes use constrained domains to ensure predictable application behavior:
+\begin{itemize}
+  \item Status fields (e.g., purchase order status, sales order status) are restricted to predefined values.
+  \item Quantities are constrained to valid ranges (e.g., order quantities must be positive; received quantity must be non-negative).
+\end{itemize}
+
+\subsection{Non-negative inventory invariant}
+A critical business rule is that inventory on-hand must not become negative. SIPMS enforces
+this invariant directly in the database using triggers on \texttt{stock\_movement} (described in
+Section~\ref{sec:db-triggers}), so that any process inserting movements (API or other tools)
+cannot reduce inventory below zero.
+
+% --------------------------------------------------------------------
+\section{Inventory Consistency Design}
+\label{sec:db-inventory-design}
+
+\subsection{Stock movement as the system of record}
+SIPMS records each inventory change as a row in \texttt{stock\_movement}. This provides:
+\begin{itemize}
+  \item a complete audit trail of what changed, when, where, and by whom,
+  \item a unified model for multiple operations (purchase receipt, sales issue, transfer, adjustment),
+  \item a reliable base for reporting and troubleshooting.
+\end{itemize}
+
+\subsection{Current inventory snapshot}
+The table \texttt{inventory\_level} stores the current on-hand quantity for each
+\texttt{(product, location)} pair. Instead of updating inventory levels from many places,
+SIPMS updates \texttt{inventory\_level} automatically whenever a new stock movement is inserted.
+This reduces duplicated logic and helps keep the snapshot consistent with the movement ledger.
+
+% --------------------------------------------------------------------
+\section{Database Views for Reporting}
+\label{sec:db-views}
+
+To simplify reporting queries and reduce repeated joins in the application layer, SIPMS
+implements views focused on common dashboard/reporting needs.
+
+\subsection{Implemented views}
+\begin{itemize}
+  \item \texttt{view\_stock\_per\_location}: inventory per product per location, including reorder-level flags and stock value.
+  \item \texttt{view\_low\_stock\_products}: subset of products below reorder level (supports ``Low Stock'' dashboard/report).
+  \item \texttt{view\_top\_selling\_products\_last\_30\_days}: aggregated sales quantities and revenue for confirmed sales in the last 30 days.
+\end{itemize}
+
+\subsection{Benefits}
+Using views improves maintainability and consistency:
+\begin{itemize}
+  \item Reporting logic (joins and filters) is centralized in the database.
+  \item The frontend/backend can query a stable interface for analytics needs.
+  \item Performance is improved when combined with appropriate indexes (Section~\ref{subsec:indexing-strategy}).
+\end{itemize}
+
+\subsection{SQL Listing: \texttt{views.sql}}
+\lstinputlisting[style=sqlstyle, language=SQL,label={lst:views}]{../../database/views.sql}
+
+% --------------------------------------------------------------------
+\section{Stored Procedures for Critical Workflows}
+\label{sec:db-procedures}
+
+Stored procedures are used to centralize multi-step operations that must follow strict business
+rules and validation.
+
+\subsection{\texttt{sp\_create\_purchase\_order}}
+This procedure creates a new purchase order header with an initial status and total amount.
+Centralizing purchase order creation reduces duplicated logic across the application and provides
+a consistent initial state for newly created purchase orders.
+The procedure also returns the newly created purchase order identifier to the caller, enabling the
+application to attach line items or continue the workflow.
+
+\subsection{\texttt{sp\_confirm\_sales\_order}}
+Confirming a sales order must ensure inventory sufficiency before reducing stock.
+This procedure enforces the workflow:
+\begin{itemize}
+  \item Load and lock the sales order context (location information).
+  \item Check inventory availability for each sales line item at the sales location.
+  \item If any item is insufficient, reject the confirmation by raising a database error.
+  \item Otherwise, update the sales order status to \texttt{CONFIRMED}.
+  \item Insert \texttt{stock\_movement} rows (e.g., \texttt{SALES\_ISSUE}) for each order line item so that inventory is reduced consistently.
+\end{itemize}
+
+\paragraph{Error handling.}
+perfoThe procedure signals clear validation failures (e.g., missing sales order or insufficient stock).
+These errors are propagated to the API layer and displayed as user-facing validation messages.
+
+\subsection{SQL Listing: \texttt{procedures.sql}}
+\lstinputlisting[style=sqlstyle, language=SQL,label={lst:procedures}]{../../database/procedures.sql}
+
+% --------------------------------------------------------------------
+\section{Triggers Enforcing Inventory Rules}
+\label{sec:db-triggers}
+
+Database triggers are used to enforce inventory correctness regardless of which component inserts
+stock movement rows.
+
+\subsection{Validation trigger: quantity must be positive}
+A \texttt{BEFORE INSERT} trigger ensures that a stock movement quantity is strictly positive.
+This prevents invalid movements from entering the system and simplifies downstream logic
+(because movement direction is determined by movement type, not by negative quantities).
+
+\subsection{Consistency trigger: update inventory level and prevent negative stock}
+An \texttt{AFTER INSERT} trigger updates \texttt{inventory\_level} based on the inserted movement:
+\begin{itemize}
+  \item The movement type determines whether the inventory delta is positive (e.g., purchase receipt)
+        or negative (e.g., sales issue).
+  \item The trigger locks the current inventory row for the affected \texttt{(product, location)} pair to
+        avoid race conditions under concurrent updates.
+  \item If the new computed quantity would be negative, the trigger rejects the insert operation by
+        raising an error.
+  \item Otherwise, the trigger inserts or updates the corresponding \texttt{inventory\_level} row.
+\end{itemize}
+
+This design ensures that the inventory snapshot cannot silently diverge from the movement ledger,
+and that negative inventory is prevented at the database layer.
+
+\subsection{SQL Listing: \texttt{triggers.sql}}
+\lstinputlisting[style=sqlstyle, language=SQL,label={lst:triggers}]{../../database/triggers.sql}
+
+% ---------------------------
+\section{Deployment Notes and Verification Checklist}
+\label{sec:db-deploy-verify}
+
+\subsection{Setup checklist}
+After executing the scripts in the recommended order, the following checks confirm correct deployment:
+\begin{itemize}
+  \item All core tables exist and foreign keys are created successfully.
+  \item Views are queryable and return expected columns.
+  \item Stored procedures are callable and return expected results/errors.
+  \item Stock movement insertion updates \texttt{inventory\_level} automatically.
+  \item Negative inventory and invalid quantities are rejected by triggers.
+\end{itemize}
+
+\subsection{Integration with the application}
+The backend uses the database as the source of truth for inventory and leverages:
+\begin{itemize}
+  \item views for fast reporting queries,
+  \item stored procedures for critical workflow validation,
+  \item triggers for automatic and consistent inventory snapshot updates.
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Limitations and Future Improvements}
+\label{sec:db-limitations}
+
+While the current database implementation satisfies the core project requirements, the following
+improvements are natural next steps:
+\begin{itemize}
+  \item Strengthen transactional atomicity for complex workflows by ensuring multi-step status updates
+        and stock movement inserts commit as a single unit in all execution paths.
+  \item Extend auditing by writing \texttt{audit\_log} entries for key operations (e.g., confirm sales, receive goods,
+        transfers) either in procedures/triggers or consistently at the API service layer.
+  \item Add additional analytical views (e.g., inventory valuation over time, supplier performance, gross margin by product).
+\end{itemize}
+
+\newpage
+
+% ================CHAPTER 5==========================================
+\chapter{Performance Optimization and Security Configuration}
+\label{chap:perf-security}
+
+This chapter describes the main performance considerations and the security model of SIPMS.
+While Chapter~4 focuses on database objects (schema, views, procedures, triggers), here we
+explain why specific indexes and privilege configurations were introduced, and how they
+support the web application's workload.
+
+\section{Performance Optimization}
+\label{sec:performance}
+
+\subsection{Workload characteristics and query patterns}
+SIPMS is an operational system accessed through a web interface. The most frequent query
+patterns come from typical UI interactions:
+
+\begin{itemize}
+  \item \textbf{Search and filtering:} products searched by SKU/name; orders filtered by date/status;
+  reports filtered by location and keyword.
+  \item \textbf{Pagination and recent-first listing:} module tables frequently load ``latest $N$'' records
+  (e.g., newest orders, most recent transfers/movements).
+  \item \textbf{Analytics aggregates:} dashboard and reports require grouped aggregations such as
+  low-stock lists and top-selling products over a time window (e.g., last 30 days).
+  \item \textbf{Join-heavy reads:} UI pages often join transactional tables with master data (product,
+  location, supplier) to render readable names and derived values.
+\end{itemize}
+
+Because these patterns are repeated across modules, we focus on reducing full table scans,
+improving join performance, and supporting fast time-window filtering for analytics.
+
+\subsection{Indexing strategy}
+\label{subsec:indexing-strategy}
+
+Indexes are selected based on the most common access paths:
+
+\begin{itemize}
+  \item \textbf{Product lookup and search.}
+  SKU-based search is a primary workflow in inventory systems, so an index on
+  \texttt{product(sku)} accelerates filtering and exact lookup. If you also support frequent
+  name search/sort at scale, an additional index on \texttt{product(name)} can be considered.
+
+  \item \textbf{Inventory snapshots by location.}
+  Inventory is stored per \texttt{(product\_id, location\_id)} and typically uses a composite
+  primary key on these columns, which already supports many join patterns. If the workload
+  frequently filters by location first, an additional index (e.g., \texttt{(location\_id, product\_id)})
+  can further improve location-centric queries.
+
+  \item \textbf{Movement history and audit trails.}
+  Operational traceability requires reading movements by time range and by product/location.
+  A composite index on \texttt{stock\_movement(movement\_date, product\_id)} improves recent-history
+  queries and time-window reporting.
+
+  \item \textbf{Dashboard time-series queries.}
+  Dashboard charts commonly filter orders by date and status. Composite indexes on
+  \texttt{sales\_order(order\_date, status)} and \texttt{purchase\_order(order\_date, status)} improve
+  these time-based scans and avoid unnecessary table reads.
+\end{itemize}
+
+\subsection{SQL Listing: \texttt{indexes.sql}}
+\lstinputlisting[style=sqlstyle, language=SQL,label={lst:indexes}]{../../database/indexes.sql}
+
+\subsection{Query design optimizations at the application layer}
+Besides database indexes, SIPMS applies several practical query-level optimizations:
+
+\begin{itemize}
+  \item \textbf{Pagination / limits:} API endpoints cap returned records (e.g., ``last $N$'' orders or transfers)
+  to reduce response size and keep UI interactions responsive.
+  \item \textbf{Efficient joins:} frequently used foreign-key relations are retrieved with ORM join helpers
+  (e.g., \texttt{select\_related}) to reduce the number of round trips.
+  \item \textbf{Pre-validation to reduce failures:} for operations like transfers and confirmations, the
+  application performs basic checks early (e.g., locations must differ, current stock sufficiency),
+  while still relying on database enforcement for correctness.
+\end{itemize}
+
+\subsection{Use of views for reporting performance}
+Reporting pages are powered by database views that predefine joins and derived attributes
+(e.g., stock value, below-reorder flag). This design has two benefits:
+
+\begin{itemize}
+  \item \textbf{Consistency:} report calculations are standardized in SQL rather than duplicated across
+  endpoints.
+  \item \textbf{Performance:} the database optimizer can reuse indexes and execute a well-defined plan
+  for repeated reporting queries.
+\end{itemize}
+
+\subsection{Performance verification (recommended evidence)}
+To strengthen this chapter, include 1--2 examples of evidence (you can add screenshots):
+
+\begin{itemize}
+  \item \textbf{EXPLAIN plans} for key queries (product lookup, low-stock report, top-selling aggregate).
+  \item \textbf{Observed response time} or before/after comparison when indexes are enabled.
+\end{itemize}
+
+\section{Security Configuration}
+\label{sec:security}
+
+Security in SIPMS is implemented as a layered model:
+(1) application authentication and authorization, and (2) database least-privilege access.
+
+\subsection{Application authentication}
+SIPMS requires users to authenticate before accessing protected modules. The backend issues
+a signed access token after validating credentials against the \texttt{app\_user} table (passwords
+are stored as hashes). The frontend stores the session token on the client side and attaches it
+to subsequent API requests.
+
+\paragraph{Session lifecycle.}
+Typical flow:
+\begin{enumerate}
+  \item User submits username/password on the login page.
+  \item Backend validates credentials and returns an access token and basic user profile
+  (user id, name, role).
+  \item Frontend stores the token and user context, enabling authenticated navigation.
+  \item Logout clears stored session data and returns the UI to the login screen.
+\end{enumerate}
+
+\subsection{Role-based authorization (RBAC) at the API layer}
+After authentication, authorization is enforced using role-based permissions aligned with the
+RBAC matrix (ADMIN / MANAGER / CLERK). At the API layer:
+
+\begin{itemize}
+  \item \textbf{IsAuthenticated:} required for most endpoints.
+  \item \textbf{Privileged actions:} operations such as purchase order creation/receiving, cancellations,
+  and transfers are restricted to ADMIN/MANAGER.
+  \item \textbf{Clerk restrictions:} clerk users are typically limited to read-only access on master data
+  and can create sales orders but cannot perform administrative or high-impact inventory actions.
+\end{itemize}
+
+This approach keeps business rules close to the workflow endpoints and prevents accidental exposure
+of privileged operations.
+
+\subsection{Database security and least-privilege access}
+\label{subsec:db-security}
+
+In addition to application RBAC, SIPMS configures database users with least privilege to provide
+defense in depth. The script \texttt{security.sql} creates three privilege tiers:
+
+\begin{itemize}
+  \item \textbf{sipms\_admin:} full privileges on the \texttt{sipms} schema (schema management and full access).
+  \item \textbf{sipms\_manager:} CRUD privileges on core business tables and permission to execute critical
+  stored procedures.
+  \item \textbf{sipms\_staff:} restricted privileges (read access to master data and limited inserts for sales
+  order workflows; execute permission for sales confirmation procedure where applicable).
+\end{itemize}
+
+\subsection{SQL Listing: \texttt{security.sql}}
+\lstinputlisting[style=sqlstyle, language=SQL,label={lst:security}]{../../database/security.sql}
+
+\subsection{Operational notes and recommended hardening}
+The repository uses placeholder passwords in SQL scripts; real credentials should be provided via
+deployment configuration (environment variables/secrets). Additional practical hardening steps include:
+
+\begin{itemize}
+  \item rotate credentials regularly and restrict database access by host/network;
+  \item avoid using admin DB users for the application runtime connection;
+  \item enable audit logging for sensitive actions (either at application layer or database layer);
+  \item ensure backups and recovery procedures are tested.
+\end{itemize}
+
+\newpage
+
+%================= CHAPTER 6: Testing and Validation =================
+
+\chapter{Testing and Validation}
+\label{chap:testing}
+
+This chapter presents the testing approach used to verify that SIPMS behaves correctly across
+the web interface, backend APIs, and database layer. The goal is to validate functional
+requirements (CRUD workflows, order processing, reporting) and key non-functional properties
+(security/RBAC enforcement and inventory consistency).
+
+% --------------------------------------------------------------------
+\section{Testing Scope and Objectives}
+\label{sec:test-scope}
+
+Testing in SIPMS focuses on the following objectives:
+\begin{itemize}
+  \item \textbf{Functional correctness:} ensure core workflows (Products, Purchase Orders, Sales Orders,
+  Reports) work as intended and produce correct data.
+  \item \textbf{Inventory integrity:} verify inventory never becomes negative and inventory snapshots stay
+  consistent with stock movements.
+  \item \textbf{Security and RBAC:} validate that authentication is required for protected modules and that
+  role permissions are enforced consistently (UI restrictions + API enforcement).
+  \item \textbf{Database correctness:} validate that procedures, triggers, and views behave correctly and
+  return expected outputs/errors.
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Test Environment}
+\label{sec:test-env}
+
+\subsection{System under test}
+The tested system includes:
+\begin{itemize}
+  \item \textbf{Frontend:} React web application (Dashboard, Products, Purchase Orders, Sales Orders, Reports).
+  \item \textbf{Backend:} Django REST API implementing authentication and business logic.
+  \item \textbf{Database:} MySQL database implementing schema, views, stored procedures, triggers, indexes, and security grants.
+\end{itemize}
+
+\subsection{Test data}
+Testing was performed using a controlled dataset containing:
+\begin{itemize}
+  \item multiple products with different reorder levels and categories;
+  \item multiple locations to verify per-location inventory tracking;
+  \item suppliers for procurement workflows;
+  \item test users for each role (ADMIN, MANAGER, CLERK).
+\end{itemize}
+The dataset was designed to include both normal cases and edge cases (e.g., low stock, insufficient stock).
+
+% --------------------------------------------------------------------
+\section{Testing Strategy}
+\label{sec:test-strategy}
+
+We used a layered testing strategy to reduce defects early and validate end-to-end behavior:
+
+\subsection{Manual end-to-end UI testing (black-box)}
+Each module was tested from the user perspective by performing actions through the UI and verifying:
+(i) UI state updates, (ii) API success/error responses reflected in the UI, and (iii) persisted database state.
+
+\subsection{API testing (integration)}
+Key endpoints were tested directly using an API client (e.g., Postman/Thunder Client) to verify:
+\begin{itemize}
+  \item correct request/response payloads and status codes;
+  \item validation errors for invalid inputs;
+  \item authorization behavior for different roles (403/401 responses where applicable).
+\end{itemize}
+
+\subsection{Database-level validation}
+Database procedures and triggers were validated by:
+\begin{itemize}
+  \item executing stored procedures with normal and failing inputs;
+  \item inserting stock movements to confirm automatic updates to \texttt{inventory\_level};
+  \item attempting invalid operations (e.g., negative inventory) to ensure the database rejects them;
+  \item querying reporting views to confirm correct aggregation and filtering.
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Functional Test Cases}
+\label{sec:functional-tests}
+
+This section summarizes representative test cases for each major module. The full detailed test
+log can be added as an appendix if required.
+
+% ---------------------- Authentication ----------------------
+\subsection{Authentication and Session Tests}
+\label{subsec:test-auth}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
+\hline
+\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
+\hline
+AUTH-01 & Login with valid credentials & Token/session is created and user is redirected to the dashboard. \\
+AUTH-02 & Login with invalid credentials & Login fails with a clear error message; no session is stored. \\
+AUTH-03 & Access protected module without login & User is redirected to login (or receives 401 on API calls). \\
+AUTH-04 & Logout & Token/session is cleared; protected modules require re-login. \\
+\hline
+\end{tabular}
+\caption{Authentication and session test cases.}
+\label{tab:test-auth}
+\end{table}
+
+% ---------------------- Products ----------------------
+\subsection{Products Module Tests}
+\label{subsec:test-products}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
+\hline
+\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
+\hline
+PROD-01 & Create a new product & Product is saved and appears in the product list. \\
+PROD-02 & Update product fields (price, reorder level) & Changes persist and are reflected in UI + database. \\
+PROD-03 & Search product by SKU/name & Matching products are returned; non-matching are excluded. \\
+PROD-04 & Invalid product data (empty required fields) & Validation error is shown; product is not created. \\
+\hline
+\end{tabular}
+\caption{Products module test cases.}
+\label{tab:test-products}
+\end{table}
+
+% ---------------------- Purchase Orders ----------------------
+\subsection{Purchase Orders Module Tests}
+\label{subsec:test-po}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
+\hline
+\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
+\hline
+PO-01 & Create purchase order with valid items & PO is created; total amount is computed and stored. \\
+PO-02 & Receive goods for a purchase order & Stock movements are created; inventory level increases accordingly. \\
+PO-03 & Attempt receive with invalid quantity & Operation is rejected with a clear validation error. \\
+PO-04 & Filter/search purchase orders by status/date & UI displays correct subset of orders. \\
+\hline
+\end{tabular}
+\caption{Purchase orders module test cases.}
+\label{tab:test-po}
+\end{table}
+
+% ---------------------- Sales Orders ----------------------
+\subsection{Sales Orders Module Tests}
+\label{subsec:test-so}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
+\hline
+\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
+\hline
+SO-01 & Create sales order with sufficient stock & SO is created; confirmation reduces inventory via stock movements. \\
+SO-02 & Create/confirm sales order with insufficient stock & Operation is rejected; inventory remains unchanged. \\
+SO-03 & Cancel a sales order & Status changes to CANCELLED; no stock reduction occurs (or reversal is applied if defined). \\
+SO-04 & Filter/search sales orders by status/date & UI displays correct subset of orders. \\
+\hline
+\end{tabular}
+\caption{Sales orders module test cases.}
+\label{tab:test-so}
+\end{table}
+
+% ---------------------- Reports ----------------------
+\subsection{Reports and Dashboard Tests}
+\label{subsec:test-reports}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{0.13\textwidth} p{0.35\textwidth} p{0.42\textwidth}}
+\hline
+\textbf{Test ID} & \textbf{Scenario} & \textbf{Expected Result} \\
+\hline
+REP-01 & Low stock report & Displays products below reorder level with correct quantities. \\
+REP-02 & Stock per location report & Displays correct per-location quantities and valuation fields. \\
+REP-03 & Top-selling products (last 30 days) & Displays correct aggregation based on confirmed sales. \\
+\hline
+\end{tabular}
+\caption{Reporting and dashboard test cases.}
+\label{tab:test-reports}
+\end{table}
+
+% --------------------------------------------------------------------
+\section{Security and RBAC Validation}
+\label{sec:rbac-tests}
+
+To validate role-based access control, we tested each role against privileged operations using both
+the UI and direct API calls.
+
+\subsection{RBAC test matrix (representative)}
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{p{0.40\textwidth} c c c}
+\hline
+\textbf{Operation} & \textbf{ADMIN} & \textbf{MANAGER} & \textbf{CLERK} \\
+\hline
+Create purchase order & \checkmark & \checkmark & $\times$ \\
+Receive goods & \checkmark & \checkmark & $\times$ \\
+Create sales order & \checkmark & \checkmark & \checkmark \\
+Cancel sales order & \checkmark & \checkmark & $\times$ \\
+View reports & \checkmark & \checkmark & \checkmark \\
+Manage users/roles & \checkmark & $\times$ & $\times$ \\
+\hline
+\end{tabular}
+\caption{Representative RBAC validation matrix (expected access).}
+\label{tab:rbac-matrix}
+\end{table}
+
+\paragraph{Expected enforcement.}
+Restricted operations must be:
+(i) hidden/disabled in the UI for unauthorized roles, and
+(ii) blocked at the API layer (e.g., 403 Forbidden) if attempted directly.
+
+% --------------------------------------------------------------------
+\section{Database Correctness Tests}
+\label{sec:db-tests}
+
+\subsection{Trigger validation tests}
+We validated that triggers enforce inventory correctness under both normal and invalid conditions:
+\begin{itemize}
+  \item \textbf{TRG-01 (positive quantity):} inserting a stock movement with zero/negative quantity is rejected.
+  \item \textbf{TRG-02 (non-negative inventory):} inserting a movement that would reduce inventory below zero is rejected.
+  \item \textbf{TRG-03 (snapshot update):} valid stock movements automatically update \texttt{inventory\_level}.
+\end{itemize}
+
+\subsection{Stored procedure validation tests}
+We validated stored procedures using both successful and failing inputs:
+\begin{itemize}
+  \item \textbf{PROC-01:} \texttt{sp\_create\_purchase\_order} creates a purchase order with a consistent initial status.
+  \item \textbf{PROC-02:} \texttt{sp\_confirm\_sales\_order} rejects confirmation when stock is insufficient.
+  \item \textbf{PROC-03:} \texttt{sp\_confirm\_sales\_order} inserts \texttt{stock\_movement} rows and updates \texttt{inventory\_level} when stock is sufficient.
+\end{itemize}
+
+\subsection{View validation tests}
+Views were validated by comparing view outputs with base table aggregates:
+\begin{itemize}
+  \item \textbf{VIEW-01:} low stock view matches products where \texttt{qty\_on\_hand < reorder\_level}.
+  \item \textbf{VIEW-02:} top-selling view matches confirmed sales totals in the last 30 days.
+  \item \textbf{VIEW-03:} stock-per-location view matches \texttt{inventory\_level} joined with product metadata.
+\end{itemize}
+
+% --------------------------------------------------------------------
+\section{Testing Evidence and Screenshots (to be inserted)}
+\label{sec:test-evidence}
+
+To strengthen the report, the following evidence can be attached as figures:
+\begin{itemize}
+  \item UI screenshots of successful workflows (create PO, receive goods, create SO, cancel SO).
+  \item UI screenshots of validation failures (insufficient stock, unauthorized actions hidden/blocked).
+  \item API client screenshots showing HTTP status codes for RBAC enforcement (401/403 cases).
+  \item Database query screenshots verifying \texttt{inventory\_level} updates after stock movements.
+\end{itemize}
+
+% Example placeholders:
+% \begin{figure}[H]
+%   \centering
+%   \includegraphics[width=0.95\textwidth]{figures/test_auth_login_success.png}
+%   \caption{Authentication test: successful login and session creation.}
+%   \label{fig:test-auth-success}
+% \end{figure}
+
+% --------------------------------------------------------------------
+\section{Limitations and Future Testing}
+\label{sec:test-limitations}
+
+Current testing validates core behaviors and integrity constraints; however, future improvements include:
+\begin{itemize}
+  \item \textbf{Automated test suite:} add backend unit/integration tests (e.g., Django test cases) for
+  endpoints and permission rules.
+  \item \textbf{Concurrency tests:} test simultaneous stock updates (high load) to further validate locking and trigger behavior.
+  \item \textbf{Performance benchmarks:} measure response time for key endpoints and compare with/without indexes.
+  \item \textbf{Security hardening tests:} penetration-style checks for token expiration, replay, and privilege escalation attempts.
+\end{itemize}
+
+
+\end{document}
+
+
+% \begin{wrapfigure}{r}{0.3\textwidth}
+%     \centering
+%     \vspace{-20pt} % Adjust the space above the image
+%     \includegraphics[width=0.28\textwidth]{bai 1.png}
+%     \vspace{-10pt} % Adjust the space below the image
+%     % \caption{Mô tả ảnh ở đây}
+%     % \label{fig:your_label}
+% \end{wrapfigure}
+
+
+ 
+% \begin{figure}[h!]
+% \centering
+% \includegraphics[width=0.6\textwidth]{Problem5.png}
+% \end{figure}

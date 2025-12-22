@@ -20,11 +20,3 @@ ALTER TABLE sales_order
 -- Index for purchase_order filtering by date/status (dashboard charts)
 ALTER TABLE purchase_order
   ADD INDEX idx_purchase_order_order_date_status (order_date, status);
-
--- (Optional) Fulltext index on product description for search
--- Need check MySQL version and storage engine support
--- ALTER TABLE stock_movement
--- PARTITION BY RANGE (YEAR(movement_date)) (
---   PARTITION p2024 VALUES LESS THAN (2025),
---   PARTITION pmax  VALUES LESS THAN MAXVALUE
--- );

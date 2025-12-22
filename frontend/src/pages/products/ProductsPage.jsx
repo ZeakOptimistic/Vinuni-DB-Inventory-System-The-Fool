@@ -383,7 +383,7 @@ const ProductsPage = () => {
                         )}
 
                         {/* Delete */}
-                        {user.role === "ADMIN" || "CLERK" && (
+                        {(user?.role === "ADMIN" || user?.role === "MANAGER") && (
                           <button
                             type="button"
                             className="btn btn-outline"
