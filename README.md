@@ -10,6 +10,8 @@ This project was developed as a course project for the Databases and Database Sy
 SIPMS is a MySQL-based information system that helps a multi-branch retail
 company manage its products, stock levels, and purchasing activities.
 
+Demo Video: [Watch the SIPMS Project Demo on YouTube](https://youtu.be/FIkxGOQp5iY)
+
 The system supports:
 - Managing products, categories, suppliers, and multiple inventory locations
   (central warehouse and several stores).
@@ -20,6 +22,7 @@ The system supports:
   (low-stock alerts, top-selling products, stock value per location, etc.).
 - Enforcing user authentication and role-based access control for admins,
   inventory managers, and store staff.
+
 
 ---
 
@@ -435,7 +438,7 @@ project-root/                                   # Root of SIPMS system
 | Dec 1, 2025      | Team registration & topic selection                 |
 | Dec 8, 2025      | Peer review of proposals                            | 
 | Dec 15, 2025     | Submit design document (ERD, DDL, task division)    |
-| Dec 22, 2025     | Final submission & presentation slides              |
+| Dec 25, 2025     | Final submission & presentation slides              |
 
 ---
 

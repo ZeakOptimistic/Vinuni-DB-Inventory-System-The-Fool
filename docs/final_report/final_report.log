@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.12)  22 DEC 2025 13:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.23)  25 DEC 2025 21:50
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -732,7 +732,7 @@ File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 
  [2]
 Chapter 1.
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 109.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 110.
 (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/lm\ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [3
@@ -744,502 +744,502 @@ Chapter 2.
 
 ] [6{C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}]
 Chapter 3.
-<demo/dashboard1.png, id=447, 1429.59094pt x 812.28468pt>
+<demo/dashboard1.png, id=448, 1429.59094pt x 812.28468pt>
 File: demo/dashboard1.png Graphic file (type png)
 <use demo/dashboard1.png>
-Package pdftex.def Info: demo/dashboard1.png  used on input line 223.
+Package pdftex.def Info: demo/dashboard1.png  used on input line 224.
 (pdftex.def)             Requested size: 483.69687pt x 274.83453pt.
-<demo/dashboard2.png, id=449, 1427.3325pt x 812.28468pt>
+<demo/dashboard2.png, id=450, 1427.3325pt x 812.28468pt>
 File: demo/dashboard2.png Graphic file (type png)
 <use demo/dashboard2.png>
-Package pdftex.def Info: demo/dashboard2.png  used on input line 229.
+Package pdftex.def Info: demo/dashboard2.png  used on input line 230.
 (pdftex.def)             Requested size: 483.69687pt x 275.26834pt.
-<demo/dashboard3.png, id=450, 1428.08531pt x 812.28468pt>
+<demo/dashboard3.png, id=451, 1428.08531pt x 812.28468pt>
 File: demo/dashboard3.png Graphic file (type png)
 <use demo/dashboard3.png>
-Package pdftex.def Info: demo/dashboard3.png  used on input line 235.
+Package pdftex.def Info: demo/dashboard3.png  used on input line 236.
 (pdftex.def)             Requested size: 483.69687pt x 275.11961pt.
-<demo/dashboard4.png, id=451, 1428.08531pt x 812.28468pt>
+<demo/dashboard4.png, id=452, 1428.08531pt x 812.28468pt>
 File: demo/dashboard4.png Graphic file (type png)
 <use demo/dashboard4.png>
-Package pdftex.def Info: demo/dashboard4.png  used on input line 241.
+Package pdftex.def Info: demo/dashboard4.png  used on input line 242.
 (pdftex.def)             Requested size: 483.69687pt x 275.11961pt.
-<demo/dashboard5.png, id=452, 1429.59094pt x 812.28468pt>
+<demo/dashboard5.png, id=453, 1429.59094pt x 812.28468pt>
 File: demo/dashboard5.png Graphic file (type png)
 <use demo/dashboard5.png>
-Package pdftex.def Info: demo/dashboard5.png  used on input line 247.
+Package pdftex.def Info: demo/dashboard5.png  used on input line 248.
 (pdftex.def)             Requested size: 483.69687pt x 274.83453pt.
 [7
 
 ] [8 <./demo/dashboard1.png> <./demo/dashboard2.png>] [9 <./demo/dashboard3.png> <./demo/dashboard4.png>]
-<demo/product1.png, id=473, 1444.64719pt x 812.28468pt>
+<demo/product1.png, id=474, 1444.64719pt x 812.28468pt>
 File: demo/product1.png Graphic file (type png)
 <use demo/product1.png>
-Package pdftex.def Info: demo/product1.png  used on input line 266.
+Package pdftex.def Info: demo/product1.png  used on input line 267.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product2.png, id=474, 1444.64719pt x 812.28468pt>
+<demo/product2.png, id=475, 1444.64719pt x 812.28468pt>
 File: demo/product2.png Graphic file (type png)
 <use demo/product2.png>
-Package pdftex.def Info: demo/product2.png  used on input line 272.
+Package pdftex.def Info: demo/product2.png  used on input line 273.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product3.png, id=475, 1444.64719pt x 812.28468pt>
+<demo/product3.png, id=476, 1444.64719pt x 812.28468pt>
 File: demo/product3.png Graphic file (type png)
 <use demo/product3.png>
-Package pdftex.def Info: demo/product3.png  used on input line 278.
+Package pdftex.def Info: demo/product3.png  used on input line 279.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product4.png, id=476, 1444.64719pt x 812.28468pt>
+<demo/product4.png, id=477, 1444.64719pt x 812.28468pt>
 File: demo/product4.png Graphic file (type png)
 <use demo/product4.png>
-Package pdftex.def Info: demo/product4.png  used on input line 284.
+Package pdftex.def Info: demo/product4.png  used on input line 285.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product5.png, id=477, 1444.64719pt x 812.28468pt>
+<demo/product5.png, id=478, 1444.64719pt x 812.28468pt>
 File: demo/product5.png Graphic file (type png)
 <use demo/product5.png>
-Package pdftex.def Info: demo/product5.png  used on input line 291.
+Package pdftex.def Info: demo/product5.png  used on input line 292.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product6.png, id=478, 1444.64719pt x 812.28468pt>
+<demo/product6.png, id=479, 1444.64719pt x 812.28468pt>
 File: demo/product6.png Graphic file (type png)
 <use demo/product6.png>
-Package pdftex.def Info: demo/product6.png  used on input line 298.
+Package pdftex.def Info: demo/product6.png  used on input line 299.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product7.png, id=479, 1444.64719pt x 812.28468pt>
+<demo/product7.png, id=480, 1444.64719pt x 812.28468pt>
 File: demo/product7.png Graphic file (type png)
 <use demo/product7.png>
-Package pdftex.def Info: demo/product7.png  used on input line 305.
+Package pdftex.def Info: demo/product7.png  used on input line 306.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/product8.png, id=480, 1444.64719pt x 812.28468pt>
+<demo/product8.png, id=481, 1444.64719pt x 812.28468pt>
 File: demo/product8.png Graphic file (type png)
 <use demo/product8.png>
-Package pdftex.def Info: demo/product8.png  used on input line 311.
+Package pdftex.def Info: demo/product8.png  used on input line 312.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [10 <./demo/dashboard5.png>] [11 <./demo/product1.png> <./demo/product2.png>] [12 <./demo/product3.png> <./demo/product4.png>] [13 <./demo/product5.png> <./demo/product6.png>] [14 <./demo/product7.png> <./demo/product8.png>]
-<demo/supplier1.png, id=520, 1444.64719pt x 812.28468pt>
+<demo/supplier1.png, id=521, 1444.64719pt x 812.28468pt>
 File: demo/supplier1.png Graphic file (type png)
 <use demo/supplier1.png>
-Package pdftex.def Info: demo/supplier1.png  used on input line 329.
+Package pdftex.def Info: demo/supplier1.png  used on input line 330.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/supplier2.png, id=521, 1444.64719pt x 811.53188pt>
+<demo/supplier2.png, id=522, 1444.64719pt x 811.53188pt>
 File: demo/supplier2.png Graphic file (type png)
 <use demo/supplier2.png>
-Package pdftex.def Info: demo/supplier2.png  used on input line 335.
+Package pdftex.def Info: demo/supplier2.png  used on input line 336.
 (pdftex.def)             Requested size: 483.69687pt x 271.71936pt.
-<demo/supplier3.png, id=522, 1444.64719pt x 812.28468pt>
+<demo/supplier3.png, id=523, 1444.64719pt x 812.28468pt>
 File: demo/supplier3.png Graphic file (type png)
 <use demo/supplier3.png>
-Package pdftex.def Info: demo/supplier3.png  used on input line 341.
+Package pdftex.def Info: demo/supplier3.png  used on input line 342.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/supplier4.png, id=523, 1444.64719pt x 812.28468pt>
+<demo/supplier4.png, id=524, 1444.64719pt x 812.28468pt>
 File: demo/supplier4.png Graphic file (type png)
 <use demo/supplier4.png>
-Package pdftex.def Info: demo/supplier4.png  used on input line 347.
+Package pdftex.def Info: demo/supplier4.png  used on input line 348.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/supplier5.png, id=524, 1444.64719pt x 812.28468pt>
+<demo/supplier5.png, id=525, 1444.64719pt x 812.28468pt>
 File: demo/supplier5.png Graphic file (type png)
 <use demo/supplier5.png>
-Package pdftex.def Info: demo/supplier5.png  used on input line 353.
+Package pdftex.def Info: demo/supplier5.png  used on input line 354.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/supplier6.png, id=525, 1444.64719pt x 812.28468pt>
+<demo/supplier6.png, id=526, 1444.64719pt x 812.28468pt>
 File: demo/supplier6.png Graphic file (type png)
 <use demo/supplier6.png>
-Package pdftex.def Info: demo/supplier6.png  used on input line 359.
+Package pdftex.def Info: demo/supplier6.png  used on input line 360.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/supplier7.png, id=526, 1444.64719pt x 812.28468pt>
+<demo/supplier7.png, id=527, 1444.64719pt x 812.28468pt>
 File: demo/supplier7.png Graphic file (type png)
 <use demo/supplier7.png>
-Package pdftex.def Info: demo/supplier7.png  used on input line 365.
+Package pdftex.def Info: demo/supplier7.png  used on input line 366.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/supplier8.png, id=527, 1444.64719pt x 812.28468pt>
+<demo/supplier8.png, id=528, 1444.64719pt x 812.28468pt>
 File: demo/supplier8.png Graphic file (type png)
 <use demo/supplier8.png>
-Package pdftex.def Info: demo/supplier8.png  used on input line 371.
+Package pdftex.def Info: demo/supplier8.png  used on input line 372.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [15 <./demo/supplier1.png>] [16 <./demo/supplier2.png> <./demo/supplier3.png>] [17 <./demo/supplier4.png> <./demo/supplier5.png>] [18 <./demo/supplier6.png> <./demo/supplier7.png>]
-<demo/location1.png, id=559, 1444.64719pt x 812.28468pt>
+<demo/location1.png, id=560, 1444.64719pt x 812.28468pt>
 File: demo/location1.png Graphic file (type png)
 <use demo/location1.png>
-Package pdftex.def Info: demo/location1.png  used on input line 391.
+Package pdftex.def Info: demo/location1.png  used on input line 392.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location2.png, id=560, 1444.64719pt x 812.28468pt>
+<demo/location2.png, id=561, 1444.64719pt x 812.28468pt>
 File: demo/location2.png Graphic file (type png)
 <use demo/location2.png>
-Package pdftex.def Info: demo/location2.png  used on input line 397.
+Package pdftex.def Info: demo/location2.png  used on input line 398.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location3.png, id=561, 1444.64719pt x 812.28468pt>
+<demo/location3.png, id=562, 1444.64719pt x 812.28468pt>
 File: demo/location3.png Graphic file (type png)
 <use demo/location3.png>
-Package pdftex.def Info: demo/location3.png  used on input line 403.
+Package pdftex.def Info: demo/location3.png  used on input line 404.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location4.png, id=562, 1444.64719pt x 812.28468pt>
+<demo/location4.png, id=563, 1444.64719pt x 812.28468pt>
 File: demo/location4.png Graphic file (type png)
 <use demo/location4.png>
-Package pdftex.def Info: demo/location4.png  used on input line 409.
+Package pdftex.def Info: demo/location4.png  used on input line 410.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location5.png, id=563, 1444.64719pt x 812.28468pt>
+<demo/location5.png, id=564, 1444.64719pt x 812.28468pt>
 File: demo/location5.png Graphic file (type png)
 <use demo/location5.png>
-Package pdftex.def Info: demo/location5.png  used on input line 415.
+Package pdftex.def Info: demo/location5.png  used on input line 416.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location6.png, id=564, 1444.64719pt x 812.28468pt>
+<demo/location6.png, id=565, 1444.64719pt x 812.28468pt>
 File: demo/location6.png Graphic file (type png)
 <use demo/location6.png>
-Package pdftex.def Info: demo/location6.png  used on input line 421.
+Package pdftex.def Info: demo/location6.png  used on input line 422.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location7.png, id=565, 1444.64719pt x 812.28468pt>
+<demo/location7.png, id=566, 1444.64719pt x 812.28468pt>
 File: demo/location7.png Graphic file (type png)
 <use demo/location7.png>
-Package pdftex.def Info: demo/location7.png  used on input line 427.
+Package pdftex.def Info: demo/location7.png  used on input line 428.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/location8.png, id=566, 1444.64719pt x 812.28468pt>
+<demo/location8.png, id=567, 1444.64719pt x 812.28468pt>
 File: demo/location8.png Graphic file (type png)
 <use demo/location8.png>
-Package pdftex.def Info: demo/location8.png  used on input line 433.
+Package pdftex.def Info: demo/location8.png  used on input line 434.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [19 <./demo/supplier8.png>] [20 <./demo/location1.png> <./demo/location2.png>] [21 <./demo/location3.png> <./demo/location4.png>] [22 <./demo/location5.png> <./demo/location6.png>] [23 <./demo/location7.png> <./demo/location8.png>]
-Overfull \hbox (16.86899pt too wide) in paragraph at lines 442--443
+Overfull \hbox (16.86899pt too wide) in paragraph at lines 443--444
 []\T1/lmr/m/n/12 Create new cat-e-gories via a form cap-tur-ing: Name, De-scrip-tion, and Sta-tus (Ac-tive/Inactive). 
  []
 
-<demo/category1.png, id=605, 1444.64719pt x 812.28468pt>
+<demo/category1.png, id=606, 1444.64719pt x 812.28468pt>
 File: demo/category1.png Graphic file (type png)
 <use demo/category1.png>
-Package pdftex.def Info: demo/category1.png  used on input line 453.
+Package pdftex.def Info: demo/category1.png  used on input line 454.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category2.png, id=606, 1444.64719pt x 812.28468pt>
+<demo/category2.png, id=607, 1444.64719pt x 812.28468pt>
 File: demo/category2.png Graphic file (type png)
 <use demo/category2.png>
-Package pdftex.def Info: demo/category2.png  used on input line 459.
+Package pdftex.def Info: demo/category2.png  used on input line 460.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category3.png, id=607, 1444.64719pt x 812.28468pt>
+<demo/category3.png, id=608, 1444.64719pt x 812.28468pt>
 File: demo/category3.png Graphic file (type png)
 <use demo/category3.png>
-Package pdftex.def Info: demo/category3.png  used on input line 465.
+Package pdftex.def Info: demo/category3.png  used on input line 466.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category4.png, id=608, 1444.64719pt x 812.28468pt>
+<demo/category4.png, id=609, 1444.64719pt x 812.28468pt>
 File: demo/category4.png Graphic file (type png)
 <use demo/category4.png>
-Package pdftex.def Info: demo/category4.png  used on input line 471.
+Package pdftex.def Info: demo/category4.png  used on input line 472.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category5.png, id=609, 1444.64719pt x 812.28468pt>
+<demo/category5.png, id=610, 1444.64719pt x 812.28468pt>
 File: demo/category5.png Graphic file (type png)
 <use demo/category5.png>
-Package pdftex.def Info: demo/category5.png  used on input line 477.
+Package pdftex.def Info: demo/category5.png  used on input line 478.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category6.png, id=610, 1444.64719pt x 812.28468pt>
+<demo/category6.png, id=611, 1444.64719pt x 812.28468pt>
 File: demo/category6.png Graphic file (type png)
 <use demo/category6.png>
-Package pdftex.def Info: demo/category6.png  used on input line 483.
+Package pdftex.def Info: demo/category6.png  used on input line 484.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category7.png, id=611, 1444.64719pt x 812.28468pt>
+<demo/category7.png, id=612, 1444.64719pt x 812.28468pt>
 File: demo/category7.png Graphic file (type png)
 <use demo/category7.png>
-Package pdftex.def Info: demo/category7.png  used on input line 489.
+Package pdftex.def Info: demo/category7.png  used on input line 490.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/category8.png, id=612, 1444.64719pt x 812.28468pt>
+<demo/category8.png, id=613, 1444.64719pt x 812.28468pt>
 File: demo/category8.png Graphic file (type png)
 <use demo/category8.png>
-Package pdftex.def Info: demo/category8.png  used on input line 495.
+Package pdftex.def Info: demo/category8.png  used on input line 496.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
 [24 <./demo/category1.png>] [25 <./demo/category2.png> <./demo/category3.png>] [26 <./demo/category4.png> <./demo/category5.png>] [27 <./demo/category6.png> <./demo/category7.png>]
-<demo/po1.png, id=644, 1444.64719pt x 812.28468pt>
+<demo/po1.png, id=645, 1444.64719pt x 812.28468pt>
 File: demo/po1.png Graphic file (type png)
 <use demo/po1.png>
-Package pdftex.def Info: demo/po1.png  used on input line 514.
+Package pdftex.def Info: demo/po1.png  used on input line 515.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po2.png, id=645, 1444.64719pt x 812.28468pt>
+<demo/po2.png, id=646, 1444.64719pt x 812.28468pt>
 File: demo/po2.png Graphic file (type png)
 <use demo/po2.png>
-Package pdftex.def Info: demo/po2.png  used on input line 520.
+Package pdftex.def Info: demo/po2.png  used on input line 521.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po3.png, id=646, 1444.64719pt x 812.28468pt>
+<demo/po3.png, id=647, 1444.64719pt x 812.28468pt>
 File: demo/po3.png Graphic file (type png)
 <use demo/po3.png>
-Package pdftex.def Info: demo/po3.png  used on input line 526.
+Package pdftex.def Info: demo/po3.png  used on input line 527.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po4.png, id=647, 1444.64719pt x 812.28468pt>
+<demo/po4.png, id=648, 1444.64719pt x 812.28468pt>
 File: demo/po4.png Graphic file (type png)
 <use demo/po4.png>
-Package pdftex.def Info: demo/po4.png  used on input line 532.
+Package pdftex.def Info: demo/po4.png  used on input line 533.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po5.png, id=648, 1444.64719pt x 812.28468pt>
+<demo/po5.png, id=649, 1444.64719pt x 812.28468pt>
 File: demo/po5.png Graphic file (type png)
 <use demo/po5.png>
-Package pdftex.def Info: demo/po5.png  used on input line 538.
+Package pdftex.def Info: demo/po5.png  used on input line 539.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po6.png, id=649, 1444.64719pt x 812.28468pt>
+<demo/po6.png, id=650, 1444.64719pt x 812.28468pt>
 File: demo/po6.png Graphic file (type png)
 <use demo/po6.png>
-Package pdftex.def Info: demo/po6.png  used on input line 544.
+Package pdftex.def Info: demo/po6.png  used on input line 545.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po7.png, id=650, 1444.64719pt x 812.28468pt>
+<demo/po7.png, id=651, 1444.64719pt x 812.28468pt>
 File: demo/po7.png Graphic file (type png)
 <use demo/po7.png>
-Package pdftex.def Info: demo/po7.png  used on input line 550.
+Package pdftex.def Info: demo/po7.png  used on input line 551.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/po8.png, id=651, 1444.64719pt x 812.28468pt>
+<demo/po8.png, id=652, 1444.64719pt x 812.28468pt>
 File: demo/po8.png Graphic file (type png)
 <use demo/po8.png>
-Package pdftex.def Info: demo/po8.png  used on input line 551.
+Package pdftex.def Info: demo/po8.png  used on input line 552.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [28 <./demo/category8.png>] [29 <./demo/po1.png> <./demo/po2.png>] [30 <./demo/po3.png> <./demo/po4.png>] [31 <./demo/po5.png> <./demo/po6.png>] [32 <./demo/po7.png> <./demo/po8.png>]
-<demo/so1.png, id=690, 1444.64719pt x 812.28468pt>
+<demo/so1.png, id=691, 1444.64719pt x 812.28468pt>
 File: demo/so1.png Graphic file (type png)
 <use demo/so1.png>
-Package pdftex.def Info: demo/so1.png  used on input line 571.
+Package pdftex.def Info: demo/so1.png  used on input line 572.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so2.png, id=691, 1444.64719pt x 812.28468pt>
+<demo/so2.png, id=692, 1444.64719pt x 812.28468pt>
 File: demo/so2.png Graphic file (type png)
 <use demo/so2.png>
-Package pdftex.def Info: demo/so2.png  used on input line 577.
+Package pdftex.def Info: demo/so2.png  used on input line 578.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so3.png, id=692, 1444.64719pt x 812.28468pt>
+<demo/so3.png, id=693, 1444.64719pt x 812.28468pt>
 File: demo/so3.png Graphic file (type png)
 <use demo/so3.png>
-Package pdftex.def Info: demo/so3.png  used on input line 583.
+Package pdftex.def Info: demo/so3.png  used on input line 584.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so4.png, id=693, 1444.64719pt x 812.28468pt>
+<demo/so4.png, id=694, 1444.64719pt x 812.28468pt>
 File: demo/so4.png Graphic file (type png)
 <use demo/so4.png>
-Package pdftex.def Info: demo/so4.png  used on input line 589.
+Package pdftex.def Info: demo/so4.png  used on input line 590.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so5.png, id=694, 1444.64719pt x 812.28468pt>
+<demo/so5.png, id=695, 1444.64719pt x 812.28468pt>
 File: demo/so5.png Graphic file (type png)
 <use demo/so5.png>
-Package pdftex.def Info: demo/so5.png  used on input line 595.
+Package pdftex.def Info: demo/so5.png  used on input line 596.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so6.png, id=695, 1444.64719pt x 812.28468pt>
+<demo/so6.png, id=696, 1444.64719pt x 812.28468pt>
 File: demo/so6.png Graphic file (type png)
 <use demo/so6.png>
-Package pdftex.def Info: demo/so6.png  used on input line 601.
+Package pdftex.def Info: demo/so6.png  used on input line 602.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so7.png, id=696, 1444.64719pt x 812.28468pt>
+<demo/so7.png, id=697, 1444.64719pt x 812.28468pt>
 File: demo/so7.png Graphic file (type png)
 <use demo/so7.png>
-Package pdftex.def Info: demo/so7.png  used on input line 607.
+Package pdftex.def Info: demo/so7.png  used on input line 608.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/so8.png, id=697, 1444.64719pt x 812.28468pt>
+<demo/so8.png, id=698, 1444.64719pt x 812.28468pt>
 File: demo/so8.png Graphic file (type png)
 <use demo/so8.png>
-Package pdftex.def Info: demo/so8.png  used on input line 613.
+Package pdftex.def Info: demo/so8.png  used on input line 614.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [33 <./demo/so1.png>] [34 <./demo/so2.png> <./demo/so3.png>] [35 <./demo/so4.png> <./demo/so5.png>] [36 <./demo/so6.png> <./demo/so7.png>]
-<demo/transfer1.png, id=729, 1444.64719pt x 812.28468pt>
+<demo/transfer1.png, id=730, 1444.64719pt x 812.28468pt>
 File: demo/transfer1.png Graphic file (type png)
 <use demo/transfer1.png>
-Package pdftex.def Info: demo/transfer1.png  used on input line 631.
+Package pdftex.def Info: demo/transfer1.png  used on input line 632.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/transfer2.png, id=730, 1444.64719pt x 812.28468pt>
+<demo/transfer2.png, id=731, 1444.64719pt x 812.28468pt>
 File: demo/transfer2.png Graphic file (type png)
 <use demo/transfer2.png>
-Package pdftex.def Info: demo/transfer2.png  used on input line 637.
+Package pdftex.def Info: demo/transfer2.png  used on input line 638.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/transfer3.png, id=731, 1444.64719pt x 812.28468pt>
+<demo/transfer3.png, id=732, 1444.64719pt x 812.28468pt>
 File: demo/transfer3.png Graphic file (type png)
 <use demo/transfer3.png>
-Package pdftex.def Info: demo/transfer3.png  used on input line 643.
+Package pdftex.def Info: demo/transfer3.png  used on input line 644.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/transfer4.png, id=732, 1444.64719pt x 812.28468pt>
+<demo/transfer4.png, id=733, 1444.64719pt x 812.28468pt>
 File: demo/transfer4.png Graphic file (type png)
 <use demo/transfer4.png>
-Package pdftex.def Info: demo/transfer4.png  used on input line 649.
+Package pdftex.def Info: demo/transfer4.png  used on input line 650.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/transfer5.png, id=733, 1444.64719pt x 812.28468pt>
+<demo/transfer5.png, id=734, 1444.64719pt x 812.28468pt>
 File: demo/transfer5.png Graphic file (type png)
 <use demo/transfer5.png>
-Package pdftex.def Info: demo/transfer5.png  used on input line 655.
+Package pdftex.def Info: demo/transfer5.png  used on input line 656.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/transfer6.png, id=734, 1444.64719pt x 812.28468pt>
+<demo/transfer6.png, id=735, 1444.64719pt x 812.28468pt>
 File: demo/transfer6.png Graphic file (type png)
 <use demo/transfer6.png>
-Package pdftex.def Info: demo/transfer6.png  used on input line 661.
+Package pdftex.def Info: demo/transfer6.png  used on input line 662.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/transfer7.png, id=735, 1444.64719pt x 812.28468pt>
+<demo/transfer7.png, id=736, 1444.64719pt x 812.28468pt>
 File: demo/transfer7.png Graphic file (type png)
 <use demo/transfer7.png>
-Package pdftex.def Info: demo/transfer7.png  used on input line 667.
+Package pdftex.def Info: demo/transfer7.png  used on input line 668.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [37 <./demo/so8.png>] [38 <./demo/transfer1.png> <./demo/transfer2.png>] [39 <./demo/transfer3.png> <./demo/transfer4.png>] [40 <./demo/transfer5.png> <./demo/transfer6.png>]
-<demo/report1.png, id=766, 1444.64719pt x 812.28468pt>
+<demo/report1.png, id=767, 1444.64719pt x 812.28468pt>
 File: demo/report1.png Graphic file (type png)
 <use demo/report1.png>
-Package pdftex.def Info: demo/report1.png  used on input line 691.
+Package pdftex.def Info: demo/report1.png  used on input line 692.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report2.png, id=767, 1444.64719pt x 812.28468pt>
+<demo/report2.png, id=768, 1444.64719pt x 812.28468pt>
 File: demo/report2.png Graphic file (type png)
 <use demo/report2.png>
-Package pdftex.def Info: demo/report2.png  used on input line 697.
+Package pdftex.def Info: demo/report2.png  used on input line 698.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report3.png, id=768, 1444.64719pt x 812.28468pt>
+<demo/report3.png, id=769, 1444.64719pt x 812.28468pt>
 File: demo/report3.png Graphic file (type png)
 <use demo/report3.png>
-Package pdftex.def Info: demo/report3.png  used on input line 703.
+Package pdftex.def Info: demo/report3.png  used on input line 704.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report4.png, id=769, 1444.64719pt x 812.28468pt>
+<demo/report4.png, id=770, 1444.64719pt x 812.28468pt>
 File: demo/report4.png Graphic file (type png)
 <use demo/report4.png>
-Package pdftex.def Info: demo/report4.png  used on input line 709.
+Package pdftex.def Info: demo/report4.png  used on input line 710.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report5.png, id=770, 1444.64719pt x 812.28468pt>
+<demo/report5.png, id=771, 1444.64719pt x 812.28468pt>
 File: demo/report5.png Graphic file (type png)
 <use demo/report5.png>
-Package pdftex.def Info: demo/report5.png  used on input line 715.
+Package pdftex.def Info: demo/report5.png  used on input line 716.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report6.png, id=771, 1444.64719pt x 812.28468pt>
+<demo/report6.png, id=772, 1444.64719pt x 812.28468pt>
 File: demo/report6.png Graphic file (type png)
 <use demo/report6.png>
-Package pdftex.def Info: demo/report6.png  used on input line 721.
+Package pdftex.def Info: demo/report6.png  used on input line 722.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report7.png, id=772, 1444.64719pt x 812.28468pt>
+<demo/report7.png, id=773, 1444.64719pt x 812.28468pt>
 File: demo/report7.png Graphic file (type png)
 <use demo/report7.png>
-Package pdftex.def Info: demo/report7.png  used on input line 727.
+Package pdftex.def Info: demo/report7.png  used on input line 728.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/report8.png, id=773, 1444.64719pt x 812.28468pt>
+<demo/report8.png, id=774, 1444.64719pt x 812.28468pt>
 File: demo/report8.png Graphic file (type png)
 <use demo/report8.png>
-Package pdftex.def Info: demo/report8.png  used on input line 733.
+Package pdftex.def Info: demo/report8.png  used on input line 734.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [41 <./demo/transfer7.png>] [42 <./demo/report1.png> <./demo/report2.png>] [43 <./demo/report3.png> <./demo/report4.png>] [44 <./demo/report5.png> <./demo/report6.png>] [45 <./demo/report7.png> <./demo/report8.png>]
-<demo/user1.png, id=813, 1444.64719pt x 812.28468pt>
+<demo/user1.png, id=814, 1444.64719pt x 812.28468pt>
 File: demo/user1.png Graphic file (type png)
 <use demo/user1.png>
-Package pdftex.def Info: demo/user1.png  used on input line 750.
+Package pdftex.def Info: demo/user1.png  used on input line 751.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user2.png, id=814, 1444.64719pt x 812.28468pt>
+<demo/user2.png, id=815, 1444.64719pt x 812.28468pt>
 File: demo/user2.png Graphic file (type png)
 <use demo/user2.png>
-Package pdftex.def Info: demo/user2.png  used on input line 756.
+Package pdftex.def Info: demo/user2.png  used on input line 757.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user3.png, id=815, 1444.64719pt x 812.28468pt>
+<demo/user3.png, id=816, 1444.64719pt x 812.28468pt>
 File: demo/user3.png Graphic file (type png)
 <use demo/user3.png>
-Package pdftex.def Info: demo/user3.png  used on input line 762.
+Package pdftex.def Info: demo/user3.png  used on input line 763.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user4.png, id=816, 1444.64719pt x 812.28468pt>
+<demo/user4.png, id=817, 1444.64719pt x 812.28468pt>
 File: demo/user4.png Graphic file (type png)
 <use demo/user4.png>
-Package pdftex.def Info: demo/user4.png  used on input line 768.
+Package pdftex.def Info: demo/user4.png  used on input line 769.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user5.png, id=817, 1444.64719pt x 812.28468pt>
+<demo/user5.png, id=818, 1444.64719pt x 812.28468pt>
 File: demo/user5.png Graphic file (type png)
 <use demo/user5.png>
-Package pdftex.def Info: demo/user5.png  used on input line 774.
+Package pdftex.def Info: demo/user5.png  used on input line 775.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user6.png, id=818, 1444.64719pt x 812.28468pt>
+<demo/user6.png, id=819, 1444.64719pt x 812.28468pt>
 File: demo/user6.png Graphic file (type png)
 <use demo/user6.png>
-Package pdftex.def Info: demo/user6.png  used on input line 780.
+Package pdftex.def Info: demo/user6.png  used on input line 781.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user7.png, id=819, 1444.64719pt x 812.28468pt>
+<demo/user7.png, id=820, 1444.64719pt x 812.28468pt>
 File: demo/user7.png Graphic file (type png)
 <use demo/user7.png>
-Package pdftex.def Info: demo/user7.png  used on input line 786.
+Package pdftex.def Info: demo/user7.png  used on input line 787.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user8.png, id=820, 1444.64719pt x 812.28468pt>
+<demo/user8.png, id=821, 1444.64719pt x 812.28468pt>
 File: demo/user8.png Graphic file (type png)
 <use demo/user8.png>
-Package pdftex.def Info: demo/user8.png  used on input line 792.
+Package pdftex.def Info: demo/user8.png  used on input line 793.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user9.png, id=821, 1444.64719pt x 812.28468pt>
+<demo/user9.png, id=822, 1444.64719pt x 812.28468pt>
 File: demo/user9.png Graphic file (type png)
 <use demo/user9.png>
-Package pdftex.def Info: demo/user9.png  used on input line 798.
+Package pdftex.def Info: demo/user9.png  used on input line 799.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user10.png, id=822, 1444.64719pt x 812.28468pt>
+<demo/user10.png, id=823, 1444.64719pt x 812.28468pt>
 File: demo/user10.png Graphic file (type png)
 <use demo/user10.png>
-Package pdftex.def Info: demo/user10.png  used on input line 804.
+Package pdftex.def Info: demo/user10.png  used on input line 805.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user11.png, id=823, 1444.64719pt x 812.28468pt>
+<demo/user11.png, id=824, 1444.64719pt x 812.28468pt>
 File: demo/user11.png Graphic file (type png)
 <use demo/user11.png>
-Package pdftex.def Info: demo/user11.png  used on input line 810.
+Package pdftex.def Info: demo/user11.png  used on input line 811.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user12.png, id=824, 1444.64719pt x 812.28468pt>
+<demo/user12.png, id=825, 1444.64719pt x 812.28468pt>
 File: demo/user12.png Graphic file (type png)
 <use demo/user12.png>
-Package pdftex.def Info: demo/user12.png  used on input line 816.
+Package pdftex.def Info: demo/user12.png  used on input line 817.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user13.png, id=825, 1444.64719pt x 812.28468pt>
+<demo/user13.png, id=826, 1444.64719pt x 812.28468pt>
 File: demo/user13.png Graphic file (type png)
 <use demo/user13.png>
-Package pdftex.def Info: demo/user13.png  used on input line 822.
+Package pdftex.def Info: demo/user13.png  used on input line 823.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user14.png, id=826, 1444.64719pt x 812.28468pt>
+<demo/user14.png, id=827, 1444.64719pt x 812.28468pt>
 File: demo/user14.png Graphic file (type png)
 <use demo/user14.png>
-Package pdftex.def Info: demo/user14.png  used on input line 828.
+Package pdftex.def Info: demo/user14.png  used on input line 829.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user15.png, id=827, 1444.64719pt x 812.28468pt>
+<demo/user15.png, id=828, 1444.64719pt x 812.28468pt>
 File: demo/user15.png Graphic file (type png)
 <use demo/user15.png>
-Package pdftex.def Info: demo/user15.png  used on input line 834.
+Package pdftex.def Info: demo/user15.png  used on input line 835.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
-<demo/user16.png, id=828, 1444.64719pt x 812.28468pt>
+<demo/user16.png, id=829, 1444.64719pt x 812.28468pt>
 File: demo/user16.png Graphic file (type png)
 <use demo/user16.png>
-Package pdftex.def Info: demo/user16.png  used on input line 840.
+Package pdftex.def Info: demo/user16.png  used on input line 841.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [46 <./demo/user1.png>] [47 <./demo/user2.png> <./demo/user3.png>] [48 <./demo/user4.png> <./demo/user5.png>] [49 <./demo/user6.png> <./demo/user7.png>] [50 <./demo/user8.png> <./demo/user9.png>] [51 <./demo/user10.png> <./demo/user11.png>] [52 <./demo/user12.png> <./demo/user13.png>] [53 <./demo/user14.png> <./demo/user15.png>]
-<demo/login.png, id=892, 1444.64719pt x 812.28468pt>
+<demo/login.png, id=893, 1444.64719pt x 812.28468pt>
 File: demo/login.png Graphic file (type png)
 <use demo/login.png>
-Package pdftex.def Info: demo/login.png  used on input line 852.
+Package pdftex.def Info: demo/login.png  used on input line 853.
 (pdftex.def)             Requested size: 483.69687pt x 271.97142pt.
  [54 <./demo/user16.png>] [55 <./demo/login.png>]
 Chapter 4.
 [56
 
 ]
-<diagram sipms.png, id=914, 965.6075pt x 1076.02pt>
+<diagram sipms.png, id=915, 965.6075pt x 1076.02pt>
 File: diagram sipms.png Graphic file (type png)
 <use diagram sipms.png>
-Package pdftex.def Info: diagram sipms.png  used on input line 908.
+Package pdftex.def Info: diagram sipms.png  used on input line 909.
 (pdftex.def)             Requested size: 483.69687pt x 539.01024pt.
  [57] [58 <./diagram sipms.png>]
-Overfull \hbox (8.72539pt too wide) in paragraph at lines 960--964
+Overfull \hbox (8.72539pt too wide) in paragraph at lines 961--965
 \T1/lmtt/m/n/12 location_id)\T1/lmr/m/n/12 , \T1/lmtt/m/n/12 purchase_order_item(po_id, product_id)\T1/lmr/m/n/12 , \T1/lmtt/m/n/12 sales_order_item(so_id,
  []
 
 
-Overfull \hbox (49.64929pt too wide) in paragraph at lines 964--965
+Overfull \hbox (49.64929pt too wide) in paragraph at lines 965--966
 []\T1/lmr/m/n/12 Foreign keys en-force valid ref-er-ences (e.g., or-der head-ers ref-er-ence ex-ist-ing sup-pli-ers/locations/users;
  []
 
 [59]
-Overfull \hbox (19.86363pt too wide) in paragraph at lines 993--997
+Overfull \hbox (19.86363pt too wide) in paragraph at lines 994--998
 []\T1/lmr/m/n/12 The ta-ble \T1/lmtt/m/n/12 inventory_level \T1/lmr/m/n/12 stores the cur-rent on-hand quan-tity for each \T1/lmtt/m/n/12 (product, location)
  []
 
 [60]
-Overfull \hbox (1.17676pt too wide) in paragraph at lines 1008--1009
+Overfull \hbox (1.17676pt too wide) in paragraph at lines 1009--1010
 []\T1/lmtt/m/n/12 view_low_stock_products\T1/lmr/m/n/12 : sub-set of prod-ucts be-low re-order level (sup-ports ``Low Stock''
  []
 
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <14.4> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 1020.
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 1021.
 (C:\Users\LAPTOP Thai Hoa\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 1021.
+Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on input line 1022.
  (../../database/views.sql
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/lmtt/b/n' tried instead on input line 5.
  [61]) [62] (../../database/procedures.sql [63] [64]) [65] (../../database/triggers.sql [66]) [67] [68]
 Chapter 5.
 
-Overfull \hbox (7.73312pt too wide) in paragraph at lines 1164--1169
+Overfull \hbox (7.73312pt too wide) in paragraph at lines 1165--1170
 []\T1/lmr/bx/n/12 Inventory snap-shots by lo-ca-tion. \T1/lmr/m/n/12 In-ven-tory is stored per \T1/lmtt/m/n/12 (product_id, location_id)
  []
 
 [69
 
 {C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}]
-Overfull \hbox (71.12624pt too wide) in paragraph at lines 1170--1174
+Overfull \hbox (71.12624pt too wide) in paragraph at lines 1171--1175
 \T1/lmr/m/n/12 ments by time range and by prod-uct/location. A com-pos-ite in-dex on \T1/lmtt/m/n/12 stock_movement(movement_date,
  []
 
 
-Overfull \hbox (73.13396pt too wide) in paragraph at lines 1175--1179
+Overfull \hbox (73.13396pt too wide) in paragraph at lines 1176--1180
 \T1/lmr/m/n/12 sta-tus. Com-pos-ite in-dexes on \T1/lmtt/m/n/12 sales_order(order_date, status) \T1/lmr/m/n/12 and \T1/lmtt/m/n/12 purchase_order(order_date,
  []
 
@@ -1248,77 +1248,77 @@ Chapter 6.
 [75
 
 ]
-<demo/test1a.png, id=1333, 1444.64719pt x 812.28468pt>
+<demo/test1a.png, id=1334, 1444.64719pt x 812.28468pt>
 File: demo/test1a.png Graphic file (type png)
 <use demo/test1a.png>
-Package pdftex.def Info: demo/test1a.png  used on input line 1365.
+Package pdftex.def Info: demo/test1a.png  used on input line 1366.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
  [76{C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}]
-<demo/test1b.png, id=1339, 1444.64719pt x 812.28468pt>
+<demo/test1b.png, id=1340, 1444.64719pt x 812.28468pt>
 File: demo/test1b.png Graphic file (type png)
 <use demo/test1b.png>
-Package pdftex.def Info: demo/test1b.png  used on input line 1371.
+Package pdftex.def Info: demo/test1b.png  used on input line 1372.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
-<demo/test1c.png, id=1340, 1444.64719pt x 812.28468pt>
+<demo/test1c.png, id=1341, 1444.64719pt x 812.28468pt>
 File: demo/test1c.png Graphic file (type png)
 <use demo/test1c.png>
-Package pdftex.def Info: demo/test1c.png  used on input line 1377.
+Package pdftex.def Info: demo/test1c.png  used on input line 1378.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
  [77 <./demo/test1a.png> <./demo/test1b.png>]
-<demo/test2.png, id=1347, 1444.64719pt x 812.28468pt>
+<demo/test2.png, id=1348, 1444.64719pt x 812.28468pt>
 File: demo/test2.png Graphic file (type png)
 <use demo/test2.png>
-Package pdftex.def Info: demo/test2.png  used on input line 1384.
+Package pdftex.def Info: demo/test2.png  used on input line 1385.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
-<demo/test3.png, id=1348, 1444.64719pt x 812.28468pt>
+<demo/test3.png, id=1349, 1444.64719pt x 812.28468pt>
 File: demo/test3.png Graphic file (type png)
 <use demo/test3.png>
-Package pdftex.def Info: demo/test3.png  used on input line 1391.
+Package pdftex.def Info: demo/test3.png  used on input line 1392.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
  [78 <./demo/test1c.png> <./demo/test2.png>]
-<demo/test4a.png, id=1358, 1444.64719pt x 812.28468pt>
+<demo/test4a.png, id=1359, 1444.64719pt x 812.28468pt>
 File: demo/test4a.png Graphic file (type png)
 <use demo/test4a.png>
-Package pdftex.def Info: demo/test4a.png  used on input line 1411.
+Package pdftex.def Info: demo/test4a.png  used on input line 1412.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
  [79 <./demo/test3.png>]
-<demo/test4b.png, id=1365, 1443.14156pt x 767.11594pt>
+<demo/test4b.png, id=1366, 1443.14156pt x 767.11594pt>
 File: demo/test4b.png Graphic file (type png)
 <use demo/test4b.png>
-Package pdftex.def Info: demo/test4b.png  used on input line 1418.
+Package pdftex.def Info: demo/test4b.png  used on input line 1419.
 (pdftex.def)             Requested size: 459.51054pt x 244.25307pt.
 
-Overfull \hbox (31.23616pt too wide) in paragraph at lines 1427--1432
+Overfull \hbox (31.23616pt too wide) in paragraph at lines 1428--1433
 \T1/lmr/m/n/12 checks in-ven-tory suf-fi-ciency be-fore in-sert-ing \T1/lmtt/m/n/12 SALES_ISSUE \T1/lmr/m/n/12 move-ments and up-dat-ing \T1/lmtt/m/n/12 inventory_level
  []
 
 [80 <./demo/test4a.png> <./demo/test4b.png>]
-<demo/test5.png, id=1374, 1444.64719pt x 812.28468pt>
+<demo/test5.png, id=1375, 1444.64719pt x 812.28468pt>
 File: demo/test5.png Graphic file (type png)
 <use demo/test5.png>
-Package pdftex.def Info: demo/test5.png  used on input line 1440.
+Package pdftex.def Info: demo/test5.png  used on input line 1441.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
-<demo/test6.png, id=1375, 1444.64719pt x 812.28468pt>
+<demo/test6.png, id=1376, 1444.64719pt x 812.28468pt>
 File: demo/test6.png Graphic file (type png)
 <use demo/test6.png>
-Package pdftex.def Info: demo/test6.png  used on input line 1452.
+Package pdftex.def Info: demo/test6.png  used on input line 1453.
 (pdftex.def)             Requested size: 459.51054pt x 258.3623pt.
  [81 <./demo/test5.png>]
-<demo/test7.png, id=1384, 1442.38875pt x 764.10469pt>
+<demo/test7.png, id=1385, 1442.38875pt x 764.10469pt>
 File: demo/test7.png Graphic file (type png)
 <use demo/test7.png>
-Package pdftex.def Info: demo/test7.png  used on input line 1474.
+Package pdftex.def Info: demo/test7.png  used on input line 1475.
 (pdftex.def)             Requested size: 459.51054pt x 243.42252pt.
  [82 <./demo/test6.png>]
-<demo/test8.png, id=1391, 1437.11906pt x 764.8575pt>
+<demo/test8.png, id=1392, 1437.11906pt x 764.8575pt>
 File: demo/test8.png Graphic file (type png)
 <use demo/test8.png>
-Package pdftex.def Info: demo/test8.png  used on input line 1481.
+Package pdftex.def Info: demo/test8.png  used on input line 1482.
 (pdftex.def)             Requested size: 459.51054pt x 244.56099pt.
-<demo/test9.png, id=1392, 1441.63594pt x 764.10469pt>
+<demo/test9.png, id=1393, 1441.63594pt x 764.10469pt>
 File: demo/test9.png Graphic file (type png)
 <use demo/test9.png>
-Package pdftex.def Info: demo/test9.png  used on input line 1495.
+Package pdftex.def Info: demo/test9.png  used on input line 1496.
 (pdftex.def)             Requested size: 459.51054pt x 243.55077pt.
  [83 <./demo/test7.png> <./demo/test8.png>] [84 <./demo/test9.png>] (final_report.aux)
  ***********
@@ -1341,9 +1341,9 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  84i,15n,94p,554b,2388s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmr6.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmri12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtk10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt10.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmtt12.pfb><C:/Users/LAPTOP Thai Hoa/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on final_report.pdf (85 pages, 12044767 bytes).
+Output written on final_report.pdf (85 pages, 12045012 bytes).
 PDF statistics:
- 1585 PDF objects out of 1728 (max. 8388607)
+ 1586 PDF objects out of 1728 (max. 8388607)
  599 named destinations out of 1000 (max. 500000)
  1143 words of extra memory for PDF output out of 10000 (max. 10000000)
 
